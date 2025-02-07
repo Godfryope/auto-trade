@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Prices</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .token-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .token-card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            width: 200px;
+            text-align: center;
+            background-color: #f9f9f9;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .token-card:hover {
+            transform: scale(1.05);
+        }
+        .token-card img {
+            width: 50px;
+            height: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Token Prices</h1>
+    <div class="token-container" id="tokenList"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io(); // Connect to the WebSocket server
+
+        // Function to fetch tokens and update the UI (fallback for initial loading)
+        async function fetchTokens() {
+            try {
+                const response = await fetch("/tokens");
+                const tokens = await response.json();
+                console.log("Fetched tokens:", tokens); // Log the tokens data
+                
+                const tokenList = document.getElementById("tokenList");
+                tokenList.innerHTML = ""; // Clear existing tokens
+                
+                if (tokens.length === 0) {
+                    tokenList.innerHTML = "<p>No tokens are currently pumping above 95%.</p>"; // Show a message if no tokens are pumping
+                }
+
+                tokens.forEach(token => {
+                    const tokenCard = document.createElement("div");
+                    tokenCard.classList.add("token-card");
+                    
+                    tokenCard.innerHTML = `
+                        <img src="${token.image}" alt="${token.name}">
+                        <h3>${token.name} (${token.symbol})</h3>
+                        <p>Price: $${token.current_price.toFixed(2)}</p>
+                        <p>Market Cap: $${(token.market_cap / 1e9).toFixed(2)}B</p>
+                        <p>Volume: $${(token.total_volume / 1e6).toFixed(2)}M</p>
+                        <p style="color: red;">Pump: 95%+ increase!</p>
+                    `;
+
+                    tokenList.appendChild(tokenCard);
+                });
+            } catch (error) {
+                console.error("Error fetching tokens:", error);
+            }
+        }
+
+        // Listen for updates from the WebSocket server
+        socket.on("updateTokens", function(tokens) {
+            console.log("Received tokens from WebSocket:", tokens); // Log the received tokens
+
+            const tokenList = document.getElementById("tokenList");
+            tokenList.innerHTML = ""; // Clear existing tokens
+
+            if (tokens.length === 0) {
+                tokenList.innerHTML = "<p>No tokens are currently pumping above 95%.</p>"; // Show a message if no tokens are pumping
+            }
+
+            tokens.forEach(token => {
+                const tokenCard = document.createElement("div");
+                tokenCard.classList.add("token-card");
+                
+                tokenCard.innerHTML = `
+                    <img src="${token.image}" alt="${token.name}">
+                    <h3>${token.name} (${token.symbol})</h3>
+                    <p>Price: $${token.current_price.toFixed(2)}</p>
+                    <p>Market Cap: $${(token.market_cap / 1e9).toFixed(2)}B</p>
+                    <p>Volume: $${(token.total_volume / 1e6).toFixed(2)}M</p>
+                    <p style="color: red;">Pump: 95%+ increase!</p>
+                `;
+
+                tokenList.appendChild(tokenCard);
+            });
+        });
+        // Fetch initial tokens on page load
+        fetchTokens();
+    </script>
+
+</body>
+</html>
