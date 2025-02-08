@@ -74,50 +74,106 @@ setInterval(updateSolanaBalance, 300000); // Run every 5 minutes
 // You can also run the function once on bot startup to immediately fetch balances
 updateSolanaBalance();
 
-// Fetch Latest Tokens Hitting 99% Bonding Curve from Bitquery API
-const fetchLatestTokens = async () => {
-  const query = {
-    query: `{
-      ethereum {
-        dexTrades(
-          options: {limit: 5, desc: "block.timestamp.time"}
-          smartContractAddress: {is: "0x..."} # Replace with the specific contract
-          tradeAmountUsd: {gt: 1000} # Example filter
-        ) {
-          block {
-            timestamp {
-              time(format: "%Y-%m-%d %H:%M:%S")
+const { WebSocket } = require("ws");
+
+const token = "your_bitquery_api_token"; // Replace with your actual token
+const bitqueryConnection = new WebSocket(
+  "wss://streaming.bitquery.io/eap?token=" + token,
+  ["graphql-ws"]
+);
+
+bitqueryConnection.on("open", () => {
+  console.log("Connected to Bitquery.");
+
+  // Send initialization message (connection_init)
+  const initMessage = JSON.stringify({ type: "connection_init" });
+  bitqueryConnection.send(initMessage);
+});
+
+bitqueryConnection.on("message", (data) => {
+  const response = JSON.parse(data);
+
+  // Handle connection acknowledgment (connection_ack)
+  if (response.type === "connection_ack") {
+    console.log("Connection acknowledged by server.");
+
+    // Send subscription message after receiving connection_ack
+    const subscriptionMessage = JSON.stringify({
+      type: "start",
+      id: "1",
+      payload: {
+        query: `
+        subscription {
+          ethereum {
+            dexTrades(
+              options: {limit: 5, desc: "block.timestamp.time"}
+              tradeAmountUsd: {gt: 1000}
+            ) {
+              block {
+                timestamp {
+                  time(format: "%Y-%m-%d %H:%M:%S")
+                }
+              }
+              baseCurrency {
+                symbol
+                address
+              }
+              quotePrice
             }
           }
-          baseCurrency {
-            symbol
-            address
-          }
-          quotePrice
         }
-      }
-    }`
-  };
-
-  try {
-    const response = await axios.post('https://graphql.bitquery.io/', query, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY': 'ory_at___Y9UM9o5AWlOPft-gV8NR9p1A0P5JTfe8Wo01UhiFQ.ujiqRwiGdoZkaDdoFXnBfrf7aSq33QYA2bvw8HLmjpY' // Replace with your Bitquery API key
-      }
+        `,
+      },
     });
 
-    const tokens = response.data.data.ethereum.dexTrades;
-    if (tokens.length > 0) {
-      return tokens.map(token => `${token.baseCurrency.symbol} at ${token.quotePrice} USD on ${token.block.timestamp.time}`);
-    } else {
-      return ['No token data available at the moment.'];
-    }
-  } catch (err) {
-    console.error('Error fetching token data:', err.message);
-    return ['Error fetching token data.'];
+    bitqueryConnection.send(subscriptionMessage);
+    console.log("Subscription message sent.");
+
+    // Stop logic after 10 seconds
+    setTimeout(() => {
+      const stopMessage = JSON.stringify({ type: "stop", id: "1" });
+      bitqueryConnection.send(stopMessage);
+      console.log("Stop message sent after 10 seconds.");
+
+      setTimeout(() => {
+        console.log("Closing WebSocket connection.");
+        bitqueryConnection.close();
+      }, 1000);
+    }, 10000);
   }
-};
+
+  // Handle received data
+  if (response.type === "data") {
+    const tokens = response.payload.data?.ethereum?.dexTrades || [];
+    if (tokens.length > 0) {
+      console.log("Tokens fetched:");
+      tokens.forEach(token => {
+        console.log(
+          `Token: ${token.baseCurrency.symbol}, Price: ${token.quotePrice} USD, Timestamp: ${token.block.timestamp.time}`
+        );
+      });
+    } else {
+      console.log("No token data available at the moment.");
+    }
+  }
+
+  // Handle keep-alive messages (ka)
+  if (response.type === "ka") {
+    console.log("Keep-alive message received.");
+  }
+
+  if (response.type === "error") {
+    console.error("Error message received:", response.payload.errors);
+  }
+});
+
+bitqueryConnection.on("close", () => {
+  console.log("Disconnected from Bitquery.");
+});
+
+bitqueryConnection.on("error", (error) => {
+  console.error("WebSocket Error:", error);
+});
 
 // Handle Solana withdrawal
 bot.on('callback_query', async (query) => {
