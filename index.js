@@ -34,45 +34,6 @@ const createSolanaWallet = async () => {
   return wallet.publicKey.toBase58(); // Return the public wallet address
 };
 
-// Function to fetch latest tokens hitting 99% bonding curve
-const fetchLatestTokens = async () => {
-  try {
-    const response = await axios.post('https://graphql.bitquery.io', {
-      query: `{
-        ethereum(network: bsc) {
-          dexTrades(
-            options: {desc: ["block.height"], limit: 5}
-            tradeAmountUsd: {gt: 100}
-            exchangeName: {is: "Pancake v2"}
-            quotePrice: {gteq: 0.99}
-          ) {
-            block {
-              height
-            }
-            tradeAmountUsd
-            quoteCurrency {
-              symbol
-            }
-            baseCurrency {
-              symbol
-            }
-          }
-        }
-      }`
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-KEY': 'ory_at___Y9UM9o5AWlOPft-gV8NR9p1A0P5JTfe8Wo01UhiFQ.ujiqRwiGdoZkaDdoFXnBfrf7aSq33QYA2bvw8HLmjpY'
-      }
-    });
-
-    const tokens = response.data.data.ethereum.dexTrades;
-    return tokens.map(token => `Token: ${token.baseCurrency.symbol}, Quote: ${token.quoteCurrency.symbol}, Amount: ${token.tradeAmountUsd} USD`);
-  } catch (error) {
-    console.error('Error fetching latest tokens:', error.message);
-    return ['No token data available at the moment.'];
-  }
-};
 
 // Function to update user's Solana balance
 const updateSolanaBalance = async () => {
@@ -112,6 +73,51 @@ setInterval(updateSolanaBalance, 300000); // Run every 5 minutes
 
 // You can also run the function once on bot startup to immediately fetch balances
 updateSolanaBalance();
+
+// Fetch Latest Tokens Hitting 99% Bonding Curve from Bitquery API
+const fetchLatestTokens = async () => {
+  const query = {
+    query: `{
+      ethereum {
+        dexTrades(
+          options: {limit: 5, desc: "block.timestamp.time"}
+          smartContractAddress: {is: "0x..."} # Replace with the specific contract
+          tradeAmountUsd: {gt: 1000} # Example filter
+        ) {
+          block {
+            timestamp {
+              time(format: "%Y-%m-%d %H:%M:%S")
+            }
+          }
+          baseCurrency {
+            symbol
+            address
+          }
+          quotePrice
+        }
+      }
+    }`
+  };
+
+  try {
+    const response = await axios.post('https://graphql.bitquery.io/', query, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': 'ory_at___Y9UM9o5AWlOPft-gV8NR9p1A0P5JTfe8Wo01UhiFQ.ujiqRwiGdoZkaDdoFXnBfrf7aSq33QYA2bvw8HLmjpY' // Replace with your Bitquery API key
+      }
+    });
+
+    const tokens = response.data.data.ethereum.dexTrades;
+    if (tokens.length > 0) {
+      return tokens.map(token => `${token.baseCurrency.symbol} at ${token.quotePrice} USD on ${token.block.timestamp.time}`);
+    } else {
+      return ['No token data available at the moment.'];
+    }
+  } catch (err) {
+    console.error('Error fetching token data:', err.message);
+    return ['Error fetching token data.'];
+  }
+};
 
 // Handle Solana withdrawal
 bot.on('callback_query', async (query) => {
@@ -181,48 +187,49 @@ bot.on('callback_query', async (query) => {
   }
 });
 
-// Handle user login and display latest tokens
 bot.onText(/\/login/, async (msg) => {
   const chatId = msg.chat.id;
-
-  // Check if the user is already registered in MongoDB
   const user = await User.findOne({ telegramId: chatId });
 
   if (user) {
-    bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
-      parse_mode: 'Markdown'
-    });
+    bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, { parse_mode: 'Markdown' });
+    const menuOptions = {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: '💸 Deposit', callback_data: 'deposit_solana' },
+            { text: '💳 Withdrawal', callback_data: 'withdrawal' }
+          ],
+          [
+            { text: '📈 Opened Positions', callback_data: 'opened_positions' },
+            { text: '📜 History', callback_data: 'history' }
+          ],
+          [
+            { text: '🔍 Check Balance', callback_data: 'check_balance' }
+          ],
+          [
+            { text: '📊 Latest Tokens (99% Curve)', callback_data: 'latest_tokens' }
+          ]
+        ]
+      }
+    };
 
-    const latestTokens = await fetchLatestTokens();
-    bot.sendMessage(chatId, `📊 *Latest Tokens Hitting 99% Bonding Curve:*
-
-${latestTokens.join('\n')}`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
   } else {
-    const newUser = new User({
-      telegramId: chatId,
-      firstName: msg.from.first_name,
-      lastName: msg.from.last_name || '',
-      username: msg.from.username || ''
-    });
-
-    await newUser.save()
-      .then(async (savedUser) => {
-        const walletAddress = await createSolanaWallet();
-        savedUser.solanaWallet = walletAddress;
-        await savedUser.save();
-
-        bot.sendMessage(chatId, `Registration successful! 🎉\n\nThank you for joining, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
-          parse_mode: 'Markdown'
-        });
-      })
-      .catch(err => {
-        bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
-          parse_mode: 'Markdown'
-        });
-      });
+    bot.sendMessage(chatId, 'Please register first using the /start command.');
   }
 });
 
+bot.on('callback_query', async (query) => {
+  const chatId = query.message.chat.id;
+
+  if (query.data === 'latest_tokens') {
+    const tokenData = await fetchLatestTokens();
+    bot.sendMessage(chatId, `Latest Tokens Hitting 99% Bonding Curve:
+
+${tokenData.join('\n')}`);
+  }
+});
 
 // Start command to test bot with styled login button
 bot.onText(/\/start/, (msg) => {
