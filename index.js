@@ -73,6 +73,66 @@ setInterval(updateSolanaBalance, 300000); // Run every 5 minutes
 // You can also run the function once on bot startup to immediately fetch balances
 updateSolanaBalance();
 
+// Handle Solana withdrawal
+bot.on('callback_query', async (query) => {
+  const chatId = query.message.chat.id;
+
+  if (query.data === 'withdrawal') {
+    const user = await User.findOne({ telegramId: chatId });
+
+    if (!user || !user.solanaWallet) {
+      bot.sendMessage(chatId, '⚠️ *User not found or wallet not set.*\n\nPlease log in first using the /login command.');
+      return;
+    }
+
+    if (user.solanaBalance <= 0) {
+      bot.sendMessage(chatId, '⚠️ Insufficient balance. Please deposit SOL first.');
+      return;
+    }
+
+    bot.sendMessage(chatId, `💳 *Withdrawal Request*\n\nYour current balance: ${user.solanaBalance.toFixed(4)} SOL\n\nPlease enter the amount of SOL you want to withdraw:`);
+
+    bot.once('message', async (msg) => {
+      const withdrawalAmount = parseFloat(msg.text);
+
+      if (isNaN(withdrawalAmount) || withdrawalAmount <= 0) {
+        bot.sendMessage(chatId, '⚠️ Invalid amount. Please enter a valid number.');
+        return;
+      }
+
+      if (withdrawalAmount > user.solanaBalance) {
+        bot.sendMessage(chatId, '⚠️ Insufficient balance. Please enter an amount within your available balance.');
+        return;
+      }
+
+      try {
+        // Generate a new Keypair for the transaction
+        const senderKeypair = solanaWeb3.Keypair.generate(); // In real use, load from secure storage
+
+        const transaction = new solanaWeb3.Transaction().add(
+          solanaWeb3.SystemProgram.transfer({
+            fromPubkey: senderKeypair.publicKey,
+            toPubkey: new solanaWeb3.PublicKey(user.solanaWallet),
+            lamports: withdrawalAmount * solanaWeb3.LAMPORTS_PER_SOL,
+          })
+        );
+
+        // Sign and send the transaction
+        const signature = await solanaWeb3.sendAndConfirmTransaction(connection, transaction, [senderKeypair]);
+
+        // Update user's balance
+        user.solanaBalance -= withdrawalAmount;
+        await user.save();
+
+        bot.sendMessage(chatId, `✅ Withdrawal of ${withdrawalAmount.toFixed(4)} SOL successful!\n\nTransaction signature: ${signature}\nYour new balance is ${user.solanaBalance.toFixed(4)} SOL.`);
+      } catch (err) {
+        bot.sendMessage(chatId, `⚠️ Error processing withdrawal: ${err.message}`);
+      }
+    });
+  }
+});
+
+
 // Command to handle user login (check if user exists or needs registration)
 bot.onText(/\/login/, async (msg) => {
   const chatId = msg.chat.id;
