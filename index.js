@@ -86,7 +86,7 @@ bot.on('callback_query', async (query) => {
     }
 
     if (user.solanaBalance <= 0) {
-      bot.sendMessage(chatId, `⚠️ Insufficient balance. ${user.solanaBalance.toFixed(4)} SOL\\n\\n Please deposit SOL first.`);
+      bot.sendMessage(chatId, `⚠️ Insufficient balance. ${user.solanaBalance.toFixed(4)} SOL\\n\\nPlease deposit SOL first.`);
       return;
     }
 
