@@ -62,7 +62,7 @@ const fetchLatestTokens = async () => {
     }, {
       headers: {
         'Content-Type': 'application/json',
-        'X-API-KEY': 'YOUR_BITQUERY_API_KEY'
+        'X-API-KEY': 'ory_at___Y9UM9o5AWlOPft-gV8NR9p1A0P5JTfe8Wo01UhiFQ.ujiqRwiGdoZkaDdoFXnBfrf7aSq33QYA2bvw8HLmjpY'
       }
     });
 
