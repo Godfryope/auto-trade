@@ -34,6 +34,46 @@ const createSolanaWallet = async () => {
   return wallet.publicKey.toBase58(); // Return the public wallet address
 };
 
+// Function to fetch latest tokens hitting 99% bonding curve
+const fetchLatestTokens = async () => {
+  try {
+    const response = await axios.post('https://graphql.bitquery.io', {
+      query: `{
+        ethereum(network: bsc) {
+          dexTrades(
+            options: {desc: ["block.height"], limit: 5}
+            tradeAmountUsd: {gt: 100}
+            exchangeName: {is: "Pancake v2"}
+            quotePrice: {gteq: 0.99}
+          ) {
+            block {
+              height
+            }
+            tradeAmountUsd
+            quoteCurrency {
+              symbol
+            }
+            baseCurrency {
+              symbol
+            }
+          }
+        }
+      }`
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-KEY': 'YOUR_BITQUERY_API_KEY'
+      }
+    });
+
+    const tokens = response.data.data.ethereum.dexTrades;
+    return tokens.map(token => `Token: ${token.baseCurrency.symbol}, Quote: ${token.quoteCurrency.symbol}, Amount: ${token.tradeAmountUsd} USD`);
+  } catch (error) {
+    console.error('Error fetching latest tokens:', error.message);
+    return ['No token data available at the moment.'];
+  }
+};
+
 // Function to update user's Solana balance
 const updateSolanaBalance = async () => {
   // Fetch all users from the database
@@ -141,7 +181,7 @@ bot.on('callback_query', async (query) => {
   }
 });
 
-// Command to handle user login (check if user exists or needs registration)
+// Handle user login and display latest tokens
 bot.onText(/\/login/, async (msg) => {
   const chatId = msg.chat.id;
 
@@ -149,48 +189,29 @@ bot.onText(/\/login/, async (msg) => {
   const user = await User.findOne({ telegramId: chatId });
 
   if (user) {
-    // If user exists, show the main menu
     bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
       parse_mode: 'Markdown'
     });
 
-    // Display menu options for the user
-    const menuOptions = {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: '💸 Deposit', callback_data: 'deposit_solana' },
-            { text: '💳 Withdrawal', callback_data: 'withdrawal' }
-          ],
-          [
-            { text: '📈 Opened Positions', callback_data: 'opened_positions' },
-            { text: '📜 History', callback_data: 'history' }
-          ],
-          [
-            { text: '🔍 Check Balance', callback_data: 'check_balance' } // New button to check balance
-          ]
-        ]
-      }
-    };
+    const latestTokens = await fetchLatestTokens();
+    bot.sendMessage(chatId, `📊 *Latest Tokens Hitting 99% Bonding Curve:*
 
-    bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
+${latestTokens.join('\n')}`, { parse_mode: 'Markdown' });
   } else {
-    // If user doesn't exist, register them silently
     const newUser = new User({
       telegramId: chatId,
-      firstName: query.from.first_name,
-      lastName: query.from.last_name || '',
-      username: query.from.username || ''
+      firstName: msg.from.first_name,
+      lastName: msg.from.last_name || '',
+      username: msg.from.username || ''
     });
 
     await newUser.save()
       .then(async (savedUser) => {
-        // Create a Solana wallet for the user
         const walletAddress = await createSolanaWallet();
         savedUser.solanaWallet = walletAddress;
         await savedUser.save();
 
-        bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
+        bot.sendMessage(chatId, `Registration successful! 🎉\n\nThank you for joining, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
           parse_mode: 'Markdown'
         });
       })
@@ -201,6 +222,7 @@ bot.onText(/\/login/, async (msg) => {
       });
   }
 });
+
 
 // Start command to test bot with styled login button
 bot.onText(/\/start/, (msg) => {
