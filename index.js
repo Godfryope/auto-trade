@@ -90,48 +90,56 @@ bot.on('callback_query', async (query) => {
       return;
     }
 
-    bot.sendMessage(chatId, `💳 *Withdrawal Request*\n\nYour current balance: ${user.solanaBalance.toFixed(4)} SOL\n\nPlease enter the amount of SOL you want to withdraw:`);
+    bot.sendMessage(chatId, `💳 *Withdrawal Request*\\n\\nYour current balance: ${user.solanaBalance.toFixed(4)} SOL\\n\\nPlease enter the Solana wallet address where you want to withdraw:`);
 
     bot.once('message', async (msg) => {
-      const withdrawalAmount = parseFloat(msg.text);
+      const destinationAddress = msg.text.trim();
 
-      if (isNaN(withdrawalAmount) || withdrawalAmount <= 0) {
-        bot.sendMessage(chatId, '⚠️ Invalid amount. Please enter a valid number.');
+      // Validate the wallet address
+      if (!solanaWeb3.PublicKey.isOnCurve(destinationAddress)) {
+        bot.sendMessage(chatId, '⚠️ Invalid Solana wallet address. Please check and try again.');
         return;
       }
 
-      if (withdrawalAmount > user.solanaBalance) {
-        bot.sendMessage(chatId, '⚠️ Insufficient balance. Please enter an amount within your available balance.');
-        return;
-      }
+      bot.sendMessage(chatId, 'Enter the amount of SOL you want to withdraw:');
+      
+      bot.once('message', async (amountMsg) => {
+        const withdrawalAmount = parseFloat(amountMsg.text);
 
-      try {
-        // Generate a new Keypair for the transaction
-        const senderKeypair = solanaWeb3.Keypair.generate(); // In real use, load from secure storage
+        if (isNaN(withdrawalAmount) || withdrawalAmount <= 0) {
+          bot.sendMessage(chatId, '⚠️ Invalid amount. Please enter a valid number.');
+          return;
+        }
 
-        const transaction = new solanaWeb3.Transaction().add(
-          solanaWeb3.SystemProgram.transfer({
-            fromPubkey: senderKeypair.publicKey,
-            toPubkey: new solanaWeb3.PublicKey(user.solanaWallet),
-            lamports: withdrawalAmount * solanaWeb3.LAMPORTS_PER_SOL,
-          })
-        );
+        if (withdrawalAmount > user.solanaBalance) {
+          bot.sendMessage(chatId, '⚠️ Insufficient balance. Please enter an amount within your available balance.');
+          return;
+        }
 
-        // Sign and send the transaction
-        const signature = await solanaWeb3.sendAndConfirmTransaction(connection, transaction, [senderKeypair]);
+        try {
+          const senderKeypair = solanaWeb3.Keypair.generate();
 
-        // Update user's balance
-        user.solanaBalance -= withdrawalAmount;
-        await user.save();
+          const transaction = new solanaWeb3.Transaction().add(
+            solanaWeb3.SystemProgram.transfer({
+              fromPubkey: senderKeypair.publicKey,
+              toPubkey: new solanaWeb3.PublicKey(destinationAddress),
+              lamports: withdrawalAmount * solanaWeb3.LAMPORTS_PER_SOL,
+            })
+          );
 
-        bot.sendMessage(chatId, `✅ Withdrawal of ${withdrawalAmount.toFixed(4)} SOL successful!\n\nTransaction signature: ${signature}\nYour new balance is ${user.solanaBalance.toFixed(4)} SOL.`);
-      } catch (err) {
-        bot.sendMessage(chatId, `⚠️ Error processing withdrawal: ${err.message}`);
-      }
+          const signature = await solanaWeb3.sendAndConfirmTransaction(connection, transaction, [senderKeypair]);
+
+          user.solanaBalance -= withdrawalAmount;
+          await user.save();
+
+          bot.sendMessage(chatId, `✅ Withdrawal of ${withdrawalAmount.toFixed(4)} SOL successful!\\n\\nTransaction signature: ${signature}\\nNew balance: ${user.solanaBalance.toFixed(4)} SOL.`);
+        } catch (err) {
+          bot.sendMessage(chatId, `⚠️ Error processing withdrawal: ${err.message}`);
+        }
+      });
     });
   }
 });
-
 
 // Command to handle user login (check if user exists or needs registration)
 bot.onText(/\/login/, async (msg) => {
