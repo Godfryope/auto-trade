@@ -86,7 +86,7 @@ bot.on('callback_query', async (query) => {
     }
 
     if (user.solanaBalance <= 0) {
-      bot.sendMessage(chatId, `⚠️ Insufficient balance: ${user.solanaBalance.toFixed(4)} SOL. Please deposit SOL first.`);
+      bot.sendMessage(chatId, '⚠️ Insufficient balance. Please deposit SOL first.');
       return;
     }
 
@@ -102,7 +102,7 @@ bot.on('callback_query', async (query) => {
       }
 
       bot.sendMessage(chatId, 'Enter the amount of SOL you want to withdraw:');
-
+      
       bot.once('message', async (amountMsg) => {
         const withdrawalAmount = parseFloat(amountMsg.text);
 
