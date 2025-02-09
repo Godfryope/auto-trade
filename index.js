@@ -34,7 +34,6 @@ const createSolanaWallet = async () => {
   return wallet.publicKey.toBase58(); // Return the public wallet address
 };
 
-
 // Function to update user's Solana balance
 const updateSolanaBalance = async () => {
   // Fetch all users from the database
@@ -73,107 +72,6 @@ setInterval(updateSolanaBalance, 300000); // Run every 5 minutes
 
 // You can also run the function once on bot startup to immediately fetch balances
 updateSolanaBalance();
-
-const { WebSocket } = require("ws");
-
-const token = "your_bitquery_api_token"; // Replace with your actual token
-const bitqueryConnection = new WebSocket(
-  "wss://streaming.bitquery.io/eap?token=" + token,
-  ["graphql-ws"]
-);
-
-bitqueryConnection.on("open", () => {
-  console.log("Connected to Bitquery.");
-
-  // Send initialization message (connection_init)
-  const initMessage = JSON.stringify({ type: "connection_init" });
-  bitqueryConnection.send(initMessage);
-});
-
-bitqueryConnection.on("message", (data) => {
-  const response = JSON.parse(data);
-
-  // Handle connection acknowledgment (connection_ack)
-  if (response.type === "connection_ack") {
-    console.log("Connection acknowledged by server.");
-
-    // Send subscription message after receiving connection_ack
-    const subscriptionMessage = JSON.stringify({
-      type: "start",
-      id: "1",
-      payload: {
-        query: `
-        subscription {
-          ethereum {
-            dexTrades(
-              options: {limit: 5, desc: "block.timestamp.time"}
-              tradeAmountUsd: {gt: 1000}
-            ) {
-              block {
-                timestamp {
-                  time(format: "%Y-%m-%d %H:%M:%S")
-                }
-              }
-              baseCurrency {
-                symbol
-                address
-              }
-              quotePrice
-            }
-          }
-        }
-        `,
-      },
-    });
-
-    bitqueryConnection.send(subscriptionMessage);
-    console.log("Subscription message sent.");
-
-    // Stop logic after 10 seconds
-    setTimeout(() => {
-      const stopMessage = JSON.stringify({ type: "stop", id: "1" });
-      bitqueryConnection.send(stopMessage);
-      console.log("Stop message sent after 10 seconds.");
-
-      setTimeout(() => {
-        console.log("Closing WebSocket connection.");
-        bitqueryConnection.close();
-      }, 1000);
-    }, 10000);
-  }
-
-  // Handle received data
-  if (response.type === "data") {
-    const tokens = response.payload.data?.ethereum?.dexTrades || [];
-    if (tokens.length > 0) {
-      console.log("Tokens fetched:");
-      tokens.forEach(token => {
-        console.log(
-          `Token: ${token.baseCurrency.symbol}, Price: ${token.quotePrice} USD, Timestamp: ${token.block.timestamp.time}`
-        );
-      });
-    } else {
-      console.log("No token data available at the moment.");
-    }
-  }
-
-  // Handle keep-alive messages (ka)
-  if (response.type === "ka") {
-    console.log("Keep-alive message received.");
-  }
-
-  if (response.type === "error") {
-    console.error("Error message received:", response.payload.errors);
-  }
-});
-
-bitqueryConnection.on("close", () => {
-  console.log("Disconnected from Bitquery.");
-});
-
-bitqueryConnection.on("error", (error) => {
-  console.error("WebSocket Error:", error);
-});
 
 // Handle Solana withdrawal
 bot.on('callback_query', async (query) => {
@@ -243,12 +141,159 @@ bot.on('callback_query', async (query) => {
   }
 });
 
+const { WebSocket } = require("ws");
+require('dotenv').config();
+
+const token = 'ory_at___Y9UM9o5AWlOPft-gV8NR9p1A0P5JTfe8Wo01UhiFQ.ujiqRwiGdoZkaDdoFXnBfrf7aSq33QYA2bvw8HLmjpY'; // Store your API token in .env file
+
+if (!token) {
+  console.error("API token missing. Please set BITQUERY_API_TOKEN in .env file.");
+  process.exit(1);
+}
+
+const bitqueryConnection = new WebSocket(
+  `wss://streaming.bitquery.io/eap?token=${token}`,
+  ["graphql-ws"]
+);
+
+bitqueryConnection.on("open", () => {
+  console.log("Connected to Bitquery.");
+
+  // Send initialization message (connection_init)
+  const initMessage = JSON.stringify({ type: "connection_init" });
+  bitqueryConnection.send(initMessage);
+});
+
+bitqueryConnection.on("message", (data) => {
+  const response = JSON.parse(data);
+
+  // Handle connection acknowledgment (connection_ack)
+  if (response.type === "connection_ack") {
+    console.log("Connection acknowledged by server.");
+
+    // Send subscription message after receiving connection_ack
+    const subscriptionMessage = JSON.stringify({
+      type: "start",
+      id: "1",
+      payload: {
+        query: `
+        subscription MyQuery {
+          Solana {
+            DEXPools(
+              where: {Pool: {Base: {PostAmount: {gt: "206900000", lt: "246555000"}}, Dex: {ProgramAddress: {is: "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"}}, Market: {QuoteCurrency: {MintAddress: {is: "11111111111111111111111111111111"}}}}, Transaction: {Result: {Success: true}}}
+            ) {
+              Pool {
+                Market {
+                  BaseCurrency {
+                    MintAddress
+                    Name
+                    Symbol
+                  }
+                  MarketAddress
+                  QuoteCurrency {
+                    MintAddress
+                    Name
+                    Symbol
+                  }
+                }
+                Dex {
+                  ProtocolName
+                  ProtocolFamily
+                }
+                Base {
+                  PostAmount
+                }
+                Quote {
+                  PostAmount
+                  PriceInUSD
+                  PostAmountInUSD
+                }
+              }
+            }
+          }
+        }
+        `,
+      },
+    });
+
+    bitqueryConnection.send(subscriptionMessage);
+    console.log("Subscription message sent.");
+
+    // Add stop logic after 30 seconds
+    setTimeout(() => {
+      const stopMessage = JSON.stringify({ type: "stop", id: "1" });
+      bitqueryConnection.send(stopMessage);
+      console.log("Stop message sent after 30 seconds.");
+
+      setTimeout(() => {
+        console.log("Closing WebSocket connection.");
+        bitqueryConnection.close();
+      }, 1000);
+    }, 30000);
+  }
+
+  // Handle received data
+  if (response.type === "data") {
+    console.log("🚀 Pump Fun Token Alert: ", JSON.stringify(response.payload.data, null, 2));
+  }
+
+  // Handle keep-alive messages (ka)
+  if (response.type === "ka") {
+    console.log("Keep-alive message received.");
+  }
+
+  if (response.type === "error") {
+    console.error("Error message received:", response.payload.errors);
+  }
+});
+
+bitqueryConnection.on("close", () => {
+  console.log("Disconnected from Bitquery.");
+});
+
+bitqueryConnection.on("error", (error) => {
+  console.error("WebSocket Error:", error);
+});
+
+
+const JUPITER_API_URL = 'https://quote-api.jup.ag/v1/quote';
+
+const autoBuyToken = async (tokenAddress) => {
+  try {
+    const response = await axios.get(`${JUPITER_API_URL}?inputMint=So11111111111111111111111111111111111111112&outputMint=${tokenAddress}&amount=1000000`);
+    const bestRoute = response.data.routes[0];
+
+    if (bestRoute) {
+      bot.sendMessage(chatId, `✅ Best route found for buying token: ${JSON.stringify(bestRoute)}`);
+      executeTrade(bestRoute);
+    } else {
+      bot.sendMessage(chatId, `⚠️ No route found for buying token: ${tokenAddress}`);
+    }
+  } catch (error) {
+    console.error('Error fetching Jupiter route:', error.message);
+  }
+};
+
+const executeTrade = async (route) => {
+  // Implement transaction logic using Solana Web3
+  bot.sendMessage(chatId, `✅ Trade executed successfully.`);
+};
+
+
+// Command to handle user login (check if user exists or needs registration)
 bot.onText(/\/login/, async (msg) => {
   const chatId = msg.chat.id;
+
+  // Check if the user is already registered in MongoDB
   const user = await User.findOne({ telegramId: chatId });
 
   if (user) {
-    bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, { parse_mode: 'Markdown' });
+    // If user exists, show the main menu
+    bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
+      parse_mode: 'Markdown'
+    });
+
+    // Display menu options for the user
     const menuOptions = {
       reply_markup: {
         inline_keyboard: [
@@ -261,10 +306,7 @@ bot.onText(/\/login/, async (msg) => {
             { text: '📜 History', callback_data: 'history' }
           ],
           [
-            { text: '🔍 Check Balance', callback_data: 'check_balance' }
-          ],
-          [
-            { text: '📊 Latest Tokens (99% Curve)', callback_data: 'latest_tokens' }
+            { text: '🔍 Check Balance', callback_data: 'check_balance' } // New button to check balance
           ]
         ]
       }
@@ -272,18 +314,30 @@ bot.onText(/\/login/, async (msg) => {
 
     bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
   } else {
-    bot.sendMessage(chatId, 'Please register first using the /start command.');
-  }
-});
+    // If user doesn't exist, register them silently
+    const newUser = new User({
+      telegramId: chatId,
+      firstName: query.from.first_name,
+      lastName: query.from.last_name || '',
+      username: query.from.username || ''
+    });
 
-bot.on('callback_query', async (query) => {
-  const chatId = query.message.chat.id;
+    await newUser.save()
+      .then(async (savedUser) => {
+        // Create a Solana wallet for the user
+        const walletAddress = await createSolanaWallet();
+        savedUser.solanaWallet = walletAddress;
+        await savedUser.save();
 
-  if (query.data === 'latest_tokens') {
-    const tokenData = await fetchLatestTokens();
-    bot.sendMessage(chatId, `Latest Tokens Hitting 99% Bonding Curve:
-
-${tokenData.join('\n')}`);
+        bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
+          parse_mode: 'Markdown'
+        });
+      })
+      .catch(err => {
+        bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
+          parse_mode: 'Markdown'
+        });
+      });
   }
 });
 
