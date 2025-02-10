@@ -142,9 +142,8 @@ bot.on('callback_query', async (query) => {
 });
 
 const { WebSocket } = require("ws");
-require('dotenv').config();
 
-const token = 'ory_at___Y9UM9o5AWlOPft-gV8NR9p1A0P5JTfe8Wo01UhiFQ.ujiqRwiGdoZkaDdoFXnBfrf7aSq33QYA2bvw8HLmjpY'; // Store your API token in .env file
+const token = 'ory_at_1zb31c9M98eNOpARxK37hJNK0HdGvjlGU870RRlpJjQ.kLgq0vWJraSm_FZDGzRciSFl7MxqV6wS3lFqTVbeF3I'; // Store your API token in .env file
 
 if (!token) {
   console.error("API token missing. Please set BITQUERY_API_TOKEN in .env file.");

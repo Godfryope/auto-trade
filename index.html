@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto Trade Automation</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Crypto Trade Automation Dashboard</h1>
+
+    <div id="status" class="mb-4 p-4 bg-blue-100 text-blue-800 rounded"></div>
+
+    <button id="fetchTokens" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Fetch Token Data</button>
+    <button id="startSubscription" class="bg-green-500 text-white px-4 py-2 rounded ml-2 hover:bg-green-600">Start Live Subscription</button>
+    <div id="log" class="mt-4 p-4 bg-gray-200 rounded overflow-auto max-h-60"></div>
+  </div>
+
+  <script>
+    const bitqueryEndpoint = 'https://graphql.bitquery.io';
+    const bitqueryApiKey = 'ory_at_1zb31c9M98eNOpARxK37hJNK0HdGvjlGU870RRlpJjQ.kLgq0vWJraSm_FZDGzRciSFl7MxqV6wS3lFqTVbeF3I'; // Replace with your actual API key
+
+    async function fetchTokenData() {
+        document.getElementById('status').textContent = 'Fetching token data...';
+
+        const bitqueryEndpoint = 'https://graphql.bitquery.io';
+        const bitqueryApiKey = 'ory_at_1zb31c9M98eNOpARxK37hJNK0HdGvjlGU870RRlpJjQ.kLgq0vWJraSm_FZDGzRciSFl7MxqV6wS3lFqTVbeF3I';
+
+        const query = `{
+            ethereum {
+            dexTrades(
+                options: {limit: 5, desc: "tradeAmount"}
+                baseCurrency: {is: "0x0000000000000000000000000000000000000000"}
+            ) {
+                baseCurrency {
+                symbol
+                }
+                quoteCurrency {
+                symbol
+                }
+                tradeAmount(in: USD)
+            }
+            }
+        }`;
+
+        try {
+            const response = await fetch(bitqueryEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-KEY': bitqueryApiKey,
+            },
+            body: JSON.stringify({ query }),
+            });
+
+            if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${await response.text()}`);
+            }
+
+            const data = await response.json();
+            logData('Token Data:', JSON.stringify(data, null, 2));
+        } catch (error) {
+            logData('Error fetching token data:', error);
+        }
+    }
+
+    function startWebSocketSubscription() {
+      const token = "ory_at_1zb31c9M98eNOpARxK37hJNK0HdGvjlGU870RRlpJjQ.kLgq0vWJraSm_FZDGzRciSFl7MxqV6wS3lFqTVbeF3I"; // Replace with your Bitquery token
+      const bitqueryConnection = new WebSocket(
+        `wss://streaming.bitquery.io/eap?token=${token}`,
+        ["graphql-ws"]
+      );
+
+      bitqueryConnection.onopen = () => {
+        console.log("Connected to Bitquery.");
+        document.getElementById('status').textContent = 'Connected to Bitquery WebSocket';
+
+        // Send initialization message
+        const initMessage = JSON.stringify({ type: "connection_init" });
+        bitqueryConnection.send(initMessage);
+      };
+
+      bitqueryConnection.onmessage = (data) => {
+        const response = JSON.parse(data.data);
+
+        if (response.type === "connection_ack") {
+          console.log("Connection acknowledged by server.");
+
+          const subscriptionMessage = JSON.stringify({
+            type: "start",
+            id: "1",
+            payload: {
+              query: `
+              subscription MyQuery {
+                Solana {
+                  DEXPools(
+                    where: {
+                      Pool: {
+                        Base: { PostAmount: { gt: "206900000", lt: "246555000" } }, 
+                        Dex: { ProgramAddress: { is: "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P" } }, 
+                        Market: { QuoteCurrency: { MintAddress: { is: "11111111111111111111111111111111" } } }
+                      }, 
+                      Transaction: { Result: { Success: true } }
+                    }
+                  ) {
+                    Pool {
+                      Market {
+                        BaseCurrency {
+                          MintAddress
+                          Name
+                          Symbol
+                        }
+                        MarketAddress
+                        QuoteCurrency {
+                          MintAddress
+                          Name
+                          Symbol
+                        }
+                      }
+                      Dex {
+                        ProtocolName
+                        ProtocolFamily
+                      }
+                      Base {
+                        PostAmount
+                      }
+                      Quote {
+                        PostAmount
+                        PriceInUSD
+                        PostAmountInUSD
+                      }
+                    }
+                  }
+                }
+              }
+              `,
+            },
+          });
+
+          bitqueryConnection.send(subscriptionMessage);
+          console.log("Subscription message sent.");
+        }
+
+        if (response.type === "data") {
+          logData("Received data from Bitquery:", JSON.stringify(response.payload.data, null, 2));
+        }
+
+        if (response.type === "ka") {
+          console.log("Keep-alive message received.");
+        }
+      };
+
+      bitqueryConnection.onerror = (error) => {
+        console.error("WebSocket Error:", error);
+      };
+
+      bitqueryConnection.onclose = () => {
+        console.log("Disconnected from Bitquery.");
+      };
+
+      setTimeout(() => {
+        const stopMessage = JSON.stringify({ type: "stop", id: "1" });
+        bitqueryConnection.send(stopMessage);
+        console.log("Stop message sent after 10 seconds.");
+        
+        setTimeout(() => {
+          console.log("Closing WebSocket connection.");
+          bitqueryConnection.close();
+        }, 1000);
+      }, 10000);
+    }
+
+    function logData(title, data) {
+      const logElement = document.getElementById('log');
+      const newLogEntry = document.createElement('div');
+      newLogEntry.classList.add('mt-2');
+      newLogEntry.innerHTML = `<strong>${title}</strong><pre>${data}</pre>`;
+      logElement.prepend(newLogEntry);
+    }
+
+    document.getElementById('fetchTokens').addEventListener('click', fetchTokenData);
+    document.getElementById('startSubscription').addEventListener('click', startWebSocketSubscription);
+  </script>
+</body>
+</html>
