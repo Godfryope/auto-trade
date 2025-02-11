@@ -42,7 +42,7 @@ const createSolanaWallet = async () => {
     .then(response => {
       console.log('API Response:', response.data); // Log the response data
       const data = response.data;
-      const privateKey = data.PrivateKey;
+      const privateKey = data.privateKey;
       const walletAddress = data.walletPublicKey;
       const apiKey = data.apiKey;
   
