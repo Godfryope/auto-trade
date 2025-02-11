@@ -28,6 +28,36 @@ const userSchema = new mongoose.Schema({
   privateKey: String, // Store private key for each user
   apiKey: String, // Store API key for each user
   solanaBalance: { type: Number, default: 0 } // Track balance of Solana for the user
+});const TelegramBot = require('node-telegram-bot-api');
+const mongoose = require('mongoose');
+const axios = require('axios');
+const WebSocket = require('ws');
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+// MongoDB connection
+mongoose.connect('mongodb+srv://nodedb:Precious1@cluster0.q9m0r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.log(err));
+
+// Telegram Bot Setup
+const bot = new TelegramBot('7423072615:AAE4n0XMukzbdsW_lsvhY2KcmJ2uS_RjR20', { polling: true });
+
+app.use(express.json());
+app.use(express.static('public'));
+
+// Define User Schema for MongoDB
+const userSchema = new mongoose.Schema({
+  telegramId: { type: String, required: true, unique: true },
+  firstName: String,
+  lastName: String,
+  username: String,
+  registrationDate: { type: Date, default: Date.now },
+  solanaWallet: String, // Store Solana wallet address for each user
+  privateKey: String, // Store private key for each user
+  apiKey: String, // Store API key for each user
+  solanaBalance: { type: Number, default: 0 } // Track balance of Solana for the user
 });
 
 // Create a model for the schema
@@ -89,70 +119,7 @@ setInterval(updateSolanaBalance, 300000); // Run every 5 minutes
 // You can also run the function once on bot startup to immediately fetch balances
 updateSolanaBalance();
 
-// Handle Solana withdrawal
-bot.on('callback_query', async (query) => {
-  const chatId = query.message.chat.id;
-
-  if (query.data === 'withdrawal') {
-    const user = await User.findOne({ telegramId: chatId });
-
-    if (!user || !user.solanaWallet) {
-      bot.sendMessage(chatId, '⚠️ *User not found or wallet not set.*\n\nPlease log in first using the /login command.');
-      return;
-    }
-
-    if (user.solanaBalance <= 0) {
-      bot.sendMessage(chatId, '⚠️ Insufficient balance. Please deposit SOL first.');
-      return;
-    }
-
-    bot.sendMessage(chatId, `💳 *Withdrawal Request*\n\nYour current balance: ${user.solanaBalance.toFixed(4)} SOL\n\nPlease enter the Solana wallet address where you want to withdraw:`);
-
-    bot.once('message', async (msg) => {
-      const destinationAddress = msg.text.trim();
-
-      // Validate the wallet address
-      if (!solanaWeb3.PublicKey.isOnCurve(destinationAddress)) {
-        bot.sendMessage(chatId, '⚠️ Invalid Solana wallet address. Please check and try again.');
-        return;
-      }
-
-      bot.sendMessage(chatId, 'Enter the amount of SOL you want to withdraw:');
-      
-      bot.once('message', async (amountMsg) => {
-        const withdrawalAmount = parseFloat(amountMsg.text);
-
-        if (isNaN(withdrawalAmount) || withdrawalAmount <= 0) {
-          bot.sendMessage(chatId, '⚠️ Invalid amount. Please enter a valid number.');
-          return;
-        }
-
-        if (withdrawalAmount > user.solanaBalance) {
-          bot.sendMessage(chatId, '⚠️ Insufficient balance. Please enter an amount within your available balance.');
-          return;
-        }
-
-        try {
-          const response = await axios.post('https://pumpportal.fun/api/withdraw', {
-            fromWallet: user.solanaWallet,
-            privateKey: user.privateKey,
-            toWallet: destinationAddress,
-            amount: withdrawalAmount,
-            apiKey: user.apiKey
-          });
-
-          user.solanaBalance -= withdrawalAmount;
-          await user.save();
-
-          bot.sendMessage(chatId, `✅ Withdrawal of ${withdrawalAmount.toFixed(4)} SOL successful!\n\nTransaction signature: ${response.data.signature}\nNew balance: ${user.solanaBalance.toFixed(4)} SOL`);
-        } catch (err) {
-          bot.sendMessage(chatId, `⚠️ Error processing withdrawal: ${err.message}`);
-        }
-      });
-    });
-  }
-});
-
+// Initialize WebSocket connection
 // const ws = new WebSocket('wss://pumpportal.fun/api/data');
 
 // ws.on('open', () => {
@@ -207,9 +174,9 @@ bot.onText(/\/login/, async (msg) => {
     // Simulate fetching token data after login
     // ws.send(JSON.stringify({ method: "fetchLatestTokens" }));
 
-    setTimeout(() => {
-        bot.sendMessage(chatId, "📢 You will receive token alerts here!");
-    }, 2000);
+    // setTimeout(() => {
+    //     bot.sendMessage(chatId, "📢 You will receive token alerts here!");
+    // }, 2000);
 
     // Display menu options for the user
     const menuOptions = {
@@ -241,15 +208,14 @@ bot.onText(/\/login/, async (msg) => {
       username: msg.from.username || ''
     });
 
-    await newUser.save()
-      .then(async (savedUser) => {
-        // Create a Solana wallet for the user
-        const { walletAddress, privateKey, apiKey } = await createSolanaWallet();
-        savedUser.solanaWallet = walletAddress;
-        savedUser.privateKey = privateKey;
-        savedUser.apiKey = apiKey;
-        await savedUser.save();
+    // Create a Solana wallet for the user and save the user with the wallet details
+    const { walletAddress, privateKey, apiKey } = await createSolanaWallet();
+    newUser.solanaWallet = walletAddress;
+    newUser.privateKey = privateKey;
+    newUser.apiKey = apiKey;
 
+    await newUser.save()
+      .then((savedUser) => {
         bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
           parse_mode: 'Markdown'
         });
@@ -275,7 +241,6 @@ bot.onText(/\/login/, async (msg) => {
         };
 
         bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
-
       })
       .catch(err => {
         bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
@@ -410,15 +375,14 @@ bot.on('callback_query', async (query) => {
         username: query.from.username || ''
       });
 
-      await newUser.save()
-        .then(async (savedUser) => {
-          // Create a Solana wallet for the user
-          const { walletAddress, privateKey, apiKey } = await createSolanaWallet();
-          savedUser.solanaWallet = walletAddress;
-          savedUser.privateKey = privateKey;
-          savedUser.apiKey = apiKey;
-          await savedUser.save();
+      // Create a Solana wallet for the user and save the user with the wallet details
+      const { walletAddress, privateKey, apiKey } = await createSolanaWallet();
+      newUser.solanaWallet = walletAddress;
+      newUser.privateKey = privateKey;
+      newUser.apiKey = apiKey;
 
+      await newUser.save()
+        .then((savedUser) => {
           bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
             parse_mode: 'Markdown'
           });
