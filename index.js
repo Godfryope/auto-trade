@@ -34,33 +34,23 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 // Function to create a wallet using PumpPortal API
-
 const createSolanaWallet = async () => {
   try {
-    const axios = require('axios');
-    
-    // Step 1: Create a wallet
-    axios.get('https://pumpportal.fun/api/create-wallet')
-      .then(response => {
-        console.log('API Response:', response.data); // Log the response data
-        const data = response.data;
-        const privateKey = data.walletPrivateKey;
-        const walletAddress = data.walletPublicKey;
-        const apiKey = data.apiKey;
-    
-        if (walletAddress && apiKey) {
-          console.log(`Private Key: ${privateKey}`);
-          console.log(`Wallet Address: ${walletAddress}`);
-          console.log(`API Key: ${apiKey}`);
-          return { walletAddress, privateKey, apiKey };
+    const response = await axios.get('https://pumpportal.fun/api/create-wallet');
+    console.log('API Response:', response.data); // Log the response data
+    const data = response.data;
+    const walletAddress = data.walletPublicKey;
+    const privateKey = data.walletPrivateKey;
+    const apiKey = data.apiKey;
+
+    if (walletAddress && privateKey && apiKey) {
+      console.log(`Private Key: ${privateKey}`);
+      console.log(`Wallet Address: ${walletAddress}`);
+      console.log(`API Key: ${apiKey}`);
+      return { walletAddress, privateKey, apiKey };
     } else {
       throw new Error('Invalid response data');
     }
-      })
-      .catch(error => {
-        console.error('Failed to create wallet:', error.response ? error.response.data : error.message);
-      });
-
   } catch (error) {
     console.error('Failed to create wallet:', error.response ? error.response.data : error.message);
     throw new Error(error.response ? error.response.data : error.message);
