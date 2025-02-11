@@ -388,7 +388,7 @@ bot.on('callback_query', async (query) => {
             ],
             [
               { text: '🔍 Check Balance', callback_data: 'check_balance' },
-              { text: '📈 Trade', web_app: { url: `https://your-domain.com?telegramId=${chatId}` } } // New Trade button with mini app
+              { text: '📈 Trade', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } } // New Trade button with mini app
             ]
           ]
         }
