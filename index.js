@@ -37,6 +37,7 @@ const User = mongoose.model('User', userSchema);
 const createSolanaWallet = async () => {
   try {
     const response = await axios.get('https://pumpportal.fun/api/create-wallet');
+    console.log('API Response:', response.data); // Log the response data
     const data = response.data;
     const walletAddress = data.walletPublicKey;
     const privateKey = data.walletPrivateKey;
@@ -48,6 +49,7 @@ const createSolanaWallet = async () => {
       throw new Error('Invalid response data');
     }
   } catch (error) {
+    console.error('Failed to create wallet:', error.response ? error.response.data : error.message);
     throw new Error(error.response ? error.response.data : error.message);
   }
 };
