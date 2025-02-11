@@ -2,13 +2,12 @@ const TelegramBot = require('node-telegram-bot-api');
 const mongoose = require('mongoose');
 const axios = require('axios');
 const WebSocket = require('ws');
-const solanaWeb3 = require('@solana/web3.js'); // Solana Web3 SDK for wallet and transactions
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
 
 // MongoDB connection
-mongoose.connect('mongodb+srv://nodedb:Precious1@cluster0.q9m0r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+mongoose.connect('mongodb+srv://bitcoption:Precious1@autotrader.myq0i.mongodb.net/?retryWrites=true&w=majority&appName=autotrader')
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.log(err));
 
@@ -26,19 +25,31 @@ const userSchema = new mongoose.Schema({
   username: String,
   registrationDate: { type: Date, default: Date.now },
   solanaWallet: String, // Store Solana wallet address for each user
+  privateKey: String, // Store private key for each user
+  apiKey: String, // Store API key for each user
   solanaBalance: { type: Number, default: 0 } // Track balance of Solana for the user
 });
 
 // Create a model for the schema
 const User = mongoose.model('User', userSchema);
 
-// Solana Web3 connection setup
-const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
-
-// Solana Wallet Creation Function
+// Function to create a wallet using PumpPortal API
 const createSolanaWallet = async () => {
-  const wallet = solanaWeb3.Keypair.generate();
-  return wallet.publicKey.toBase58(); // Return the public wallet address
+  try {
+    const response = await axios.get('https://pumpportal.fun/api/create-wallet');
+    const data = response.data;
+    const walletAddress = data.walletPublicKey;
+    const privateKey = data.walletPrivateKey;
+    const apiKey = data.apiKey;
+
+    if (walletAddress && privateKey && apiKey) {
+      return { walletAddress, privateKey, apiKey };
+    } else {
+      throw new Error('Invalid response data');
+    }
+  } catch (error) {
+    throw new Error(error.response ? error.response.data : error.message);
+  }
 };
 
 // Function to update user's Solana balance
@@ -53,10 +64,9 @@ const updateSolanaBalance = async () => {
       const walletAddress = user.solanaWallet;
 
       // Get the current balance of the user's wallet from Solana blockchain
-      const balance = await connection.getBalance(new solanaWeb3.PublicKey(walletAddress));
-
-      // Convert the balance from lamports (smallest unit of SOL) to SOL
-      const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+      const response = await axios.get(`https://pumpportal.fun/api/get-balance?wallet=${walletAddress}&apiKey=${user.apiKey}`);
+      const balance = response.data.balance;
+      const solBalance = balance / 1000000000; // Convert from lamports to SOL
 
       // If the balance has changed, update the balance in MongoDB
       if (user.solanaBalance !== solBalance) {
@@ -64,7 +74,6 @@ const updateSolanaBalance = async () => {
         await user.save();
 
         // Optionally, send a message to the user about the updated balance
-        // (You can skip this part if not needed)
         const chatId = user.telegramId;
         bot.sendMessage(chatId, `📊 Your Solana balance has been updated! Your new balance is: ${solBalance} SOL`);
       }
@@ -124,22 +133,18 @@ bot.on('callback_query', async (query) => {
         }
 
         try {
-          const senderKeypair = solanaWeb3.Keypair.generate();
-
-          const transaction = new solanaWeb3.Transaction().add(
-            solanaWeb3.SystemProgram.transfer({
-              fromPubkey: senderKeypair.publicKey,
-              toPubkey: new solanaWeb3.PublicKey(destinationAddress),
-              lamports: withdrawalAmount * solanaWeb3.LAMPORTS_PER_SOL,
-            })
-          );
-
-          const signature = await solanaWeb3.sendAndConfirmTransaction(connection, transaction, [senderKeypair]);
+          const response = await axios.post('https://pumpportal.fun/api/withdraw', {
+            fromWallet: user.solanaWallet,
+            privateKey: user.privateKey,
+            toWallet: destinationAddress,
+            amount: withdrawalAmount,
+            apiKey: user.apiKey
+          });
 
           user.solanaBalance -= withdrawalAmount;
           await user.save();
 
-          bot.sendMessage(chatId, `✅ Withdrawal of ${withdrawalAmount.toFixed(4)} SOL successful!\n\nTransaction signature: ${signature}\nNew balance: ${user.solanaBalance.toFixed(4)} SOL`);
+          bot.sendMessage(chatId, `✅ Withdrawal of ${withdrawalAmount.toFixed(4)} SOL successful!\n\nTransaction signature: ${response.data.signature}\nNew balance: ${user.solanaBalance.toFixed(4)} SOL`);
         } catch (err) {
           bot.sendMessage(chatId, `⚠️ Error processing withdrawal: ${err.message}`);
         }
@@ -148,47 +153,45 @@ bot.on('callback_query', async (query) => {
   }
 });
 
-const ws = new WebSocket('wss://pumpportal.fun/api/data');
+// const ws = new WebSocket('wss://pumpportal.fun/api/data');
 
-ws.on('open', () => {
-    console.log('✅ Connected to PumpPortal WebSocket');
-    ws.send(JSON.stringify({ method: "subscribeNewToken" }));
-});
+// ws.on('open', () => {
+//     console.log('✅ Connected to PumpPortal WebSocket');
+//     ws.send(JSON.stringify({ method: "subscribeNewToken" }));
+// });
 
-ws.on('message', async (data) => {
-    try {
-        const tokenData = JSON.parse(data);
-        console.log('📩 Raw Data Received:', tokenData);
+// ws.on('message', async (data) => {
+//     try {
+//         const tokenData = JSON.parse(data);
+//         console.log('📩 Raw Data Received:', tokenData);
 
-        if (tokenData.vTokensInBondingCurve && tokenData.vSolInBondingCurve) {
-            const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
-                (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
+//         if (tokenData.vTokensInBondingCurve && tokenData.vSolInBondingCurve) {
+//             const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
+//                 (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
 
-            // console.log(`🔍 ${tokenData.name} (${tokenData.symbol}) - Bounding Curve: ${boundingCurvePercentage.toFixed(2)}%`);
+//             if (boundingCurvePercentage >= 98) {
+//                 const tokenInfo = `🔥 98%+ Bounding Curve Token:
+// 📛 Name: ${tokenData.name}
+// 💠 Symbol: ${tokenData.symbol}
+// 📊 Bounding Curve: ${boundingCurvePercentage.toFixed(2)}%
+// 💰 Market Cap: ${tokenData.marketCapSol} SOL
+// 🔗 URI: ${tokenData.uri}`;
 
-            if (boundingCurvePercentage >= 98) {
-                const tokenInfo = `🔥 98%+ Bounding Curve Token:
-📛 Name: ${tokenData.name}
-💠 Symbol: ${tokenData.symbol}
-📊 Bounding Curve: ${boundingCurvePercentage.toFixed(2)}%
-💰 Market Cap: ${tokenData.marketCapSol} SOL
-🔗 URI: ${tokenData.uri}`;
+//                 bot.sendMessage(chatId, tokenInfo);
+//             }
+//         }
+//     } catch (error) {
+//         console.error('❌ Error parsing message:', error);
+//     }
+// });
 
-                bot.sendMessage(chatId, tokenInfo);
-            }
-        }
-    } catch (error) {
-        console.error('❌ Error parsing message:', error);
-    }
-});
+// ws.on('error', (error) => {
+//     console.error('🚨 WebSocket Error:', error);
+// });
 
-ws.on('error', (error) => {
-    console.error('🚨 WebSocket Error:', error);
-});
-
-ws.on('close', (code, reason) => {
-    console.log(`❌ Connection closed: ${code} - ${reason}`);
-});
+// ws.on('close', (code, reason) => {
+//     console.log(`❌ Connection closed: ${code} - ${reason}`);
+// });
 
 // Command to handle user login (check if user exists or needs registration)
 bot.onText(/\/login/, async (msg) => {
@@ -222,7 +225,7 @@ bot.onText(/\/login/, async (msg) => {
           ],
           [
             { text: '🔍 Check Balance', callback_data: 'check_balance' },
-            { text: '📈 Trade', web_app: { url: `https://your-domain.com?telegramId=${chatId}` } } // New Trade button with mini app
+            { text: '📈 Trade', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } } // New Trade button with mini app
           ]
         ]
       }
@@ -241,8 +244,10 @@ bot.onText(/\/login/, async (msg) => {
     await newUser.save()
       .then(async (savedUser) => {
         // Create a Solana wallet for the user
-        const walletAddress = await createSolanaWallet();
+        const { walletAddress, privateKey, apiKey } = await createSolanaWallet();
         savedUser.solanaWallet = walletAddress;
+        savedUser.privateKey = privateKey;
+        savedUser.apiKey = apiKey;
         await savedUser.save();
 
         bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
@@ -263,7 +268,7 @@ bot.onText(/\/login/, async (msg) => {
               ],
               [
                 { text: '🔍 Check Balance', callback_data: 'check_balance' },
-                { text: '📈 Trade', web_app: { url: `https://your-domain.com?telegramId=${chatId}` } } // New Trade button with mini app
+                { text: '📈 Trade', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } } // New Trade button with mini app
               ]
             ]
           }
@@ -325,7 +330,7 @@ bot.onText(/\/menu/, (msg) => {
         ],
         [
           { text: '🔍 Check Balance', callback_data: 'check_balance' },
-          { text: '📈 Trade', web_app: { url: `https://your-domain.com?telegramId=${chatId}` } } // New Trade button with mini app
+          { text: '📈 Trade', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } } // New Trade button with mini app
         ]
       ]
     }
@@ -345,8 +350,9 @@ bot.on('callback_query', async (query) => {
     if (user && user.solanaWallet) {
       try {
         // Get the current balance of the user's wallet from Solana blockchain
-        const balance = await connection.getBalance(new solanaWeb3.PublicKey(user.solanaWallet));
-        const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL;
+        const response = await axios.get(`https://pumpportal.fun/api/get-balance?wallet=${user.solanaWallet}&apiKey=${user.apiKey}`);
+        const balance = response.data.balance;
+        const solBalance = balance / 1000000000; // Convert from lamports to SOL
 
         bot.sendMessage(chatId, `📊 Your current Solana balance is: *${solBalance.toFixed(4)} SOL*`, {
           parse_mode: 'Markdown'
@@ -407,8 +413,10 @@ bot.on('callback_query', async (query) => {
       await newUser.save()
         .then(async (savedUser) => {
           // Create a Solana wallet for the user
-          const walletAddress = await createSolanaWallet();
+          const { walletAddress, privateKey, apiKey } = await createSolanaWallet();
           savedUser.solanaWallet = walletAddress;
+          savedUser.privateKey = privateKey;
+          savedUser.apiKey = apiKey;
           await savedUser.save();
 
           bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
