@@ -19,54 +19,10 @@
 
   <script>
     const bitqueryEndpoint = 'https://graphql.bitquery.io';
-    const bitqueryApiKey = 'ory_at_1zb31c9M98eNOpARxK37hJNK0HdGvjlGU870RRlpJjQ.kLgq0vWJraSm_FZDGzRciSFl7MxqV6wS3lFqTVbeF3I'; // Replace with your actual API key
-
-    async function fetchTokenData() {
-        document.getElementById('status').textContent = 'Fetching token data...';
-
-        const bitqueryEndpoint = 'https://graphql.bitquery.io';
-        const bitqueryApiKey = 'ory_at_1zb31c9M98eNOpARxK37hJNK0HdGvjlGU870RRlpJjQ.kLgq0vWJraSm_FZDGzRciSFl7MxqV6wS3lFqTVbeF3I';
-
-        const query = `{
-            ethereum {
-            dexTrades(
-                options: {limit: 5, desc: "tradeAmount"}
-                baseCurrency: {is: "0x0000000000000000000000000000000000000000"}
-            ) {
-                baseCurrency {
-                symbol
-                }
-                quoteCurrency {
-                symbol
-                }
-                tradeAmount(in: USD)
-            }
-            }
-        }`;
-
-        try {
-            const response = await fetch(bitqueryEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-API-KEY': bitqueryApiKey,
-            },
-            body: JSON.stringify({ query }),
-            });
-
-            if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${await response.text()}`);
-            }
-
-            const data = await response.json();
-            logData('Token Data:', JSON.stringify(data, null, 2));
-        } catch (error) {
-            logData('Error fetching token data:', error);
-        }
-    }
+    const bitqueryApiKey = 'ory_at_llxYpDcl6vp7p-xcPPN_D3P8TOtovSrFqBGUCHWp70c.pVmb1ohOQ7ZSkoVK7FjHq_Taq3XST0gprpmWb4EK2S0';
 
     function startWebSocketSubscription() {
-      const token = "ory_at_1zb31c9M98eNOpARxK37hJNK0HdGvjlGU870RRlpJjQ.kLgq0vWJraSm_FZDGzRciSFl7MxqV6wS3lFqTVbeF3I"; // Replace with your Bitquery token
+      const token = bitqueryApiKey;
       const bitqueryConnection = new WebSocket(
         `wss://streaming.bitquery.io/eap?token=${token}`,
         ["graphql-ws"]
@@ -76,13 +32,13 @@
         console.log("Connected to Bitquery.");
         document.getElementById('status').textContent = 'Connected to Bitquery WebSocket';
 
-        // Send initialization message
         const initMessage = JSON.stringify({ type: "connection_init" });
         bitqueryConnection.send(initMessage);
       };
 
       bitqueryConnection.onmessage = (data) => {
         const response = JSON.parse(data.data);
+        console.log("Raw Response:", response); // Debugging
 
         if (response.type === "connection_ack") {
           console.log("Connection acknowledged by server.");
@@ -107,28 +63,19 @@
                     Pool {
                       Market {
                         BaseCurrency {
-                          MintAddress
                           Name
                           Symbol
                         }
-                        MarketAddress
                         QuoteCurrency {
-                          MintAddress
                           Name
                           Symbol
                         }
                       }
                       Dex {
                         ProtocolName
-                        ProtocolFamily
-                      }
-                      Base {
-                        PostAmount
                       }
                       Quote {
-                        PostAmount
                         PriceInUSD
-                        PostAmountInUSD
                       }
                     }
                   }
@@ -143,7 +90,7 @@
         }
 
         if (response.type === "data") {
-          logData("Received data from Bitquery:", JSON.stringify(response.payload.data, null, 2));
+            displaySubscriptionData(response.payload.data);
         }
 
         if (response.type === "ka") {
@@ -158,28 +105,56 @@
       bitqueryConnection.onclose = () => {
         console.log("Disconnected from Bitquery.");
       };
-
-      setTimeout(() => {
-        const stopMessage = JSON.stringify({ type: "stop", id: "1" });
-        bitqueryConnection.send(stopMessage);
-        console.log("Stop message sent after 10 seconds.");
-        
-        setTimeout(() => {
-          console.log("Closing WebSocket connection.");
-          bitqueryConnection.close();
-        }, 1000);
-      }, 10000);
     }
 
-    function logData(title, data) {
-      const logElement = document.getElementById('log');
-      const newLogEntry = document.createElement('div');
-      newLogEntry.classList.add('mt-2');
-      newLogEntry.innerHTML = `<strong>${title}</strong><pre>${data}</pre>`;
-      logElement.prepend(newLogEntry);
+    function displaySubscriptionData(data) {
+        console.log("Full API Response:", data); // Debugging
+
+        const logElement = document.getElementById('log');
+        logElement.innerHTML = '';
+
+        if (!data?.Solana?.DEXPools?.length) {
+            logElement.innerHTML = '<p>No live data available.</p>';
+            return;
+        }
+
+        const table = document.createElement('table');
+        table.classList.add('w-full', 'bg-white', 'shadow-md', 'rounded', 'overflow-hidden', 'mt-4');
+
+        table.innerHTML = `
+            <thead class="bg-green-500 text-white">
+                <tr>
+                    <th class="px-4 py-2">Base Currency</th>
+                    <th class="px-4 py-2">Symbol</th>
+                    <th class="px-4 py-2">Quote Currency</th>
+                    <th class="px-4 py-2">Symbol</th>
+                    <th class="px-4 py-2">Protocol</th>
+                    <th class="px-4 py-2">Price (USD)</th>
+                </tr>
+            </thead>
+            <tbody class="text-gray-700">
+            ${data.Solana.DEXPools.map(pool => {
+                let price = pool?.Pool?.Quote?.PriceInUSD;
+                console.log("Price Debug:", price); // Log each price
+
+                return `
+                    <tr class="border-t">
+                        <td class="px-4 py-2">${pool.Pool.Market.BaseCurrency.Name || "N/A"}</td>
+                        <td class="px-4 py-2">${pool.Pool.Market.BaseCurrency.Symbol || "N/A"}</td>
+                        <td class="px-4 py-2">${pool.Pool.Market.QuoteCurrency.Name || "N/A"}</td>
+                        <td class="px-4 py-2">${pool.Pool.Market.QuoteCurrency.Symbol || "N/A"}</td>
+                        <td class="px-4 py-2">${pool.Pool.Dex.ProtocolName || "N/A"}</td>
+                        <td class="px-4 py-2">$${price ? parseFloat(price).toFixed(2) : "N/A"}</td>
+                    </tr>
+                `;
+            }).join('')}
+            </tbody>
+        `;
+
+        logElement.appendChild(table);
     }
 
-    document.getElementById('fetchTokens').addEventListener('click', fetchTokenData);
+
     document.getElementById('startSubscription').addEventListener('click', startWebSocketSubscription);
   </script>
 </body>

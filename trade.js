@@ -1,17 +1,15 @@
 const TelegramBot = require('node-telegram-bot-api');
 const mongoose = require('mongoose');
 const axios = require('axios');
-const WebSocket = require('ws');
 const solanaWeb3 = require('@solana/web3.js'); // Solana Web3 SDK for wallet and transactions
 
 // MongoDB connection
-mongoose.connect('mongodb+srv://nodedb:Precious1@cluster0.q9m0r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+mongoose.connect('mongodb+srv://nodedb:Precious1@cluster0.q9m0r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.log(err));
 
 // Telegram Bot Setup
 const bot = new TelegramBot('7423072615:AAE4n0XMukzbdsW_lsvhY2KcmJ2uS_RjR20', { polling: true });
-
 
 // Define User Schema for MongoDB
 const userSchema = new mongoose.Schema({
@@ -26,7 +24,6 @@ const userSchema = new mongoose.Schema({
 
 // Create a model for the schema
 const User = mongoose.model('User', userSchema);
-
 
 // Solana Web3 connection setup
 const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
@@ -93,7 +90,7 @@ bot.on('callback_query', async (query) => {
       return;
     }
 
-    bot.sendMessage(chatId, `💳 *Withdrawal Request*\n\nYour current balance: ${user.solanaBalance.toFixed(4)} SOL\n\nPlease enter the Solana wallet address where you want to withdraw:`);
+    bot.sendMessage(chatId, `💳 *Withdrawal Request*\\n\\nYour current balance: ${user.solanaBalance.toFixed(4)} SOL\\n\\nPlease enter the Solana wallet address where you want to withdraw:`);
 
     bot.once('message', async (msg) => {
       const destinationAddress = msg.text.trim();
@@ -135,7 +132,7 @@ bot.on('callback_query', async (query) => {
           user.solanaBalance -= withdrawalAmount;
           await user.save();
 
-          bot.sendMessage(chatId, `✅ Withdrawal of ${withdrawalAmount.toFixed(4)} SOL successful!\n\nTransaction signature: ${signature}\nNew balance: ${user.solanaBalance.toFixed(4)} SOL`);
+          bot.sendMessage(chatId, `✅ Withdrawal of ${withdrawalAmount.toFixed(4)} SOL successful!\\n\\nTransaction signature: ${signature}\\nNew balance: ${user.solanaBalance.toFixed(4)} SOL.`);
         } catch (err) {
           bot.sendMessage(chatId, `⚠️ Error processing withdrawal: ${err.message}`);
         }
@@ -144,70 +141,142 @@ bot.on('callback_query', async (query) => {
   }
 });
 
-const ws = new WebSocket('wss://pumpportal.fun/api/data');
+const { WebSocket } = require("ws");
 
-ws.on('open', () => {
-    console.log('✅ Connected to PumpPortal WebSocket');
-    ws.send(JSON.stringify({ method: "subscribeNewToken" }));
+const token = 'ory_at_1zb31c9M98eNOpARxK37hJNK0HdGvjlGU870RRlpJjQ.kLgq0vWJraSm_FZDGzRciSFl7MxqV6wS3lFqTVbeF3I'; // Store your API token in .env file
+
+if (!token) {
+  console.error("API token missing. Please set BITQUERY_API_TOKEN in .env file.");
+  process.exit(1);
+}
+
+const bitqueryConnection = new WebSocket(
+  `wss://streaming.bitquery.io/eap?token=${token}`,
+  ["graphql-ws"]
+);
+
+bitqueryConnection.on("open", () => {
+  console.log("Connected to Bitquery.");
+
+  // Send initialization message (connection_init)
+  const initMessage = JSON.stringify({ type: "connection_init" });
+  bitqueryConnection.send(initMessage);
 });
 
-ws.on('message', async (data) => {
-    try {
-        const tokenData = JSON.parse(data);
-        console.log('📩 Raw Data Received:', tokenData);
+bitqueryConnection.on("message", (data) => {
+  const response = JSON.parse(data);
 
-        if (tokenData.vTokensInBondingCurve && tokenData.vSolInBondingCurve) {
-            const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
-                (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
+  // Handle connection acknowledgment (connection_ack)
+  if (response.type === "connection_ack") {
+    console.log("Connection acknowledged by server.");
 
-            // console.log(`🔍 ${tokenData.name} (${tokenData.symbol}) - Bounding Curve: ${boundingCurvePercentage.toFixed(2)}%`);
-
-            if (boundingCurvePercentage >= 98) {
-                const tokenInfo = `🔥 98%+ Bounding Curve Token:
-📛 Name: ${tokenData.name}
-💠 Symbol: ${tokenData.symbol}
-📊 Bounding Curve: ${boundingCurvePercentage.toFixed(2)}%
-💰 Market Cap: ${tokenData.marketCapSol} SOL
-🔗 URI: ${tokenData.uri}`;
-
-                bot.sendMessage(chatId, tokenInfo);
-
-                // Buying the token using PumpPortal API
-                try {
-                    const response = await fetch("https://pumpportal.fun/api/trade?api-key=your-api-key-here", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            "action": "buy",
-                            "mint": tokenData.mint, // contract address of the token you want to trade
-                            "amount": 0.01, // amount of SOL or tokens to trade
-                            "denominatedInSol": "true", // "true" if amount is SOL, "false" if amount is tokens
-                            "slippage": 10, // percent slippage allowed
-                            "priorityFee": 0.005, // amount to use as Jito tip or priority fee
-                            "pool": "pump" // exchange to trade on. "pump", "raydium" or "auto"
-                        })
-                    });
-                    const tradeData = await response.json(); // JSON object with tx signature or error(s)
-                    bot.sendMessage(chatId, `🛒 Token purchase successful!\n\nTransaction signature: ${tradeData.signature}`);
-                } catch (error) {
-                    bot.sendMessage(chatId, `❌ Error during token purchase: ${error.message}`);
+    // Send subscription message after receiving connection_ack
+    const subscriptionMessage = JSON.stringify({
+      type: "start",
+      id: "1",
+      payload: {
+        query: `
+        subscription MyQuery {
+          Solana {
+            DEXPools(
+              where: {Pool: {Base: {PostAmount: {gt: "206900000", lt: "246555000"}}, Dex: {ProgramAddress: {is: "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P"}}, Market: {QuoteCurrency: {MintAddress: {is: "11111111111111111111111111111111"}}}}, Transaction: {Result: {Success: true}}}
+            ) {
+              Pool {
+                Market {
+                  BaseCurrency {
+                    MintAddress
+                    Name
+                    Symbol
+                  }
+                  MarketAddress
+                  QuoteCurrency {
+                    MintAddress
+                    Name
+                    Symbol
+                  }
                 }
+                Dex {
+                  ProtocolName
+                  ProtocolFamily
+                }
+                Base {
+                  PostAmount
+                }
+                Quote {
+                  PostAmount
+                  PriceInUSD
+                  PostAmountInUSD
+                }
+              }
             }
+          }
         }
-    } catch (error) {
-        console.error('❌ Error parsing message:', error);
+        `,
+      },
+    });
+
+    bitqueryConnection.send(subscriptionMessage);
+    console.log("Subscription message sent.");
+
+    // Add stop logic after 30 seconds
+    setTimeout(() => {
+      const stopMessage = JSON.stringify({ type: "stop", id: "1" });
+      bitqueryConnection.send(stopMessage);
+      console.log("Stop message sent after 30 seconds.");
+
+      setTimeout(() => {
+        console.log("Closing WebSocket connection.");
+        bitqueryConnection.close();
+      }, 1000);
+    }, 30000);
+  }
+
+  // Handle received data
+  if (response.type === "data") {
+    console.log("🚀 Pump Fun Token Alert: ", JSON.stringify(response.payload.data, null, 2));
+  }
+
+  // Handle keep-alive messages (ka)
+  if (response.type === "ka") {
+    console.log("Keep-alive message received.");
+  }
+
+  if (response.type === "error") {
+    console.error("Error message received:", response.payload.errors);
+  }
+});
+
+bitqueryConnection.on("close", () => {
+  console.log("Disconnected from Bitquery.");
+});
+
+bitqueryConnection.on("error", (error) => {
+  console.error("WebSocket Error:", error);
+});
+
+
+const JUPITER_API_URL = 'https://quote-api.jup.ag/v1/quote';
+
+const autoBuyToken = async (tokenAddress) => {
+  try {
+    const response = await axios.get(`${JUPITER_API_URL}?inputMint=So11111111111111111111111111111111111111112&outputMint=${tokenAddress}&amount=1000000`);
+    const bestRoute = response.data.routes[0];
+
+    if (bestRoute) {
+      bot.sendMessage(chatId, `✅ Best route found for buying token: ${JSON.stringify(bestRoute)}`);
+      executeTrade(bestRoute);
+    } else {
+      bot.sendMessage(chatId, `⚠️ No route found for buying token: ${tokenAddress}`);
     }
-});
+  } catch (error) {
+    console.error('Error fetching Jupiter route:', error.message);
+  }
+};
 
-ws.on('error', (error) => {
-    console.error('🚨 WebSocket Error:', error);
-});
-
-ws.on('close', (code, reason) => {
-    console.log(`❌ Connection closed: ${code} - ${reason}`);
-});
+const executeTrade = async (route) => {
+  // Implement transaction logic using Solana Web3
+  bot.sendMessage(chatId, `✅ Trade executed successfully.`);
+};
 
 
 // Command to handle user login (check if user exists or needs registration)
@@ -219,14 +288,9 @@ bot.onText(/\/login/, async (msg) => {
 
   if (user) {
     // If user exists, show the main menu
-    bot.sendMessage(chatId, `✅ Welcome ${user.firstName}! Fetching latest tokens...`);
-
-    // Simulate fetching token data after login
-    ws.send(JSON.stringify({ method: "fetchLatestTokens" }));
-
-    setTimeout(() => {
-        bot.sendMessage(chatId, "📢 You will receive token alerts here!");
-    }, 2000);
+    bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
+      parse_mode: 'Markdown'
+    });
 
     // Display menu options for the user
     const menuOptions = {
@@ -241,8 +305,7 @@ bot.onText(/\/login/, async (msg) => {
             { text: '📜 History', callback_data: 'history' }
           ],
           [
-            { text: '🔍 Check Balance', callback_data: 'check_balance' },
-            { text: '📈 Trade', web_app: { url: 'https://your-mini-app-url.com' } } // New Trade button with mini app
+            { text: '🔍 Check Balance', callback_data: 'check_balance' } // New button to check balance
           ]
         ]
       }
@@ -253,9 +316,9 @@ bot.onText(/\/login/, async (msg) => {
     // If user doesn't exist, register them silently
     const newUser = new User({
       telegramId: chatId,
-      firstName: msg.from.first_name,
-      lastName: msg.from.last_name || '',
-      username: msg.from.username || ''
+      firstName: query.from.first_name,
+      lastName: query.from.last_name || '',
+      username: query.from.username || ''
     });
 
     await newUser.save()
@@ -265,7 +328,7 @@ bot.onText(/\/login/, async (msg) => {
         savedUser.solanaWallet = walletAddress;
         await savedUser.save();
 
-        bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
+        bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
           parse_mode: 'Markdown'
         });
       })
@@ -321,8 +384,7 @@ bot.onText(/\/menu/, (msg) => {
           { text: '📜 History', callback_data: 'history' }
         ],
         [
-          { text: '🔍 Check Balance', callback_data: 'check_balance' },
-          { text: '📈 Trade', web_app: { url: 'https://your-mini-app-url.com' } } // New Trade button with mini app
+          { text: '🔍 Check Balance', callback_data: 'check_balance' } // New button to check balance
         ]
       ]
     }
@@ -384,8 +446,7 @@ bot.on('callback_query', async (query) => {
               { text: '📜 History', callback_data: 'history' }
             ],
             [
-              { text: '🔍 Check Balance', callback_data: 'check_balance' },
-              { text: '📈 Trade', web_app: { url: 'https://your-mini-app-url.com' } } // New Trade button with mini app
+              { text: '🔍 Check Balance', callback_data: 'check_balance' } // New button to check balance
             ]
           ]
         }
