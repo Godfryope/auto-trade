@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const axios = require('axios');
 const WebSocket = require('ws');
 const solanaWeb3 = require('@solana/web3.js'); // Solana Web3 SDK for wallet and transactions
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
 
 // MongoDB connection
 mongoose.connect('mongodb+srv://nodedb:Precious1@cluster0.q9m0r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
@@ -12,6 +15,8 @@ mongoose.connect('mongodb+srv://nodedb:Precious1@cluster0.q9m0r.mongodb.net/?ret
 // Telegram Bot Setup
 const bot = new TelegramBot('7423072615:AAE4n0XMukzbdsW_lsvhY2KcmJ2uS_RjR20', { polling: true });
 
+app.use(express.json());
+app.use(express.static('public'));
 
 // Define User Schema for MongoDB
 const userSchema = new mongoose.Schema({
@@ -26,7 +31,6 @@ const userSchema = new mongoose.Schema({
 
 // Create a model for the schema
 const User = mongoose.model('User', userSchema);
-
 
 // Solana Web3 connection setup
 const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
@@ -171,29 +175,6 @@ ws.on('message', async (data) => {
 🔗 URI: ${tokenData.uri}`;
 
                 bot.sendMessage(chatId, tokenInfo);
-
-                // Buying the token using PumpPortal API
-                try {
-                    const response = await fetch("https://pumpportal.fun/api/trade?api-key=your-api-key-here", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            "action": "buy",
-                            "mint": tokenData.mint, // contract address of the token you want to trade
-                            "amount": 0.01, // amount of SOL or tokens to trade
-                            "denominatedInSol": "true", // "true" if amount is SOL, "false" if amount is tokens
-                            "slippage": 10, // percent slippage allowed
-                            "priorityFee": 0.005, // amount to use as Jito tip or priority fee
-                            "pool": "pump" // exchange to trade on. "pump", "raydium" or "auto"
-                        })
-                    });
-                    const tradeData = await response.json(); // JSON object with tx signature or error(s)
-                    bot.sendMessage(chatId, `🛒 Token purchase successful!\n\nTransaction signature: ${tradeData.signature}`);
-                } catch (error) {
-                    bot.sendMessage(chatId, `❌ Error during token purchase: ${error.message}`);
-                }
             }
         }
     } catch (error) {
@@ -208,7 +189,6 @@ ws.on('error', (error) => {
 ws.on('close', (code, reason) => {
     console.log(`❌ Connection closed: ${code} - ${reason}`);
 });
-
 
 // Command to handle user login (check if user exists or needs registration)
 bot.onText(/\/login/, async (msg) => {
@@ -242,7 +222,7 @@ bot.onText(/\/login/, async (msg) => {
           ],
           [
             { text: '🔍 Check Balance', callback_data: 'check_balance' },
-            { text: '📈 Trade', web_app: { url: 'https://your-mini-app-url.com' } } // New Trade button with mini app
+            { text: '📈 Trade', web_app: { url: `https://your-domain.com?telegramId=${chatId}` } } // New Trade button with mini app
           ]
         ]
       }
@@ -268,6 +248,29 @@ bot.onText(/\/login/, async (msg) => {
         bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
           parse_mode: 'Markdown'
         });
+
+        // Show the main menu after registration
+        const menuOptions = {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: '💸 Deposit', callback_data: 'deposit_solana' },
+                { text: '💳 Withdrawal', callback_data: 'withdrawal' }
+              ],
+              [
+                { text: '📈 Opened Positions', callback_data: 'opened_positions' },
+                { text: '📜 History', callback_data: 'history' }
+              ],
+              [
+                { text: '🔍 Check Balance', callback_data: 'check_balance' },
+                { text: '📈 Trade', web_app: { url: `https://your-domain.com?telegramId=${chatId}` } } // New Trade button with mini app
+              ]
+            ]
+          }
+        };
+
+        bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
+
       })
       .catch(err => {
         bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
@@ -322,7 +325,7 @@ bot.onText(/\/menu/, (msg) => {
         ],
         [
           { text: '🔍 Check Balance', callback_data: 'check_balance' },
-          { text: '📈 Trade', web_app: { url: 'https://your-mini-app-url.com' } } // New Trade button with mini app
+          { text: '📈 Trade', web_app: { url: `https://your-domain.com?telegramId=${chatId}` } } // New Trade button with mini app
         ]
       ]
     }
@@ -385,7 +388,7 @@ bot.on('callback_query', async (query) => {
             ],
             [
               { text: '🔍 Check Balance', callback_data: 'check_balance' },
-              { text: '📈 Trade', web_app: { url: 'https://your-mini-app-url.com' } } // New Trade button with mini app
+              { text: '📈 Trade', web_app: { url: `https://your-domain.com?telegramId=${chatId}` } } // New Trade button with mini app
             ]
           ]
         }
@@ -411,6 +414,28 @@ bot.on('callback_query', async (query) => {
           bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
             parse_mode: 'Markdown'
           });
+
+          // Show the main menu after registration
+          const menuOptions = {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: '💸 Deposit', callback_data: 'deposit_solana' },
+                  { text: '💳 Withdrawal', callback_data: 'withdrawal' }
+                ],
+                [
+                  { text: '📈 Opened Positions', callback_data: 'opened_positions' },
+                  { text: '📜 History', callback_data: 'history' }
+                ],
+                [
+                  { text: '🔍 Check Balance', callback_data: 'check_balance' },
+                  { text: '📈 Trade', web_app: { url: `https://your-domain.com?telegramId=${chatId}` } } // New Trade button with mini app
+                ]
+              ]
+            }
+          };
+
+          bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
         })
         .catch(err => {
           bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
@@ -462,4 +487,61 @@ bot.on('callback_query', async (query) => {
       bot.sendMessage(chatId, '⚠️ *User not found.*\n\nPlease log in first using the /login command.');
     }
   }  
+});
+
+app.get('/api/authenticate/:telegramId', async (req, res) => {
+  const { telegramId } = req.params;
+  const user = await User.findOne({ telegramId });
+
+  if (user) {
+    res.json({ success: true });
+  } else {
+    res.json({ success: false });
+  }
+});
+
+app.get('/api/tokens', async (req, res) => {
+  // Fetch tokens from the PumpPortal API
+  try {
+    const response = await fetch('https://pumpportal.fun/api/tokens');
+    const tokens = await response.json();
+    res.json(tokens);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch tokens' });
+  }
+});
+
+app.post('/api/buy', async (req, res) => {
+  const { telegramId, mint } = req.body;
+  const user = await User.findOne({ telegramId });
+
+  if (!user) {
+    return res.json({ success: false, message: 'User not found' });
+  }
+
+  try {
+    const response = await fetch("https://pumpportal.fun/api/trade?api-key=dcujpn1fdmt78n22dna6upb3ct5p2c3ca4t5aj1fe4qmrhtm5wnmyy26c9c58uv1arw6au3h8tw4cmkgcwt78dbe8n848kj8b1m32u3gcx4n0nuka9rm4ebed1a3cjaeexmpjtjp84ykuc5upckvg90nngkk3c96kgpj2cr9rv4gp36edm74kk7d4r36uj35xn4jc1pen8kuf8", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "action": "buy",
+        "mint": mint,
+        "amount": 0.01,
+        "denominatedInSol": "true",
+        "slippage": 10,
+        "priorityFee": 0.005,
+        "pool": "pump"
+      })
+    });
+    const data = await response.json();
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to buy token', error });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
