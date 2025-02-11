@@ -28,36 +28,6 @@ const userSchema = new mongoose.Schema({
   privateKey: String, // Store private key for each user
   apiKey: String, // Store API key for each user
   solanaBalance: { type: Number, default: 0 } // Track balance of Solana for the user
-});const TelegramBot = require('node-telegram-bot-api');
-const mongoose = require('mongoose');
-const axios = require('axios');
-const WebSocket = require('ws');
-const express = require('express');
-const app = express();
-const port = process.env.PORT || 3000;
-
-// MongoDB connection
-mongoose.connect('mongodb+srv://nodedb:Precious1@cluster0.q9m0r.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.log(err));
-
-// Telegram Bot Setup
-const bot = new TelegramBot('7423072615:AAE4n0XMukzbdsW_lsvhY2KcmJ2uS_RjR20', { polling: true });
-
-app.use(express.json());
-app.use(express.static('public'));
-
-// Define User Schema for MongoDB
-const userSchema = new mongoose.Schema({
-  telegramId: { type: String, required: true, unique: true },
-  firstName: String,
-  lastName: String,
-  username: String,
-  registrationDate: { type: Date, default: Date.now },
-  solanaWallet: String, // Store Solana wallet address for each user
-  privateKey: String, // Store private key for each user
-  apiKey: String, // Store API key for each user
-  solanaBalance: { type: Number, default: 0 } // Track balance of Solana for the user
 });
 
 // Create a model for the schema
