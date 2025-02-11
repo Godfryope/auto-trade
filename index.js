@@ -205,7 +205,7 @@ bot.onText(/\/login/, async (msg) => {
     bot.sendMessage(chatId, `✅ Welcome ${user.firstName}! Fetching latest tokens...`);
 
     // Simulate fetching token data after login
-    ws.send(JSON.stringify({ method: "fetchLatestTokens" }));
+    // ws.send(JSON.stringify({ method: "fetchLatestTokens" }));
 
     setTimeout(() => {
         bot.sendMessage(chatId, "📢 You will receive token alerts here!");
