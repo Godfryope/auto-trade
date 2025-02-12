@@ -502,7 +502,7 @@ ws.on('message', (data) => {
                     boundingCurvePercentage: boundingCurvePercentage,
                     marketCapSol: tokenData.marketCapSol,
                     uri: tokenData.uri,
-                    imageUri: tokenData.imageUri,
+                    imageUri: tokenData.image,
                     mint: tokenData.mint
                 });
             }
