@@ -495,7 +495,7 @@ ws.on('message', (data) => {
             const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
                 (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
 
-            if (boundingCurvePercentage >= 98) {
+            if (boundingCurvePercentage >= 95) {
                 tokens.push({
                     name: tokenData.name,
                     symbol: tokenData.symbol,
