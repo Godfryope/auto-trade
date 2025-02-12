@@ -451,8 +451,8 @@ ws.on('message', (data) => {
         console.log('📩 Raw Data Received:', tokenData);
 
         if (tokenData.vTokensInBondingCurve && tokenData.vSolInBondingCurve) {
-            const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
-                (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
+          const bondingCurvePercentage = (tokenData.vTokensInBondingCurve / 
+            (tokenData.vTokensInBondingCurve + tokenData.initialBuy)) * 100;
 
             if (boundingCurvePercentage >= 95) {
                 tokens.push({
