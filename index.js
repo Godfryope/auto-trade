@@ -499,7 +499,7 @@ ws.on('message', (data) => {
                 tokens.push({
                     name: tokenData.name,
                     symbol: tokenData.symbol,
-                    boundingCurvePercentage: boundingCurvePercentage,
+                    boundingCurvePercentage: tokenData.vTokensInBondingCurve,
                     marketCapSol: tokenData.marketCapSol,
                     uri: tokenData.uri,
                     imageUri: tokenData.image,

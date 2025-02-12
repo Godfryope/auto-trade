@@ -68,7 +68,7 @@
                     const li = document.createElement('li');
                     li.innerHTML = `
                       <div class="token-info">
-                        <img src="${token.image}" alt="${token.name} logo">
+                        <img src="${token.imageUri}" alt="${token.name} logo">
                         <span><a href="${token.uri}" target="_blank">${token.name}</a> (${token.symbol}) - (${token.marketCapSol})</span>
                         <button onclick="buyToken('${token.mint}')">Buy</button>
                       </div>
