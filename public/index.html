@@ -161,8 +161,6 @@
                     alert('Token purchase successful!');
                 } else if (response.status === 400 && data.message === 'Insufficient funds') {
                     alert('Token purchase failed: Insufficient funds in your wallet.');
-                } else if (response.status === 400 && data.message === 'Wallet is empty') {
-                    alert('Token purchase failed: Your wallet is empty.');
                 } else {
                     alert(`Token purchase failed: ${data.message}`);
                 }
