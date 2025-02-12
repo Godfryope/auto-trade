@@ -58,87 +58,47 @@ const createSolanaWallet = async () => {
   }
 };
 
-// // Function to update user's Solana balance
-// const updateSolanaBalance = async () => {
-//   // Fetch all users from the database
-//   const users = await User.find({});
 
-//   // Loop through each user to fetch and update their Solana balance
-//   for (let user of users) {
-//     try {
-//       // Get the user's Solana wallet address
-//       const walletAddress = user.solanaWallet;
+// Initialize WebSocket connection to PumpPortal API
+const ws = new WebSocket('wss://pumpportal.fun/api/data');
 
-//       // Get the current balance of the user's wallet from Solana blockchain
-//       const response = await axios.get(`https://pumpportal.fun/api/get-balance?wallet=${walletAddress}&apiKey=${user.apiKey}`);
-//       if (response.status === 200) {
-//         const balance = response.data.balance;
-//         const solBalance = balance / 1000000000; // Convert from lamports to SOL
+ws.on('open', () => {
+    console.log('✅ Connected to PumpPortal WebSocket');
+    ws.send(JSON.stringify({ method: "subscribeNewToken" }));
+});
 
-//         // If the balance has changed, update the balance in MongoDB
-//         if (user.solanaBalance !== solBalance) {
-//           user.solanaBalance = solBalance;
-//           await user.save();
+ws.on('message', async (data) => {
+    try {
+        const tokenData = JSON.parse(data);
+        console.log('📩 Raw Data Received:', tokenData);
 
-//           // Optionally, send a message to the user about the updated balance
-//           const chatId = user.telegramId;
-//           bot.sendMessage(chatId, `📊 Your Solana balance has been updated! Your new balance is: ${solBalance} SOL`);
-//         }
-//       } else {
-//         console.log(`Error fetching balance for user ${user.telegramId}: ${response.statusText}`);
-//       }
-//     } catch (err) {
-//       console.log(`Error fetching balance for user ${user.telegramId}: ${err.message}`);
-//     }
-//   }
-// };
+        if (tokenData.vTokensInBondingCurve && tokenData.vSolInBondingCurve) {
+            const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
+                (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
 
-// // Set a periodic update every 5 minutes (300,000 ms)
-// setInterval(updateSolanaBalance, 300000); // Run every 5 minutes
+            if (boundingCurvePercentage >= 98) {
+                const tokenInfo = `🔥 98%+ Bounding Curve Token:
+📛 Name: ${tokenData.name}
+💠 Symbol: ${tokenData.symbol}
+📊 Bounding Curve: ${boundingCurvePercentage.toFixed(2)}%
+💰 Market Cap: ${tokenData.marketCapSol} SOL
+🔗 URI: ${tokenData.uri}`;
 
-// // You can also run the function once on bot startup to immediately fetch balances
-// updateSolanaBalance();
+                bot.sendMessage(chatId, tokenInfo);
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error parsing message:', error);
+    }
+});
 
-// Initialize WebSocket connection
-// const ws = new WebSocket('wss://pumpportal.fun/api/data');
+ws.on('error', (error) => {
+    console.error('🚨 WebSocket Error:', error);
+});
 
-// ws.on('open', () => {
-//     console.log('✅ Connected to PumpPortal WebSocket');
-//     ws.send(JSON.stringify({ method: "subscribeNewToken" }));
-// });
-
-// ws.on('message', async (data) => {
-//     try {
-//         const tokenData = JSON.parse(data);
-//         console.log('📩 Raw Data Received:', tokenData);
-
-//         if (tokenData.vTokensInBondingCurve && tokenData.vSolInBondingCurve) {
-//             const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
-//                 (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
-
-//             if (boundingCurvePercentage >= 98) {
-//                 const tokenInfo = `🔥 98%+ Bounding Curve Token:
-// 📛 Name: ${tokenData.name}
-// 💠 Symbol: ${tokenData.symbol}
-// 📊 Bounding Curve: ${boundingCurvePercentage.toFixed(2)}%
-// 💰 Market Cap: ${tokenData.marketCapSol} SOL
-// 🔗 URI: ${tokenData.uri}`;
-
-//                 bot.sendMessage(chatId, tokenInfo);
-//             }
-//         }
-//     } catch (error) {
-//         console.error('❌ Error parsing message:', error);
-//     }
-// });
-
-// ws.on('error', (error) => {
-//     console.error('🚨 WebSocket Error:', error);
-// });
-
-// ws.on('close', (code, reason) => {
-//     console.log(`❌ Connection closed: ${code} - ${reason}`);
-// });
+ws.on('close', (code, reason) => {
+    console.log(`❌ Connection closed: ${code} - ${reason}`);
+});
 
 // Command to handle user login (check if user exists or needs registration)
 bot.onText(/\/login/, async (msg) => {
