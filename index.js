@@ -451,17 +451,17 @@ ws.on('message', (data) => {
         console.log('📩 Raw Data Received:', tokenData);
 
         if (tokenData.vTokensInBondingCurve && tokenData.vSolInBondingCurve) {
-            const boundingCurvePercentage = (tokenData.vSolInBondingCurve / 
+            const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
                 (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
 
-            if (boundingCurvePercentage >= 98) {
+            if (boundingCurvePercentage >= 95) {
                 tokens.push({
                     name: tokenData.name,
                     symbol: tokenData.symbol,
-                    boundingCurvePercentage: boundingCurvePercentage,
+                    boundingCurvePercentage: tokenData.vTokensInBondingCurve,
                     marketCapSol: tokenData.marketCapSol,
                     uri: tokenData.uri,
-                    imageUri: tokenData.uri.image,
+                    imageUri: tokenData.image,
                     mint: tokenData.mint
                 });
             }
