@@ -493,7 +493,7 @@ app.post('/api/buy', async (req, res) => {
   }
 
   // Example check for minimum required balance to make a purchase
-  const amountToPurchase = 0.01;
+  const amountToPurchase = 0.001;
   if (user.solanaBalance < amountToPurchase) {
       return res.status(400).json({ success: false, message: 'Insufficient funds' });
   }
