@@ -451,7 +451,7 @@ ws.on('message', (data) => {
         console.log('📩 Raw Data Received:', tokenData);
 
         if (tokenData.vTokensInBondingCurve && tokenData.vSolInBondingCurve) {
-            const boundingCurvePercentage = (tokenData.vSolInBondingCurve / 
+            const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
                 (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
 
             if (boundingCurvePercentage >= 95) {
@@ -461,7 +461,7 @@ ws.on('message', (data) => {
                     boundingCurvePercentage: boundingCurvePercentage,
                     marketCapSol: tokenData.marketCapSol,
                     uri: tokenData.uri,
-                    imageUri: tokenData.image,
+                    imageUri: tokenData.uri.image,
                     mint: tokenData.mint
                 });
             }
