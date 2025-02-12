@@ -58,46 +58,46 @@ const createSolanaWallet = async () => {
   }
 };
 
-// Function to update user's Solana balance
-const updateSolanaBalance = async () => {
-  // Fetch all users from the database
-  const users = await User.find({});
+// // Function to update user's Solana balance
+// const updateSolanaBalance = async () => {
+//   // Fetch all users from the database
+//   const users = await User.find({});
 
-  // Loop through each user to fetch and update their Solana balance
-  for (let user of users) {
-    try {
-      // Get the user's Solana wallet address
-      const walletAddress = user.solanaWallet;
+//   // Loop through each user to fetch and update their Solana balance
+//   for (let user of users) {
+//     try {
+//       // Get the user's Solana wallet address
+//       const walletAddress = user.solanaWallet;
 
-      // Get the current balance of the user's wallet from Solana blockchain
-      const response = await axios.get(`https://pumpportal.fun/api/get-balance?wallet=${walletAddress}&apiKey=${user.apiKey}`);
-      if (response.status === 200) {
-        const balance = response.data.balance;
-        const solBalance = balance / 1000000000; // Convert from lamports to SOL
+//       // Get the current balance of the user's wallet from Solana blockchain
+//       const response = await axios.get(`https://pumpportal.fun/api/get-balance?wallet=${walletAddress}&apiKey=${user.apiKey}`);
+//       if (response.status === 200) {
+//         const balance = response.data.balance;
+//         const solBalance = balance / 1000000000; // Convert from lamports to SOL
 
-        // If the balance has changed, update the balance in MongoDB
-        if (user.solanaBalance !== solBalance) {
-          user.solanaBalance = solBalance;
-          await user.save();
+//         // If the balance has changed, update the balance in MongoDB
+//         if (user.solanaBalance !== solBalance) {
+//           user.solanaBalance = solBalance;
+//           await user.save();
 
-          // Optionally, send a message to the user about the updated balance
-          const chatId = user.telegramId;
-          bot.sendMessage(chatId, `📊 Your Solana balance has been updated! Your new balance is: ${solBalance} SOL`);
-        }
-      } else {
-        console.log(`Error fetching balance for user ${user.telegramId}: ${response.statusText}`);
-      }
-    } catch (err) {
-      console.log(`Error fetching balance for user ${user.telegramId}: ${err.message}`);
-    }
-  }
-};
+//           // Optionally, send a message to the user about the updated balance
+//           const chatId = user.telegramId;
+//           bot.sendMessage(chatId, `📊 Your Solana balance has been updated! Your new balance is: ${solBalance} SOL`);
+//         }
+//       } else {
+//         console.log(`Error fetching balance for user ${user.telegramId}: ${response.statusText}`);
+//       }
+//     } catch (err) {
+//       console.log(`Error fetching balance for user ${user.telegramId}: ${err.message}`);
+//     }
+//   }
+// };
 
-// Set a periodic update every 5 minutes (300,000 ms)
-setInterval(updateSolanaBalance, 300000); // Run every 5 minutes
+// // Set a periodic update every 5 minutes (300,000 ms)
+// setInterval(updateSolanaBalance, 300000); // Run every 5 minutes
 
-// You can also run the function once on bot startup to immediately fetch balances
-updateSolanaBalance();
+// // You can also run the function once on bot startup to immediately fetch balances
+// updateSolanaBalance();
 
 // Initialize WebSocket connection
 // const ws = new WebSocket('wss://pumpportal.fun/api/data');
@@ -297,12 +297,16 @@ bot.on('callback_query', async (query) => {
       try {
         // Get the current balance of the user's wallet from Solana blockchain
         const response = await axios.get(`https://pumpportal.fun/api/get-balance?wallet=${user.solanaWallet}&apiKey=${user.apiKey}`);
+        if (response.status === 200) {
           const balance = response.data.balance;
           const solBalance = balance / 1000000000; // Convert from lamports to SOL
 
-          bot.sendMessage(chatId, `📊 Your current Solana balance is: *${solBalance.toFixed(4)} SOL*`,
+          bot.sendMessage(chatId, `📊 Your current Solana balance is: *${solBalance.toFixed(4)} SOL*`, {
             parse_mode: 'Markdown'
-          );
+          });
+        } else {
+          bot.sendMessage(chatId, `⚠️ Error fetching balance: ${response.statusText}`);
+        }
       } catch (err) {
         bot.sendMessage(chatId, `⚠️ Error fetching balance: ${err.message}`);
       }
