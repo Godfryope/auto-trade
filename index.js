@@ -5,6 +5,8 @@ const WebSocket = require('ws');
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
+const bodyParser = require('body-parser');
+
 
 // MongoDB connection
 mongoose.connect('mongodb+srv://bitcoption:Precious1@autotrader.myq0i.mongodb.net/?retryWrites=true&w=majority&appName=autotrader')
