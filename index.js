@@ -33,33 +33,31 @@ const userSchema = new mongoose.Schema({
 // Create a model for the schema
 const User = mongoose.model('User', userSchema);
 
-// Function to create a wallet using PumpPortal API
-const createSolanaWallet = async () => {
-  const axios = require('axios');
+const axios = require('axios');
 
-// Step 1: Create a wallet
-  await axios.get('https://pumpportal.fun/api/create-wallet')
-    .then(response => {
-      console.log('API Response:', response.data); // Log the response data
-      const data = response.data;
-      const privateKey = data.privateKey;
-      const walletAddress = data.walletPublicKey;
-      const apiKey = data.apiKey;
-  
-      if (walletAddress && apiKey) {
-        console.log(`Private Key: ${privateKey}`);
-        console.log(`Wallet Address: ${walletAddress}`);
-        console.log(`API Key: ${apiKey}`);
-        return { walletAddress, privateKey, apiKey };
-        
-      } else {
-        console.error('Failed to create wallet: Invalid response data');
-      }
-    })
-    .catch(error => {
-      console.error('Failed to create wallet:', error.response ? error.response.data : error.message);
-    });
-    
+const createSolanaWallet = async () => {
+  try {
+    // Step 1: Create a wallet
+    const response = await axios.get('https://pumpportal.fun/api/create-wallet');
+    console.log('API Response:', response.data); // Log the response data
+    const data = response.data;
+    const privateKey = data.privateKey;
+    const walletAddress = data.walletPublicKey;
+    const apiKey = data.apiKey;
+
+    if (walletAddress && apiKey) {
+      console.log(`Private Key: ${privateKey}`);
+      console.log(`Wallet Address: ${walletAddress}`);
+      console.log(`API Key: ${apiKey}`);
+      return { walletAddress, privateKey, apiKey };
+    } else {
+      console.error('Failed to create wallet: Invalid response data');
+      return null;
+    }
+  } catch (error) {
+    console.error('Failed to create wallet:', error.response ? error.response.data : error.message);
+    return null;
+  }
 };
 
 // Function to update user's Solana balance
@@ -189,7 +187,14 @@ bot.onText(/\/login/, async (msg) => {
     });
 
     // Create a Solana wallet for the user and save the user with the wallet details
-    const { walletAddress, privateKey, apiKey } = await createSolanaWallet();
+    const walletDetails = await createSolanaWallet();
+    if (walletDetails) {
+      const { walletAddress, privateKey, apiKey } = walletDetails;
+      // Continue with your logic using walletAddress, privateKey, and apiKey
+      console.log('Wallet details successfully retrieved and used.');
+    } else {
+      console.error('Wallet creation failed.');
+    }
     newUser.solanaWallet = walletAddress;
     newUser.privateKey = privateKey;
     newUser.apiKey = apiKey;
@@ -356,7 +361,14 @@ bot.on('callback_query', async (query) => {
       });
 
       // Create a Solana wallet for the user and save the user with the wallet details
-      const { walletAddress, privateKey, apiKey } = await createSolanaWallet();
+      const walletDetails = await createSolanaWallet();
+    if (walletDetails) {
+      const { walletAddress, privateKey, apiKey } = walletDetails;
+      // Continue with your logic using walletAddress, privateKey, and apiKey
+      console.log('Wallet details successfully retrieved and used.');
+    } else {
+      console.error('Wallet creation failed.');
+    }
       newUser.solanaWallet = walletAddress;
       newUser.privateKey = privateKey;
       newUser.apiKey = apiKey;
