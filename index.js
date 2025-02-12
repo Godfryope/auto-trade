@@ -451,16 +451,15 @@ ws.on('message', (data) => {
         console.log('📩 Raw Data Received:', tokenData);
 
         if (tokenData.vTokensInBondingCurve && tokenData.initialBuy) {
-          const bondingCurvePercentage = (tokenData.vTokensInBondingCurve / 
-              (tokenData.vTokensInBondingCurve + tokenData.initialBuy)) * 100;
+          const bondingCurvePercentage = (tokenData.vTokensInBondingCurve / (tokenData.vTokensInBondingCurve + tokenData.initialBuy)) * 100;
 
-              console.log(bondingCurvePercentage);
+          console.log(bondingCurvePercentage);
       
-          if (bondingCurvePercentage >= '98') {
+          if (bondingCurvePercentage >= 98) {
             tokens.push({
                 name: tokenData.name,
                 symbol: tokenData.symbol,
-                boundingCurvePercentage: boundingCurvePercentage,
+                bondingCurvePercentage: bondingCurvePercentage,
                 marketCapSol: tokenData.marketCapSol,
                 uri: tokenData.uri,
                 imageUri: tokenData.uri.image,
