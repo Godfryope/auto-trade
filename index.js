@@ -451,40 +451,49 @@ bot.on('callback_query', async (query) => {
 
   if (query.data === 'withdrawal') {
     const user = await User.findOne({ telegramId: chatId });
-    
+
     if (user) {
       bot.sendMessage(chatId, '💳 *Withdrawal Solana...*\n\nPlease enter the amount of Solana you wish to withdraw:');
-      
+
       bot.once('message', async (msg) => {
         const withdrawalAmount = parseFloat(msg.text);
-        
+
         if (isNaN(withdrawalAmount)) {
           bot.sendMessage(chatId, '⚠️ Invalid amount. Please enter a valid Solana withdrawal amount.');
-        } 
-        else if (withdrawalAmount > user.solanaBalance) {
+        } else if (withdrawalAmount > user.solanaBalance) {
           bot.sendMessage(chatId, `⚠️ Insufficient Balance: Your withdrawal amount exceeds your current Solana balance. Your balance is ${user.solanaBalance} SOL.`);
         } else {
-          // Update user's Solana balance
-          user.solanaBalance -= withdrawalAmount;
-          await user.save();
-          
-          // Initiate the withdrawal process to transfer the Solana to the user's external wallet
-          // Example: using an API call to a Solana wallet service to send the funds
-          try {
-            const response = await axios.post('https://pumpportal.fun/api/withdraw', {
-              wallet: user.solanaWallet,
-              amount: withdrawalAmount,
-              apiKey: user.apiKey
-            });
+          bot.sendMessage(chatId, '💳 *Withdrawal Solana...*\n\nPlease enter the wallet address to withdraw to:');
 
-            if (response.data.success) {
-              bot.sendMessage(chatId, `💳 Solana Withdrawal of ${withdrawalAmount} SOL confirmed! Your new balance is ${user.solanaBalance} SOL.`);
-            } else {
-              bot.sendMessage(chatId, `⚠️ Withdrawal failed: ${response.data.message}`);
+          bot.once('message', async (msg) => {
+            const recipientWallet = msg.text;
+
+            try {
+              const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
+              const fromPublicKey = new solanaWeb3.PublicKey(user.solanaWallet);
+              const toPublicKey = new solanaWeb3.PublicKey(recipientWallet);
+
+              // Create a transaction to transfer Solana
+              const transaction = new solanaWeb3.Transaction().add(
+                solanaWeb3.SystemProgram.transfer({
+                  fromPubkey: fromPublicKey,
+                  toPubkey: toPublicKey,
+                  lamports: withdrawalAmount * solanaWeb3.LAMPORTS_PER_SOL,
+                })
+              );
+
+              // Sign the transaction
+              const signature = await solanaWeb3.sendAndConfirmTransaction(connection, transaction, [YOUR_SIGNER]); // Replace YOUR_SIGNER with the actual signer
+
+              // Update user's Solana balance
+              user.solanaBalance -= withdrawalAmount;
+              await user.save();
+
+              bot.sendMessage(chatId, `💳 Solana Withdrawal of ${withdrawalAmount} SOL confirmed! Your new balance is ${user.solanaBalance} SOL.\nTransaction Signature: ${signature}`);
+            } catch (error) {
+              bot.sendMessage(chatId, `⚠️ Withdrawal failed: ${error.message}`);
             }
-          } catch (error) {
-            bot.sendMessage(chatId, `⚠️ Withdrawal failed: ${error.message}`);
-          }
+          });
         }
       });
     } else {
