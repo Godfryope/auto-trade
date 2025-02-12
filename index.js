@@ -475,15 +475,51 @@ app.get('/api/authenticate/:telegramId', async (req, res) => {
   }
 });
 
-app.get('/api/tokens', async (req, res) => {
-  // Fetch tokens from the PumpPortal API
-  try {
-    const response = await fetch('https://pumpportal.fun/api/tokens');
-    const tokens = await response.json();
+app.use(bodyParser.json());
+
+let tokens = [];
+
+ws.on('open', () => {
+    console.log('✅ Connected to PumpPortal WebSocket');
+    ws.send(JSON.stringify({ method: "subscribeNewToken" }));
+});
+
+ws.on('message', (data) => {
+    try {
+        const tokenData = JSON.parse(data);
+        console.log('📩 Raw Data Received:', tokenData);
+
+        if (tokenData.vTokensInBondingCurve && tokenData.vSolInBondingCurve) {
+            const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
+                (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
+
+            if (boundingCurvePercentage >= 98) {
+                tokens.push({
+                    name: tokenData.name,
+                    symbol: tokenData.symbol,
+                    boundingCurvePercentage: boundingCurvePercentage,
+                    marketCapSol: tokenData.marketCapSol,
+                    uri: tokenData.uri,
+                    imageUri: tokenData.imageUri,
+                    mint: tokenData.mint
+                });
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error parsing message:', error);
+    }
+});
+
+ws.on('error', (error) => {
+    console.error('🚨 WebSocket Error:', error);
+});
+
+ws.on('close', (code, reason) => {
+    console.log(`❌ Connection closed: ${code} - ${reason}`);
+});
+
+app.get('/api/tokens', (req, res) => {
     res.json(tokens);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch tokens' });
-  }
 });
 
 app.post('/api/buy', async (req, res) => {
