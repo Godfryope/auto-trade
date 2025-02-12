@@ -492,10 +492,6 @@ app.post('/api/buy', async (req, res) => {
       return res.status(400).json({ success: false, message: 'User not found' });
   }
 
-  if (user.solanaBalance < 0) {
-      return res.status(400).json({ success: false, message: 'Wallet is empty' });
-  }
-
   // Example check for minimum required balance to make a purchase
   const amountToPurchase = 0.01;
   if (user.solanaBalance < amountToPurchase) {

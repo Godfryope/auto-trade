@@ -131,7 +131,7 @@
                     li.innerHTML = `
                       <div class="token-info">
                         <img src="${token.imageUri}" alt="${token.name} logo">
-                        <span><a href="${token.uri}" target="_blank">${token.name}</a> (${token.symbol}) - ${token.boundingCurvePercentage.toFixed(2)}% - MC: (${token.marketCapSol})</span>
+                        <span><a href="${token.uri}" target="_blank">${token.name}</a> (${token.symbol}) - BC: ${token.boundingCurvePercentage.toFixed(2)}% - MC: (${token.marketCapSol})</span>
                         <button onclick="buyToken('${token.mint}')">Buy</button>
                       </div>
                     `;
