@@ -71,17 +71,21 @@ const updateSolanaBalance = async () => {
 
       // Get the current balance of the user's wallet from Solana blockchain
       const response = await axios.get(`https://pumpportal.fun/api/get-balance?wallet=${walletAddress}&apiKey=${user.apiKey}`);
-      const balance = response.data.balance;
-      const solBalance = balance / 1000000000; // Convert from lamports to SOL
+      if (response.status === 200) {
+        const balance = response.data.balance;
+        const solBalance = balance / 1000000000; // Convert from lamports to SOL
 
-      // If the balance has changed, update the balance in MongoDB
-      if (user.solanaBalance !== solBalance) {
-        user.solanaBalance = solBalance;
-        await user.save();
+        // If the balance has changed, update the balance in MongoDB
+        if (user.solanaBalance !== solBalance) {
+          user.solanaBalance = solBalance;
+          await user.save();
 
-        // Optionally, send a message to the user about the updated balance
-        const chatId = user.telegramId;
-        bot.sendMessage(chatId, `📊 Your Solana balance has been updated! Your new balance is: ${solBalance} SOL`);
+          // Optionally, send a message to the user about the updated balance
+          const chatId = user.telegramId;
+          bot.sendMessage(chatId, `📊 Your Solana balance has been updated! Your new balance is: ${solBalance} SOL`);
+        }
+      } else {
+        console.log(`Error fetching balance for user ${user.telegramId}: ${response.statusText}`);
       }
     } catch (err) {
       console.log(`Error fetching balance for user ${user.telegramId}: ${err.message}`);
@@ -293,19 +297,22 @@ bot.on('callback_query', async (query) => {
       try {
         // Get the current balance of the user's wallet from Solana blockchain
         const response = await axios.get(`https://pumpportal.fun/api/get-balance?wallet=${user.solanaWallet}&apiKey=${user.apiKey}`);
-        const balance = response.data.balance;
-        const solBalance = balance / 1000000000; // Convert from lamports to SOL
+        if (response.status === 200) {
+          const balance = response.data.balance;
+          const solBalance = balance / 1000000000; // Convert from lamports to SOL
 
-        bot.sendMessage(chatId, `📊 Your current Solana balance is: *${solBalance.toFixed(4)} SOL*`, {
-          parse_mode: 'Markdown'
-        });
+          bot.sendMessage(chatId, `📊 Your current Solana balance is: *${solBalance.toFixed(4)} SOL*`, {
+            parse_mode: 'Markdown'
+          });
+        } else {
+          bot.sendMessage(chatId, `⚠️ Error fetching balance: ${response.statusText}`);
+        }
       } catch (err) {
         bot.sendMessage(chatId, `⚠️ Error fetching balance: ${err.message}`);
       }
     } else {
       bot.sendMessage(chatId, '⚠️ *User not found or wallet not set.*\n\nPlease log in first using the /login command.');
     }
-  }
 });
 
 // Handling inline button presses
