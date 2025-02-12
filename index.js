@@ -313,6 +313,7 @@ bot.on('callback_query', async (query) => {
     } else {
       bot.sendMessage(chatId, '⚠️ *User not found or wallet not set.*\n\nPlease log in first using the /login command.');
     }
+  }
 });
 
 // Handling inline button presses
