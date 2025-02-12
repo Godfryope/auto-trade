@@ -440,7 +440,47 @@ bot.on('callback_query', async (query) => {
     } else {
       bot.sendMessage(chatId, '⚠️ *User not found.*\n\nPlease log in first using the /login command.');
     }
-  }  
+  } 
+
+  if (query.data === 'withdrawal') {
+    const user = await User.findOne({ telegramId: chatId });
+    
+    if (user) {
+      bot.sendMessage(chatId, '💳 *Withdrawal Solana...*\n\nPlease enter the amount of Solana you wish to withdraw:');
+      
+      bot.once('message', async (msg) => {
+        const withdrawalAmount = parseFloat(msg.text);
+        
+        if (isNaN(withdrawalAmount) || withdrawalAmount <= 0 || withdrawalAmount > user.solanaBalance) {
+          bot.sendMessage(chatId, '⚠️ Invalid amount. Please enter a valid Solana withdrawal amount.');
+        } else {
+          // Update user's Solana balance
+          user.solanaBalance -= withdrawalAmount;
+          await user.save();
+          
+          // Initiate the withdrawal process to transfer the Solana to the user's external wallet
+          // Example: using an API call to a Solana wallet service to send the funds
+          try {
+            const response = await axios.post('https://pumpportal.fun/api/withdraw', {
+              wallet: user.solanaWallet,
+              amount: withdrawalAmount,
+              apiKey: user.apiKey
+            });
+
+            if (response.data.success) {
+              bot.sendMessage(chatId, `💳 Solana Withdrawal of ${withdrawalAmount} SOL confirmed! Your new balance is ${user.solanaBalance} SOL.`);
+            } else {
+              bot.sendMessage(chatId, `⚠️ Withdrawal failed: ${response.data.message}`);
+            }
+          } catch (error) {
+            bot.sendMessage(chatId, `⚠️ Withdrawal failed: ${error.message}`);
+          }
+        }
+      });
+    } else {
+      bot.sendMessage(chatId, '⚠️ *User not found.*\n\nPlease log in first using the /login command.');
+    }
+  } 
 });
 
 app.get('/api/authenticate/:telegramId', async (req, res) => {
