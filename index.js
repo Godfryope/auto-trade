@@ -83,7 +83,7 @@ ws.on('message', async (data) => {
                 const li = document.createElement('li');
                 li.innerHTML = `
                     <div class="token-info">
-                        <img src="${tokenData.imageUri}" alt="${tokenData.name} logo">
+                        <img src="${tokenData.image}" alt="${tokenData.name} logo">
                         <span><a href="${tokenData.uri}" target="_blank">${tokenData.name}</a> (${tokenData.symbol}) - ${boundingCurvePercentage.toFixed(2)}%</span>
                         <button onclick="buyToken('${tokenData.mint}')">Buy</button>
                     </div>
