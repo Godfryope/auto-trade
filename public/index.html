@@ -109,7 +109,7 @@
                 const data = await response.json();
           
                 if (data.success) {
-                    setInterval(loadTokens, 1000); // Update tokens every second
+                    loadTokens();
                 } else {
                     alert('Authentication failed. Please check your Telegram ID.');
                 }
