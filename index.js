@@ -450,20 +450,22 @@ ws.on('message', (data) => {
         const tokenData = JSON.parse(data);
         console.log('📩 Raw Data Received:', tokenData);
 
-        if (tokenData.vTokensInBondingCurve && tokenData.vSolInBondingCurve) {
+        if (tokenData.vTokensInBondingCurve && tokenData.initialBuy) {
           const bondingCurvePercentage = (tokenData.vTokensInBondingCurve / 
-            (tokenData.vTokensInBondingCurve + tokenData.initialBuy)) * 100;
+              (tokenData.vTokensInBondingCurve + tokenData.initialBuy)) * 100;
 
-            if (boundingCurvePercentage >= 95) {
-                tokens.push({
-                    name: tokenData.name,
-                    symbol: tokenData.symbol,
-                    boundingCurvePercentage: boundingCurvePercentage,
-                    marketCapSol: tokenData.marketCapSol,
-                    uri: tokenData.uri,
-                    imageUri: tokenData.uri.image,
-                    mint: tokenData.mint
-                });
+              console.log(bondingCurvePercentage);
+      
+          if (bondingCurvePercentage >= 95) {
+              tokens.push({
+                  name: tokenData.name,
+                  symbol: tokenData.symbol,
+                  boundingCurvePercentage: boundingCurvePercentage,
+                  marketCapSol: tokenData.marketCapSol,
+                  uri: tokenData.uri,
+                  imageUri: tokenData.uri.image,
+                  mint: tokenData.mint
+              });
             }
         }
     } catch (error) {
