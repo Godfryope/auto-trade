@@ -451,8 +451,11 @@ bot.on('callback_query', async (query) => {
       bot.once('message', async (msg) => {
         const withdrawalAmount = parseFloat(msg.text);
         
-        if (isNaN(withdrawalAmount) || withdrawalAmount <= 0 || withdrawalAmount > user.solanaBalance) {
+        if (isNaN(withdrawalAmount)) {
           bot.sendMessage(chatId, '⚠️ Invalid amount. Please enter a valid Solana withdrawal amount.');
+        } 
+        else if (withdrawalAmount > user.solanaBalance) {
+          bot.sendMessage(chatId, `⚠️ Insufficient Balance: Your withdrawal amount exceeds your current Solana balance. Your balance is ${user.solanaBalance} SOL.`);
         } else {
           // Update user's Solana balance
           user.solanaBalance -= withdrawalAmount;
