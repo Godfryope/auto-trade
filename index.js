@@ -402,9 +402,9 @@ bot.on('callback_query', async (query) => {
             parse_mode: 'Markdown'
           });
         });
+      }
     }
   }
-
   // Handling menu options
   if (query.data === 'buy_token') {
     bot.sendMessage(chatId, '📈 *Buying token...*\n\nYou are about to purchase a token at 99% or 98% bonding curve, just before migration to Raydium. Please wait...');
