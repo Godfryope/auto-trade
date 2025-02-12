@@ -297,16 +297,12 @@ bot.on('callback_query', async (query) => {
       try {
         // Get the current balance of the user's wallet from Solana blockchain
         const response = await axios.get(`https://pumpportal.fun/api/get-balance?wallet=${user.solanaWallet}&apiKey=${user.apiKey}`);
-        if (response.status === 200) {
           const balance = response.data.balance;
           const solBalance = balance / 1000000000; // Convert from lamports to SOL
 
-          bot.sendMessage(chatId, `📊 Your current Solana balance is: *${solBalance.toFixed(4)} SOL*`, {
+          bot.sendMessage(chatId, `📊 Your current Solana balance is: *${solBalance.toFixed(4)} SOL*`,
             parse_mode: 'Markdown'
-          });
-        } else {
-          bot.sendMessage(chatId, `⚠️ Error fetching balance: ${response.statusText}`);
-        }
+          );
       } catch (err) {
         bot.sendMessage(chatId, `⚠️ Error fetching balance: ${err.message}`);
       }
