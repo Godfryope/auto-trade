@@ -179,29 +179,27 @@ bot.onText(/\/login/, async (msg) => {
     // If user doesn't exist, register them silently
     const newUser = new User({
       telegramId: chatId,
-      firstName: msg.from.first_name,
-      lastName: msg.from.last_name || '',
-      username: msg.from.username || ''
+      firstName: query.from.first_name,
+      lastName: query.from.last_name || '',
+      username: query.from.username || ''
     });
-
+  
     // Create a Solana wallet for the user and save the user with the wallet details
     const walletDetails = await createSolanaWallet();
     if (walletDetails) {
       const { walletAddress, privateKey, apiKey } = walletDetails;
-      // Continue with your logic using walletAddress, privateKey, and apiKey
+      // Assign wallet details to newUser
+      newUser.solanaWallet = walletAddress;
+      newUser.privateKey = privateKey;
+      newUser.apiKey = apiKey;
+  
       console.log('Wallet details successfully retrieved and used.');
-    } else {
-      console.error('Wallet creation failed.');
-    }
-    newUser.solanaWallet = walletAddress;
-    newUser.privateKey = privateKey;
-    newUser.apiKey = apiKey;
-
-    await newUser.save()
-      .then((savedUser) => {
-        bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${walletAddress}`, {
-          parse_mode: 'Markdown'
-        });
+  
+      await newUser.save()
+        .then((savedUser) => {
+          bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${savedUser.solanaWallet}`, {
+            parse_mode: 'Markdown'
+          });
 
         // Show the main menu after registration
         const menuOptions = {
