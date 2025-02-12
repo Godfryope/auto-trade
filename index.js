@@ -456,17 +456,17 @@ ws.on('message', (data) => {
 
               console.log(bondingCurvePercentage);
       
-          // if (bondingCurvePercentage >= 98) {
-              tokens.push({
-                  name: tokenData.name,
-                  symbol: tokenData.symbol,
-                  boundingCurvePercentage: boundingCurvePercentage,
-                  marketCapSol: tokenData.marketCapSol,
-                  uri: tokenData.uri,
-                  imageUri: tokenData.uri.image,
-                  mint: tokenData.mint
-              });
-            // }
+          if (bondingCurvePercentage >= '98') {
+            tokens.push({
+                name: tokenData.name,
+                symbol: tokenData.symbol,
+                boundingCurvePercentage: boundingCurvePercentage,
+                marketCapSol: tokenData.marketCapSol,
+                uri: tokenData.uri,
+                imageUri: tokenData.uri.image,
+                mint: tokenData.mint
+            });
+          }
         }
     } catch (error) {
         console.error('❌ Error parsing message:', error);
