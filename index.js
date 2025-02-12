@@ -492,7 +492,7 @@ app.post('/api/buy', async (req, res) => {
       return res.status(400).json({ success: false, message: 'User not found' });
   }
 
-  if (user.solanaBalance <= 0) {
+  if (user.solanaBalance < 0) {
       return res.status(400).json({ success: false, message: 'Wallet is empty' });
   }
 
