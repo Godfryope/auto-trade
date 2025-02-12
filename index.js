@@ -145,14 +145,9 @@ bot.onText(/\/login/, async (msg) => {
 
   if (user) {
     // If user exists, show the main menu
-    bot.sendMessage(chatId, `✅ Welcome ${user.firstName}! Fetching latest tokens...`);
-
-    // Simulate fetching token data after login
-    // ws.send(JSON.stringify({ method: "fetchLatestTokens" }));
-
-    // setTimeout(() => {
-    //     bot.sendMessage(chatId, "📢 You will receive token alerts here!");
-    // }, 2000);
+    bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
+      parse_mode: 'Markdown'
+    });
 
     // Display menu options for the user
     const menuOptions = {
