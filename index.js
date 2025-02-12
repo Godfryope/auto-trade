@@ -453,9 +453,9 @@ ws.on('message', (data) => {
         if (tokenData.vTokensInBondingCurve && tokenData.initialBuy) {
           const bondingCurvePercentage = (tokenData.vTokensInBondingCurve / (tokenData.vTokensInBondingCurve + tokenData.initialBuy)) * 100;
 
-          console.log(bondingCurvePercentage);
+          console.log("bondingCurve: ", bondingCurvePercentage);
       
-          if (bondingCurvePercentage >= 98) {
+          if (bondingCurvePercentage >= 97) {
             tokens.push({
                 name: tokenData.name,
                 symbol: tokenData.symbol,
