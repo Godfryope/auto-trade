@@ -454,14 +454,14 @@ ws.on('message', (data) => {
             const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
                 (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
 
-            if (boundingCurvePercentage == 98) {
+            if (boundingCurvePercentage >= 98) {
                 tokens.push({
                     name: tokenData.name,
                     symbol: tokenData.symbol,
                     boundingCurvePercentage: boundingCurvePercentage,
                     marketCapSol: tokenData.marketCapSol,
                     uri: tokenData.uri,
-                    imageUri: tokenData.image,
+                    imageUri: tokenData.uri.image,
                     mint: tokenData.mint
                 });
             }
