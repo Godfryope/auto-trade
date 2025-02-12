@@ -60,50 +60,6 @@ const createSolanaWallet = async () => {
   }
 };
 
-
-// Initialize WebSocket connection to PumpPortal API
-const ws = new WebSocket('wss://pumpportal.fun/api/data');
-
-ws.on('open', () => {
-    console.log('✅ Connected to PumpPortal WebSocket');
-    ws.send(JSON.stringify({ method: "subscribeNewToken" }));
-});
-
-ws.on('message', async (data) => {
-    try {
-        const tokenData = JSON.parse(data);
-        console.log('📩 Raw Data Received:', tokenData);
-
-        if (tokenData.vTokensInBondingCurve && tokenData.vSolInBondingCurve) {
-            const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
-                (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
-
-            if (boundingCurvePercentage >= 98) {
-                const tokenList = document.getElementById('tokenList');
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <div class="token-info">
-                        <img src="${tokenData.image}" alt="${tokenData.name} logo">
-                        <span><a href="${tokenData.uri}">${tokenData.name}</a> (${tokenData.symbol}) - MC: (${tokenData.marketCapSol})</span>
-                        <button onclick="buyToken('${tokenData.mint}')">Buy</button>
-                    </div>
-                `;
-                tokenList.appendChild(li);
-            }
-        }
-    } catch (error) {
-        console.error('❌ Error parsing message:', error);
-    }
-});
-
-ws.on('error', (error) => {
-    console.error('🚨 WebSocket Error:', error);
-});
-
-ws.on('close', (code, reason) => {
-    console.log(`❌ Connection closed: ${code} - ${reason}`);
-});
-
 // Command to handle user login (check if user exists or needs registration)
 bot.onText(/\/login/, async (msg) => {
   const chatId = msg.chat.id;
@@ -478,6 +434,9 @@ app.get('/api/authenticate/:telegramId', async (req, res) => {
 });
 
 app.use(bodyParser.json());
+
+// Initialize WebSocket connection to PumpPortal API
+const ws = new WebSocket('wss://pumpportal.fun/api/data');
 
 let tokens = [];
 
