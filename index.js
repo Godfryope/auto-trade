@@ -174,9 +174,9 @@ bot.onText(/\/login/, async (msg) => {
     // If user doesn't exist, register them silently
     const newUser = new User({
       telegramId: chatId,
-      firstName: query.from.first_name,
-      lastName: query.from.last_name || '',
-      username: query.from.username || ''
+      firstName: msg.from.first_name,
+      lastName: msg.from.last_name || '',
+      username: msg.from.username || ''
     });
   
     // Create a Solana wallet for the user and save the user with the wallet details
