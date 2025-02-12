@@ -228,6 +228,7 @@ bot.onText(/\/login/, async (msg) => {
           parse_mode: 'Markdown'
         });
       });
+    }
   }
 });
 
