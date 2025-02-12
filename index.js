@@ -454,7 +454,7 @@ ws.on('message', (data) => {
             const boundingCurvePercentage = (tokenData.vTokensInBondingCurve / 
                 (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
 
-            if (boundingCurvePercentage >= 95) {
+            if (boundingCurvePercentage == 98) {
                 tokens.push({
                     name: tokenData.name,
                     symbol: tokenData.symbol,
@@ -482,10 +482,6 @@ ws.on('close', (code, reason) => {
 app.get('/api/tokens', (req, res) => {
     res.json(tokens);
 });
-
-setInterval(() => {
-    ws.send(JSON.stringify({ method: "updateTokenList" }));
-}, 1000);
 
 app.post('/api/buy', async (req, res) => {
   const { telegramId, mint } = req.body;
