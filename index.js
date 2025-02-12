@@ -458,7 +458,7 @@ ws.on('message', (data) => {
                 tokens.push({
                     name: tokenData.name,
                     symbol: tokenData.symbol,
-                    boundingCurvePercentage: tokenData.vTokensInBondingCurve,
+                    boundingCurvePercentage: boundingCurvePercentage,
                     marketCapSol: tokenData.marketCapSol,
                     uri: tokenData.uri,
                     imageUri: tokenData.image,
@@ -482,6 +482,10 @@ ws.on('close', (code, reason) => {
 app.get('/api/tokens', (req, res) => {
     res.json(tokens);
 });
+
+setInterval(() => {
+    ws.send(JSON.stringify({ method: "updateTokenList" }));
+}, 1000);
 
 app.post('/api/buy', async (req, res) => {
   const { telegramId, mint } = req.body;
