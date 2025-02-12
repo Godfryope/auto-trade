@@ -33,8 +33,6 @@ const userSchema = new mongoose.Schema({
 // Create a model for the schema
 const User = mongoose.model('User', userSchema);
 
-const axios = require('axios');
-
 const createSolanaWallet = async () => {
   try {
     // Step 1: Create a wallet
