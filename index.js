@@ -456,7 +456,7 @@ ws.on('message', (data) => {
 
               console.log(bondingCurvePercentage);
       
-          if (bondingCurvePercentage >= 95) {
+          // if (bondingCurvePercentage >= 98) {
               tokens.push({
                   name: tokenData.name,
                   symbol: tokenData.symbol,
@@ -466,7 +466,7 @@ ws.on('message', (data) => {
                   imageUri: tokenData.uri.image,
                   mint: tokenData.mint
               });
-            }
+            // }
         }
     } catch (error) {
         console.error('❌ Error parsing message:', error);
