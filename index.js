@@ -77,14 +77,16 @@ ws.on('message', async (data) => {
                 (tokenData.vTokensInBondingCurve + tokenData.vSolInBondingCurve)) * 100;
 
             if (boundingCurvePercentage >= 98) {
-                const tokenInfo = `🔥 98%+ Bounding Curve Token:
-📛 Name: ${tokenData.name}
-💠 Symbol: ${tokenData.symbol}
-📊 Bounding Curve: ${boundingCurvePercentage.toFixed(2)}%
-💰 Market Cap: ${tokenData.marketCapSol} SOL
-🔗 URI: ${tokenData.uri}`;
-
-                bot.sendMessage(chatId, tokenInfo);
+                const tokenList = document.getElementById('tokenList');
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <div class="token-info">
+                        <img src="${tokenData.imageUri}" alt="${tokenData.name} logo">
+                        <span><a href="${tokenData.uri}" target="_blank">${tokenData.name}</a> (${tokenData.symbol}) - ${boundingCurvePercentage.toFixed(2)}%</span>
+                        <button onclick="buyToken('${tokenData.mint}')">Buy</button>
+                    </div>
+                `;
+                tokenList.appendChild(li);
             }
         }
     } catch (error) {
@@ -462,59 +464,59 @@ bot.on('callback_query', async (query) => {
   } 
 });
 
-app.get('/api/authenticate/:telegramId', async (req, res) => {
-  const { telegramId } = req.params;
-  const user = await User.findOne({ telegramId });
+// app.get('/api/authenticate/:telegramId', async (req, res) => {
+//   const { telegramId } = req.params;
+//   const user = await User.findOne({ telegramId });
 
-  if (user) {
-    res.json({ success: true });
-  } else {
-    res.json({ success: false });
-  }
-});
+//   if (user) {
+//     res.json({ success: true });
+//   } else {
+//     res.json({ success: false });
+//   }
+// });
 
-app.get('/api/tokens', async (req, res) => {
-  // Fetch tokens from the PumpPortal API
-  try {
-    const response = await fetch('https://pumpportal.fun/api/tokens');
-    const tokens = await response.json();
-    res.json(tokens);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch tokens' });
-  }
-});
+// app.get('/api/tokens', async (req, res) => {
+//   // Fetch tokens from the PumpPortal API
+//   try {
+//     const response = await fetch('https://pumpportal.fun/api/tokens');
+//     const tokens = await response.json();
+//     res.json(tokens);
+//   } catch (error) {
+//     res.status(500).json({ error: 'Failed to fetch tokens' });
+//   }
+// });
 
-app.post('/api/buy', async (req, res) => {
-  const { telegramId, mint } = req.body;
-  const user = await User.findOne({ telegramId });
+// app.post('/api/buy', async (req, res) => {
+//   const { telegramId, mint } = req.body;
+//   const user = await User.findOne({ telegramId });
 
-  if (!user) {
-    return res.json({ success: false, message: 'User not found' });
-  }
+//   if (!user) {
+//     return res.json({ success: false, message: 'User not found' });
+//   }
 
-  try {
-    const response = await fetch("https://pumpportal.fun/api/trade?api-key=dcujpn1fdmt78n22dna6upb3ct5p2c3ca4t5aj1fe4qmrhtm5wnmyy26c9c58uv1arw6au3h8tw4cmkgcwt78dbe8n848kj8b1m32u3gcx4n0nuka9rm4ebed1a3cjaeexmpjtjp84ykuc5upckvg90nngkk3c96kgpj2cr9rv4gp36edm74kk7d4r36uj35xn4jc1pen8kuf8", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        "action": "buy",
-        "mint": mint,
-        "amount": 0.01,
-        "denominatedInSol": "true",
-        "slippage": 10,
-        "priorityFee": 0.005,
-        "pool": "pump"
-      })
-    });
-    const data = await response.json();
-    res.json({ success: true, data });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to buy token', error });
-  }
-});
+//   try {
+//     const response = await fetch("https://pumpportal.fun/api/trade?api-key=dcujpn1fdmt78n22dna6upb3ct5p2c3ca4t5aj1fe4qmrhtm5wnmyy26c9c58uv1arw6au3h8tw4cmkgcwt78dbe8n848kj8b1m32u3gcx4n0nuka9rm4ebed1a3cjaeexmpjtjp84ykuc5upckvg90nngkk3c96kgpj2cr9rv4gp36edm74kk7d4r36uj35xn4jc1pen8kuf8", {
+//       method: "POST",
+//       headers: {
+//         "Content-Type": "application/json"
+//       },
+//       body: JSON.stringify({
+//         "action": "buy",
+//         "mint": mint,
+//         "amount": 0.01,
+//         "denominatedInSol": "true",
+//         "slippage": 10,
+//         "priorityFee": 0.005,
+//         "pool": "pump"
+//       })
+//     });
+//     const data = await response.json();
+//     res.json({ success: true, data });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: 'Failed to buy token', error });
+//   }
+// });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+// app.listen(port, () => {
+//   console.log(`Server running on port ${port}`);
+// });

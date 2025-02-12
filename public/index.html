@@ -1,26 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Token Trading</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>98%+ Bounding Curve Tokens</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .token-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .token-info img {
+            margin-right: 10px;
+            width: 50px;
+            height: 50px;
+        }
+        .token-info span {
+            font-size: 18px;
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Token Trading Platform</h1>
-    </header>
-    <main>
-      <div class="trade-section">
-        <h2>Available Tokens</h2>
-        <ul id="tokenList"></ul>
-      </div>
-    </main>
-    <footer>
-      <p>&copy; 2025 Token Trading Platform</p>
-    </footer>
-  </div>
-  <script src="app.js"></script>
+    <h1>98%+ Bounding Curve Tokens</h1>
+    <ul id="tokenList"></ul>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const telegramId = urlParams.get('telegramId');
+          
+            if (telegramId) {
+              await authenticateUser(telegramId);
+            } else {
+              alert('Telegram ID is missing from the URL.');
+            }
+        });
+      
+        async function authenticateUser(telegramId) {
+            try {
+                const response = await fetch(`/api/authenticate/${telegramId}`);
+                const data = await response.json();
+          
+                if (data.success) {
+                    loadTokens();
+                } else {
+                    alert('Authentication failed. Please check your Telegram ID.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again later.');
+            }
+        }
+      
+        async function loadTokens() {
+            try {
+                const response = await fetch('/api/tokens');
+                const tokens = await response.json();
+                const tokenList = document.getElementById('tokenList');
+                tokenList.innerHTML = '';
+          
+                tokens.forEach(token => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                      <div class="token-info">
+                        <img src="${token.imageUri}" alt="${token.name} logo">
+                        <span><a href="${token.uri}" target="_blank">${token.name}</a> (${token.symbol}) - ${token.boundingCurvePercentage.toFixed(2)}%</span>
+                        <button onclick="buyToken('${token.mint}')">Buy</button>
+                      </div>
+                    `;
+                    tokenList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while loading tokens.');
+            }
+        }
+      
+        async function buyToken(mint) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const telegramId = urlParams.get('telegramId');
+          
+            try {
+                const response = await fetch('/api/buy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ telegramId, mint })
+                });
+                const data = await response.json();
+          
+                if (data.success) {
+                    alert('Token purchase successful!');
+                } else {
+                    alert('Token purchase failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during the token purchase.');
+            }
+        }
+    </script>
 </body>
 </html>
