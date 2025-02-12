@@ -483,34 +483,56 @@ app.get('/api/tokens', (req, res) => {
     res.json(tokens);
 });
 
+// Express route to handle the buy token request
 app.post('/api/buy', async (req, res) => {
   const { telegramId, mint } = req.body;
   const user = await User.findOne({ telegramId });
 
   if (!user) {
-    return res.json({ success: false, message: 'User not found' });
+      return res.status(400).json({ success: false, message: 'User not found' });
+  }
+
+  if (user.solanaBalance <= 0) {
+      return res.status(400).json({ success: false, message: 'Wallet is empty' });
+  }
+
+  // Example check for minimum required balance to make a purchase
+  const amountToPurchase = 0.01;
+  if (user.solanaBalance < amountToPurchase) {
+      return res.status(400).json({ success: false, message: 'Insufficient funds' });
   }
 
   try {
-    const response = await fetch("https://pumpportal.fun/api/trade?api-key=dcujpn1fdmt78n22dna6upb3ct5p2c3ca4t5aj1fe4qmrhtm5wnmyy26c9c58uv1arw6au3h8tw4cmkgcwt78dbe8n848kj8b1m32u3gcx4n0nuka9rm4ebed1a3cjaeexmpjtjp84ykuc5upckvg90nngkk3c96kgpj2cr9rv4gp36edm74kk7d4r36uj35xn4jc1pen8kuf8", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        "action": "buy",
-        "mint": mint,
-        "amount": 0.01,
-        "denominatedInSol": "true",
-        "slippage": 10,
-        "priorityFee": 0.005,
-        "pool": "pump"
-      })
-    });
-    const data = await response.json();
-    res.json({ success: true, data });
+      const response = await fetch(`https://pumpportal.fun/api/trade?api-key=${user.apiKey}`, {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+              "action": "buy",
+              "mint": mint,
+              "amount": amountToPurchase,
+              "denominatedInSol": true,
+              "slippage": 10,
+              "priorityFee": 0.005,
+              "pool": "pump"
+          })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+          return res.status(response.status).json({ success: false, message: data.message || 'Failed to buy token' });
+      }
+
+      // Deduct the purchased amount from user's balance
+      user.solanaBalance -= amountToPurchase;
+      await user.save();
+
+      res.json({ success: true, data });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to buy token', error });
+      console.error('Error:', error);
+      res.status(500).json({ success: false, message: 'Failed to buy token', error: error.message });
   }
 });
 

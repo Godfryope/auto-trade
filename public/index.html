@@ -146,7 +146,7 @@
         async function buyToken(mint) {
             const urlParams = new URLSearchParams(window.location.search);
             const telegramId = urlParams.get('telegramId');
-          
+
             try {
                 const response = await fetch('/api/buy', {
                     method: 'POST',
@@ -156,11 +156,15 @@
                     body: JSON.stringify({ telegramId, mint })
                 });
                 const data = await response.json();
-          
-                if (data.success) {
+
+                if (response.ok && data.success) {
                     alert('Token purchase successful!');
+                } else if (response.status === 400 && data.message === 'Insufficient funds') {
+                    alert('Token purchase failed: Insufficient funds in your wallet.');
+                } else if (response.status === 400 && data.message === 'Wallet is empty') {
+                    alert('Token purchase failed: Your wallet is empty.');
                 } else {
-                    alert('Token purchase failed. Please try again.');
+                    alert(`Token purchase failed: ${data.message}`);
                 }
             } catch (error) {
                 console.error('Error:', error);
