@@ -502,17 +502,17 @@ request(options, function (error, response) {
           // Append the new div to the container
           container.appendChild(tokenUpdateDiv);
 
-          if (bondingcurve >= 97) {
-              tokens.push({
-                  name: base.Name,
-                  symbol: base.Symbol,
-                  bondingCurvePercentage: bondingcurve,
-                  marketCapSol: marketcap,
-                  uri: uri,
-                  imageUri: uri,
-                  mint: base.MintAddress
-              });
-          }
+          // if (bondingcurve >= 97) {
+          //     tokens.push({
+          //         name: base.Name,
+          //         symbol: base.Symbol,
+          //         bondingCurvePercentage: bondingcurve,
+          //         marketCapSol: marketcap,
+          //         uri: uri,
+          //         imageUri: uri,
+          //         mint: base.MintAddress
+          //     });
+          // }
       });
   } catch (e) {
       console.error("Failed to parse response body: ", e);
