@@ -1,161 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crypto Trade Automation</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Updates</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+      body {
+          font-family: 'Roboto', sans-serif;
+          margin: 0;
+          padding: 0;
+          background-color: #f4f4f4;
+      }
+
+      header {
+          background-color: #282c34;
+          color: white;
+          padding: 20px;
+          text-align: center;
+      }
+
+      main {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          padding: 20px;
+      }
+
+      .token-update {
+          background-color: white;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+          margin: 10px;
+          padding: 20px;
+          width: 300px;
+          transition: transform 0.2s;
+      }
+
+      .token-update:hover {
+          transform: scale(1.05);
+      }
+
+      .token-update h2 {
+          font-size: 1.5em;
+          margin-top: 0;
+          color: #333;
+      }
+
+      .token-update p {
+          margin: 10px 0;
+          color: #555;
+      }
+
+      .token-update hr {
+          border: none;
+          border-top: 1px solid #eee;
+          margin: 20px 0;
+      }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-900">
-  <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold mb-4">Crypto Trade Automation Dashboard</h1>
-
-    <div id="status" class="mb-4 p-4 bg-blue-100 text-blue-800 rounded"></div>
-
-    <button id="fetchTokens" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Fetch Token Data</button>
-    <button id="startSubscription" class="bg-green-500 text-white px-4 py-2 rounded ml-2 hover:bg-green-600">Start Live Subscription</button>
-    <div id="log" class="mt-4 p-4 bg-gray-200 rounded overflow-auto max-h-60"></div>
-  </div>
-
-  <script>
-    const bitqueryEndpoint = 'https://graphql.bitquery.io';
-    const bitqueryApiKey = 'ory_at_llxYpDcl6vp7p-xcPPN_D3P8TOtovSrFqBGUCHWp70c.pVmb1ohOQ7ZSkoVK7FjHq_Taq3XST0gprpmWb4EK2S0';
-
-    function startWebSocketSubscription() {
-      const token = bitqueryApiKey;
-      const bitqueryConnection = new WebSocket(
-        `wss://streaming.bitquery.io/eap?token=${token}`,
-        ["graphql-ws"]
-      );
-
-      bitqueryConnection.onopen = () => {
-        console.log("Connected to Bitquery.");
-        document.getElementById('status').textContent = 'Connected to Bitquery WebSocket';
-
-        const initMessage = JSON.stringify({ type: "connection_init" });
-        bitqueryConnection.send(initMessage);
-      };
-
-      bitqueryConnection.onmessage = (data) => {
-        const response = JSON.parse(data.data);
-        console.log("Raw Response:", response); // Debugging
-
-        if (response.type === "connection_ack") {
-          console.log("Connection acknowledged by server.");
-
-          const subscriptionMessage = JSON.stringify({
-            type: "start",
-            id: "1",
-            payload: {
-              query: `
-              subscription MyQuery {
-                Solana {
-                  DEXPools(
-                    where: {
-                      Pool: {
-                        Base: { PostAmount: { gt: "206900000", lt: "246555000" } }, 
-                        Dex: { ProgramAddress: { is: "6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P" } }, 
-                        Market: { QuoteCurrency: { MintAddress: { is: "11111111111111111111111111111111" } } }
-                      }, 
-                      Transaction: { Result: { Success: true } }
-                    }
-                  ) {
-                    Pool {
-                      Market {
-                        BaseCurrency {
-                          Name
-                          Symbol
-                        }
-                        QuoteCurrency {
-                          Name
-                          Symbol
-                        }
-                      }
-                      Dex {
-                        ProtocolName
-                      }
-                      Quote {
-                        PriceInUSD
-                      }
-                    }
-                  }
-                }
-              }
-              `,
-            },
-          });
-
-          bitqueryConnection.send(subscriptionMessage);
-          console.log("Subscription message sent.");
-        }
-
-        if (response.type === "data") {
-            displaySubscriptionData(response.payload.data);
-        }
-
-        if (response.type === "ka") {
-          console.log("Keep-alive message received.");
-        }
-      };
-
-      bitqueryConnection.onerror = (error) => {
-        console.error("WebSocket Error:", error);
-      };
-
-      bitqueryConnection.onclose = () => {
-        console.log("Disconnected from Bitquery.");
-      };
-    }
-
-    function displaySubscriptionData(data) {
-        console.log("Full API Response:", data); // Debugging
-
-        const logElement = document.getElementById('log');
-        logElement.innerHTML = '';
-
-        if (!data?.Solana?.DEXPools?.length) {
-            logElement.innerHTML = '<p>No live data available.</p>';
-            return;
-        }
-
-        const table = document.createElement('table');
-        table.classList.add('w-full', 'bg-white', 'shadow-md', 'rounded', 'overflow-hidden', 'mt-4');
-
-        table.innerHTML = `
-            <thead class="bg-green-500 text-white">
-                <tr>
-                    <th class="px-4 py-2">Base Currency</th>
-                    <th class="px-4 py-2">Symbol</th>
-                    <th class="px-4 py-2">Quote Currency</th>
-                    <th class="px-4 py-2">Symbol</th>
-                    <th class="px-4 py-2">Protocol</th>
-                    <th class="px-4 py-2">Price (USD)</th>
-                </tr>
-            </thead>
-            <tbody class="text-gray-700">
-            ${data.Solana.DEXPools.map(pool => {
-                let price = pool?.Pool?.Quote?.PriceInUSD;
-                console.log("Price Debug:", price); // Log each price
-
-                return `
-                    <tr class="border-t">
-                        <td class="px-4 py-2">${pool.Pool.Market.BaseCurrency.Name || "N/A"}</td>
-                        <td class="px-4 py-2">${pool.Pool.Market.BaseCurrency.Symbol || "N/A"}</td>
-                        <td class="px-4 py-2">${pool.Pool.Market.QuoteCurrency.Name || "N/A"}</td>
-                        <td class="px-4 py-2">${pool.Pool.Market.QuoteCurrency.Symbol || "N/A"}</td>
-                        <td class="px-4 py-2">${pool.Pool.Dex.ProtocolName || "N/A"}</td>
-                        <td class="px-4 py-2">$${price ? parseFloat(price).toFixed(2) : "N/A"}</td>
-                    </tr>
-                `;
-            }).join('')}
-            </tbody>
-        `;
-
-        logElement.appendChild(table);
-    }
+<body>
+    <header>
+        <h1>Token Updates</h1>
+    </header>
+    <main id="token-updates"></main>
 
 
-    document.getElementById('startSubscription').addEventListener('click', startWebSocketSubscription);
-  </script>
+    <script>
+      async function fetchTokens() {
+          try {
+              const response = await fetch('/api/tokens');
+              const tokens = await response.json();
+
+              const tokenUpdatesContainer = document.getElementById('token-updates');
+              tokenUpdatesContainer.innerHTML = '';
+
+              tokens.forEach((token, index) => {
+                  const tokenUpdate = document.createElement('div');
+                  tokenUpdate.classList.add('token-update');
+
+                  tokenUpdate.innerHTML = `
+                      <h2>--- Token Update #${index + 1} ---</h2>
+                      <p>DEX: ${token.dexName || 'Unknown DEX'}</p>
+                      <p>Token: ${token.base?.Name || 'Unknown'} (${token.base?.Symbol || 'N/A'})</p>
+                      <p>Mint Address: ${token.base?.MintAddress || 'N/A'}</p>
+                      <p>Price: $${token.priceUSD !== 'N/A' ? parseFloat(token.priceUSD).toFixed(10) : 'N/A'}</p>
+                      <p>Market Cap: $${token.marketcap !== 'N/A' ? parseFloat(token.marketcap).toLocaleString() : 'N/A'}</p>
+                      <p>Bonding Curve: ${token.bondingcurve}%</p>
+                      <p>priceUSD2: $${token.priceUSD2 !== 'N/A' ? parseFloat(token.priceUSD2).toFixed(10) : 'N/A'}</p>
+                      <p>URI: ${token.uri}</p>
+                      <p>Pair: ${token.base?.Symbol || 'N/A'} / ${token.quote?.Symbol || 'N/A'}</p>
+                      <hr>
+                  `;
+
+                  tokenUpdatesContainer.appendChild(tokenUpdate);
+              });
+          } catch (error) {
+              console.error('Failed to fetch tokens:', error);
+          }
+      }
+
+      // Fetch tokens on page load
+      window.onload = fetchTokens;
+    </script>
+    <script src="script.js"></script>
 </body>
 </html>

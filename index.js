@@ -490,21 +490,7 @@ request(options, function (error, response) {
             console.log(`Pair: ${base?.Symbol || "N/A"} / ${quote?.Symbol || "N/A"}`);
             console.log("--------------------------------\n");
 
-            tokens.push({
-              tokenUpdateNumber: index + 1,
-              dex: dexName,
-              token: {
-                  name: base?.Name || "Unknown",
-                  symbol: base?.Symbol || "N/A"
-              },
-              mintAddress: base?.MintAddress || "N/A",
-              priceUSD: priceUSD !== "N/A" ? parseFloat(priceUSD).toFixed(10) : "N/A",
-              marketCap: marketcap !== "N/A" ? parseFloat(marketcap).toLocaleString() : "N/A",
-              bondingCurve: bondingcurve,
-              priceUSD2: priceUSD2 !== "N/A" ? parseFloat(priceUSD2).toFixed(10) : "N/A",
-              uri: uri,
-              pair: `${base?.Symbol || "N/A"} / ${quote?.Symbol || "N/A"}`
-            });
+            
         });
     } catch (e) {
         console.error("Failed to parse response body: ", e);

@@ -3,180 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About to graduate Tokens</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Token Updates</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- <link rel="stylesheet" href="styles.css"> -->
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #4CAF50;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        #tokenList {
-            list-style-type: none;
-            padding: 0;
-            margin: 20px auto;
-            max-width: 800px;
-        }
-        .token-info {
-            display: flex;
-            align-items: center;
-            background: white;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .token-info img {
-            margin-right: 15px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        .token-info span {
-            font-size: 16px;
-            flex-grow: 1;
-        }
-        .token-info a {
-            color: #4CAF50;
-            text-decoration: none;
-            font-weight: 500;
-        }
-        .token-info a:hover {
-            text-decoration: underline;
-        }
-        .token-info button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .token-info button:hover {
-            background-color: #45a049;
-        }
-        footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #4CAF50;
-            color: white;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
-        }
+      body {
+          font-family: 'Roboto', sans-serif;
+          margin: 0;
+          padding: 0;
+          background-color: #f4f4f4;
+      }
+
+      header {
+          background-color: #282c34;
+          color: white;
+          padding: 20px;
+          text-align: center;
+      }
+
+      main {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          padding: 20px;
+      }
+
+      .token-update {
+          background-color: white;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+          margin: 10px;
+          padding: 20px;
+          width: 300px;
+          transition: transform 0.2s;
+      }
+
+      .token-update:hover {
+          transform: scale(1.05);
+      }
+
+      .token-update h2 {
+          font-size: 1.5em;
+          margin-top: 0;
+          color: #333;
+      }
+
+      .token-update p {
+          margin: 10px 0;
+          color: #555;
+      }
+
+      .token-update hr {
+          border: none;
+          border-top: 1px solid #eee;
+          margin: 20px 0;
+      }
     </style>
 </head>
 <body>
     <header>
-        <h1>About to graduate tokens</h1>
+        <h1>Token Updates</h1>
     </header>
-    <ul id="tokenList"></ul>
-    <footer>
-        &copy; 2025 Token Platform. All rights reserved.
-    </footer>
+    <main id="token-updates"></main>
+
 
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const telegramId = urlParams.get('telegramId');
-          
-            if (telegramId) {
-              await authenticateUser(telegramId);
-            } else {
-              alert('Telegram ID is missing from the URL.');
-            }
-        });
-      
-        async function authenticateUser(telegramId) {
-            try {
-                const response = await fetch(`/api/authenticate/${telegramId}`);
-                const data = await response.json();
-          
-                if (data.success) {
-                    loadTokens();
-                } else {
-                    alert('Authentication failed. Please check your Telegram ID.');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again later.');
-            }
-        }
-      
-        async function loadTokens() {
-            try {
-                const response = await fetch('/api/tokens');
-                const tokens = await response.json();
-                const tokenList = document.getElementById('tokenList');
-                tokenList.innerHTML = '';
-          
-                tokens.forEach(token => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <div class="token-info">
-                            <img src="${token.uri}" alt="${token.token.name} logo">
-                            <span>
-                                <a href="${token.uri}" target="_blank">${token.token.name}</a> (${token.token.symbol})</span>
-                            <span>Mint Address: ${token.mintAddress}</span>
-                            <span>Price USD: $${token.priceUSD}</span>
-                            <span>Market Cap: $${token.marketCap}</span>
-                            <span>Bonding Curve: ${token.bondingCurve.toFixed(2)}%</span>
-                            <span>Price USD2: $${token.priceUSD2}</span>
-                            <span>URI: <a href="${token.uri}" target="_blank">${token.uri}</a></span>
-                            <span>Pair: ${token.pair}</span>
-                            <button onclick="buyToken('${token.mintAddress}')">Buy</button>
-                        </div>
-                    `;
-                    tokenList.appendChild(li);
-                });
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while loading tokens.');
-            }
-        }
-      
-        async function buyToken(mint) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const telegramId = urlParams.get('telegramId');
+      async function fetchTokens() {
+          try {
+              const response = await fetch('/api/tokens');
+              const tokens = await response.json();
 
-            try {
-                const response = await fetch('/api/buy', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ telegramId, mint })
-                });
-                const data = await response.json();
+              const tokenUpdatesContainer = document.getElementById('token-updates');
+              tokenUpdatesContainer.innerHTML = '';
 
-                if (response.ok && data.success) {
-                    alert('Token purchase successful!');
-                } else if (response.status === 400 && data.message === 'Insufficient funds') {
-                    alert('Token purchase failed: Insufficient funds in your wallet.');
-                } else {
-                    alert(`Token purchase failed: ${data.message}`);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred during the token purchase.');
-            }
-        }
+              tokens.forEach((token, index) => {
+                  const tokenUpdate = document.createElement('div');
+                  tokenUpdate.classList.add('token-update');
+
+                  tokenUpdate.innerHTML = `
+                      <h2>--- Token Update #${index + 1} ---</h2>
+                      <p>DEX: ${token.dexName || 'Unknown DEX'}</p>
+                      <p>Token: ${token.base?.Name || 'Unknown'} (${token.base?.Symbol || 'N/A'})</p>
+                      <p>Mint Address: ${token.base?.MintAddress || 'N/A'}</p>
+                      <p>Price: $${token.priceUSD !== 'N/A' ? parseFloat(token.priceUSD).toFixed(10) : 'N/A'}</p>
+                      <p>Market Cap: $${token.marketcap !== 'N/A' ? parseFloat(token.marketcap).toLocaleString() : 'N/A'}</p>
+                      <p>Bonding Curve: ${token.bondingcurve}%</p>
+                      <p>priceUSD2: $${token.priceUSD2 !== 'N/A' ? parseFloat(token.priceUSD2).toFixed(10) : 'N/A'}</p>
+                      <p>URI: ${token.uri}</p>
+                      <p>Pair: ${token.base?.Symbol || 'N/A'} / ${token.quote?.Symbol || 'N/A'}</p>
+                      <hr>
+                  `;
+
+                  tokenUpdatesContainer.appendChild(tokenUpdate);
+              });
+          } catch (error) {
+              console.error('Failed to fetch tokens:', error);
+          }
+      }
+
+      // Fetch tokens on page load
+      window.onload = fetchTokens;
     </script>
+    <script src="script.js"></script>
 </body>
 </html>
