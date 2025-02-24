@@ -460,7 +460,7 @@ request(options, function (error, response) {
     var responseBody = JSON.parse(response.body);
 
     var pools = responseBody?.data?.Solana?.DEXPools || [];
-    var pools2 = responseBody?.data?.Solana?.DEXTrades || [];
+    var trades = responseBody?.data?.Solana?.DEXTrades || [];
 
     tokens = pools.map((pool, index) => {
       const base = pool?.Pool?.Market?.BaseCurrency || {};
@@ -468,8 +468,9 @@ request(options, function (error, response) {
       const marketcap = pool?.Pool?.Base?.PriceInUSD * 1000000000 || "N/A";
       const priceUSD = pool?.Pool?.Base?.PriceInUSD || "N/A";
       const balance = pool?.Pool?.Base?.Balance ?? 0; // Ensure it's a number
-      const uri = pools2?.Trade?.Buy?.Currency?.Uri || "N/A";
-      const priceUSD2 = responseBody?.data?.Solana?.DEXTrades?.Trade?.Buy?.PriceInUSD || "N/A";
+      const trade = trades[index]?.Trade?.Buy || {};
+      const uri = trade?.Currency?.Uri || "N/A";
+      const priceUSD2 = trade?.PriceInUSD || "N/A";
 
       // Calculate bonding curve safely
       const bondingcurve = balance > 0
@@ -485,7 +486,7 @@ request(options, function (error, response) {
       console.log(`Price: $${priceUSD !== "N/A" ? parseFloat(priceUSD).toFixed(10) : "N/A"}`);
       console.log(`Market Cap: $${marketcap !== "N/A" ? parseFloat(marketcap).toLocaleString() : "N/A"}`);
       console.log(`Bonding Curve: ${bondingcurve}%`);
-      console.log(`priceUSD2: $${priceUSD2 !== "N/A" ? parseFloat(priceUSD2).toFixed(10) : "N/A"}`);
+      console.log(`Price USD2: $${priceUSD2 !== "N/A" ? parseFloat(priceUSD2).toFixed(10) : "N/A"}`);
       console.log(`URI: ${uri}`);
       console.log(`Pair: ${base?.Symbol || "N/A"} / ${quote?.Symbol || "N/A"}`);
       console.log("--------------------------------\n");

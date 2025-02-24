@@ -9,7 +9,73 @@ var options = {
       "Bearer ory_at_ES3V8WqpOjGsr6hAc54V-WTE-mKjvajBWuX8hhqJiWg.AU-UGWcDcME8mEhFsTartaMAORq5Lkib4A3eKs6fzSM",
   },
   body: JSON.stringify({
-    query: 'subscription MyQuery {\n  Solana {\n    DEXPools(\n      where: {Pool: {Base: {PostAmount: {gt: \"206900000\", lt: \"246555000\"}}, Dex: {ProgramAddress: {is: \"6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P\"}}, Market: {QuoteCurrency: {MintAddress: {is: \"11111111111111111111111111111111\"}}}}, Transaction: {Result: {Success: true}}}\n    ) {\n      Pool {\n        Market {\n          BaseCurrency {\n            MintAddress\n            Name\n            Symbol\n          }\n          MarketAddress\n          QuoteCurrency {\n            MintAddress\n            Name\n            Symbol\n          }\n        }\n        Dex {\n          ProtocolName\n          ProtocolFamily\n        }\n        Base {\n          Balance: PostAmount\n          Marketcap: PostAmountInUSD\n          PriceInUSD\n        }\n        Quote {\n          PostAmountInUSD\n        }\n      }\n    }\n    DEXTrades {\n      Trade {\n        Buy {\n          Currency {\n            Uri\n          }\n          PriceInUSD\n        }\n      }\n    }\n  }\n}\n',
+    query: `subscription {
+      Solana {
+        DEXTrades(
+          where: {Trade: {Buy: {Currency: {UpdateAuthority: {is: "TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM"}, MintAddress: {}}}, Dex: {ProgramAddress: {is: "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"}}}}
+        ) {
+          Trade {
+            Dex {
+              ProgramAddress
+              ProtocolFamily
+              ProtocolName
+            }
+            Buy {
+              Account {
+                Address
+              }
+              Amount
+              Currency {
+                MintAddress
+                Decimals
+                Symbol
+                ProgramAddress
+                Name
+              }
+              PriceAgaistSellCurrency: Price
+            }
+            Sell {
+              Account {
+                Address
+              }
+              Amount
+              Currency {
+                MintAddress
+                Decimals
+                Symbol
+                Name
+              }
+              PriceAgaistBuyCurrency: Price
+            }
+          }
+          Block {
+            Time
+            Height
+          }
+          Transaction {
+            Signature
+            FeePayer
+            Signer
+          }
+        }
+        DEXPools {
+          Pool {
+            Base {
+              Balance: PostAmount
+              Marketcap: PostAmountInUSD
+              Price
+              PriceInUSD
+            }
+            Quote {
+              PostAmount
+              PostAmountInUSD
+              Price
+              PriceInUSD
+            }
+          }
+        }
+      }
+    }`,
     variables: "{}",
   }),
 };
