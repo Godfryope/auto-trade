@@ -42,8 +42,14 @@
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const tokens = await response.json();
-        alert('Fetched tokens: ' + JSON.stringify(tokens));
+        console.log('Fetched tokens: ', tokens);
         const tokensContainer = document.getElementById('tokens');
+
+        if (tokens.length === 0) {
+          console.log('No tokens found.');
+          tokensContainer.innerHTML = '<p class="text-center">No tokens available.</p>';
+          return;
+        }
 
         tokens.forEach(token => {
           const tokenCard = document.createElement('div');
@@ -67,6 +73,7 @@
           tokensContainer.appendChild(tokenCard);
         });
       } catch (error) {
+        console.error('Error fetching tokens: ', error);
         alert('Error fetching tokens: ' + error);
       }
     }
