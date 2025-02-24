@@ -9,9 +9,8 @@ var options = {
       "Bearer ory_at_ES3V8WqpOjGsr6hAc54V-WTE-mKjvajBWuX8hhqJiWg.AU-UGWcDcME8mEhFsTartaMAORq5Lkib4A3eKs6fzSM",
   },
   body: JSON.stringify({
-      query:
-        'subscription MyQuery {\n  Solana {\n    DEXPools(\n      where: {Pool: {Base: {PostAmount: {gt: \"206900000\", lt: \"246555000\"}}, Dex: {ProgramAddress: {is: \"6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P\"}}, Market: {QuoteCurrency: {MintAddress: {is: \"11111111111111111111111111111111\"}}}}, Transaction: {Result: {Success: true}}}\n    ) {\n      Pool {\n        Market {\n          BaseCurrency {\n            MintAddress\n            Name\n            Symbol\n          }\n          MarketAddress\n          QuoteCurrency {\n            MintAddress\n            Name\n            Symbol\n          }\n        }\n        Dex {\n          ProtocolName\n          ProtocolFamily\n        }\n        Base {\n          Balance: PostAmount\n          Marketcap: PostAmountInUSD\n          PriceInUSD\n        }\n        Quote {\n          PostAmountInUSD\n        }\n      }\n    }\n    DEXTrades {\n      Trade {\n        Buy {\n          Currency {\n            Uri\n          }\n          PriceInUSD\n        }\n      }\n    }\n  }\n}\n',
-      variables: "{}",
+    query: 'subscription MyQuery {\n  Solana {\n    DEXPools(\n      where: {Pool: {Base: {PostAmount: {gt: \"206900000\", lt: \"246555000\"}}, Dex: {ProgramAddress: {is: \"6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P\"}}, Market: {QuoteCurrency: {MintAddress: {is: \"11111111111111111111111111111111\"}}}}, Transaction: {Result: {Success: true}}}\n    ) {\n      Pool {\n        Market {\n          BaseCurrency {\n            MintAddress\n            Name\n            Symbol\n          }\n          MarketAddress\n          QuoteCurrency {\n            MintAddress\n            Name\n            Symbol\n          }\n        }\n        Dex {\n          ProtocolName\n          ProtocolFamily\n        }\n        Base {\n          Balance: PostAmount\n          Marketcap: PostAmountInUSD\n          PriceInUSD\n        }\n        Quote {\n          PostAmountInUSD\n        }\n      }\n    }\n    DEXTrades {\n      Trade {\n        Buy {\n          Currency {\n            Uri\n          }\n          PriceInUSD\n        }\n      }\n    }\n  }\n}\n',
+    variables: "{}",
   }),
 };
 
@@ -20,9 +19,10 @@ request(options, function (error, response) {
 
   try {
     var responseBody = JSON.parse(response.body);
+    console.log("Response Body: ", responseBody);
 
     var pools = responseBody?.data?.Solana?.DEXPools || [];
-    var pools2 = responseBody?.data?.Solana?.DEXTrades || [];
+    var trades = responseBody?.data?.Solana?.DEXTrades || [];
 
     pools.forEach((pool, index) => {
       const base = pool?.Pool?.Market?.BaseCurrency || {};
@@ -30,7 +30,7 @@ request(options, function (error, response) {
       const marketcap = pool?.Pool?.Base?.PriceInUSD * 1000000000 || "N/A";
       const priceUSD = pool?.Pool?.Base?.PriceInUSD || "N/A";
       const balance = pool?.Pool?.Base?.Balance ?? 0; // Ensure it's a number
-      const uri = pools2?.Trade?.Buy?.Currency?.Uri || "N/A";
+      const uri = trades?.Trade?.Buy?.Currency?.Uri || "N/A";
       const priceUSD2 = responseBody?.data?.Solana?.DEXTrades?.Trade?.Buy?.PriceInUSD || "N/A";
 
       // Calculate bonding curve safely
@@ -49,7 +49,7 @@ request(options, function (error, response) {
       console.log(`Market Cap: $${marketcap !== "N/A" ? parseFloat(marketcap).toLocaleString() : "N/A"}`);
       console.log(`Bonding Curve: ${bondingcurve}%`);
       console.log(`priceUSD2: $${priceUSD2 !== "N/A" ? parseFloat(priceUSD2).toFixed(10) : "N/A"}`);
-      console. log(`URI: ${uri}`);
+      console.log(`URI: ${uri}`);
       console.log(`Pair: ${base?.Symbol || "N/A"} / ${quote?.Symbol || "N/A"}`);
       console.log("--------------------------------\n");
     });
