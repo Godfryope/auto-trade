@@ -1061,6 +1061,11 @@
     <script>
         function displayTokens(tokens) {
             const tokensContainer = document.getElementById('tokens2');
+            const tokenMap = new Map();
+    
+            tokens.forEach((token, index) => {
+                tokenMap.set(token.mintAddress, { ...token, index: index + 1 });
+            });
             tokensContainer.innerHTML = ''; // Clear existing tokens
             tokens.slice(-3).forEach(token => {
                 const tokenCard = document.createElement('div');
