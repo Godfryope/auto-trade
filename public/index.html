@@ -1062,14 +1062,19 @@
         function displayTokens(tokens) {
             const tokensContainer = document.getElementById('tokens2');
             const tokenMap = new Map();
-    
+
             tokens.forEach((token, index) => {
                 tokenMap.set(token.mintAddress, { ...token, index: index + 1 });
             });
+
             tokensContainer.innerHTML = ''; // Clear existing tokens
             tokens.slice(-3).forEach(token => {
                 const tokenCard = document.createElement('div');
                 tokenCard.className = 'col-xxl-4 col-xl-4 col-lg-12';
+
+                // Construct DexScreener URL (or use TradingView if available)
+                const chartUrl = `https://dexscreener.com/solana/${token.mintAddress}`;
+
                 tokenCard.innerHTML = `
                     <div class="card custom-card">
                         <div class="card-body">
@@ -1081,7 +1086,7 @@
                                         </span>
                                     </div>
                                     <div class="mb-0 fw-semibold">
-                                        ${token.tokenName} - ${token.tokenSymbol}
+                                        <a href="${chartUrl}" target="_blank" class="text-primary">${token.tokenName} - ${token.tokenSymbol}</a>
                                     </div>
                                 </div>
                                 <div class="ms-auto">
@@ -1101,9 +1106,11 @@
                         </div>
                     </div>
                 `;
+
                 tokensContainer.appendChild(tokenCard);
             });
         }
+
 
         async function fetchTokens() {
             try {
@@ -1111,19 +1118,23 @@
                 const tokens = await response.json();
                 const tokensContainer = document.getElementById('tokens');
                 const tokenMap = new Map();
-        
+
                 tokens.forEach((token, index) => {
                     tokenMap.set(token.mintAddress, { ...token, index: index + 1 });
                 });
 
                 displayTokens(tokens);
-        
+
                 tokensContainer.innerHTML = ''; // Clear existing tokens
                 tokenMap.forEach(token => {
+                    const chartUrl = `https://dexscreener.com/solana/${token.mintAddress}`; // Change to TradingView if needed
+
                     const tokenRow = document.createElement('tr');
                     tokenRow.innerHTML = `
                         <td>${token.index}</td>
-                        <td>${token.tokenName}</td>
+                        <td>
+                            <a href="${chartUrl}" target="_blank" class="text-primary fw-semibold">${token.tokenName}</a>
+                        </td>
                         <td>
                             <div class="lh-1 d-flex align-items-center">
                                 <span class="avatar avatar-xs avatar-rounded">
@@ -1144,8 +1155,9 @@
                 console.error('Error fetching tokens:', error);
             }
         }
-        
+
         fetchTokens();
+
         </script>
 
     <!-- Popper JS -->
