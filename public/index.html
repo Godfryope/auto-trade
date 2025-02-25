@@ -37,33 +37,39 @@
   <script>
     async function fetchTokens() {
       try {
-        const response = await fetch('/api/tokens');
-        const tokens = await response.json();
-        const tokensContainer = document.getElementById('tokens');
+      const response = await fetch('/api/tokens');
+      const tokens = await response.json();
+      const tokensContainer = document.getElementById('tokens');
+      const tokenMap = new Map();
 
-        tokens.forEach(token => {
-          const tokenCard = document.createElement('div');
-          tokenCard.className = 'col-md-4';
-          tokenCard.innerHTML = `
-            <div class="card">
-              <div class="card-header">${token.dexName}</div>
-              <div class="card-body">
-                <h5 class="card-title">${token.tokenName} (${token.tokenSymbol})</h5>
-                <p class="card-text">Mint Address: ${token.mintAddress}</p>
-                <p class="card-text">Price: $${token.priceUSD}</p>
-                <p class="card-text">Market Cap: $${token.marketcap}</p>
-                <p class="card-text">Bonding Curve: ${token.bondingcurve}%</p>
-                <p class="card-text">Price USD2: $${token.priceUSD2}</p>
-                <p class="card-text">URI: ${token.uri}</p>
-                <p class="card-text">Pair: ${token.pair}</p>
-                <button class="btn btn-buy" onclick="buyToken('${token.mintAddress}')">Buy Token</button>
-              </div>
-            </div>
-          `;
-          tokensContainer.appendChild(tokenCard);
-        });
+      tokens.forEach(token => {
+        tokenMap.set(token.mintAddress, token);
+      });
+
+      tokensContainer.innerHTML = ''; // Clear existing tokens
+      tokenMap.forEach(token => {
+        const tokenCard = document.createElement('div');
+        tokenCard.className = 'col-md-4';
+        tokenCard.innerHTML = `
+        <div class="card">
+          <div class="card-header">${token.dexName}</div>
+          <div class="card-body">
+          <h5 class="card-title">${token.tokenName} (${token.tokenSymbol})</h5>
+          <p class="card-text">Mint Address: ${token.mintAddress}</p>
+          <p class="card-text">Price: $${token.priceUSD}</p>
+          <p class="card-text">Market Cap: $${token.marketcap}</p>
+          <p class="card-text">Bonding Curve: ${token.bondingcurve}%</p>
+          <p class="card-text">Price USD2: $${token.priceUSD2}</p>
+          <p class="card-text">URI: ${token.uri}</p>
+          <p class="card-text">Pair: ${token.pair}</p>
+          <button class="btn btn-buy" onclick="buyToken('${token.mintAddress}')">Buy Token</button>
+          </div>
+        </div>
+        `;
+        tokensContainer.appendChild(tokenCard);
+      });
       } catch (error) {
-        console.error('Error fetching tokens:', error);
+      console.error('Error fetching tokens:', error);
       }
     }
 
