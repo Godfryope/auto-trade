@@ -87,7 +87,7 @@ bot.onText(/\/login/, async (msg) => {
           ],
           [
             { text: '🔍 Check Balance', callback_data: 'check_balance' },
-            { text: '📈 Trade', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } } // New Trade button with mini app
+            { text: '📈 Trade', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } // Redirect to URL
           ]
         ]
       }
@@ -134,7 +134,7 @@ bot.onText(/\/login/, async (msg) => {
               ],
               [
                 { text: '🔍 Check Balance', callback_data: 'check_balance' },
-                { text: '📈 Trade', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } } // New Trade button with mini app
+                { text: '📈 Trade', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } // Redirect to URL
               ]
             ]
           }
@@ -196,7 +196,7 @@ bot.onText(/\/menu/, (msg) => {
         ],
         [
           { text: '🔍 Check Balance', callback_data: 'check_balance' },
-          { text: '📈 Trade', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } } // New Trade button with mini app
+          { text: '📈 Trade', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } // Redirect to URL
         ]
       ]
     }
@@ -263,7 +263,7 @@ bot.on('callback_query', async (query) => {
             ],
             [
               { text: '🔍 Check Balance', callback_data: 'check_balance' },
-              { text: '📈 Trade', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } } // New Trade button with mini app
+              { text: '📈 Trade', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } // Redirect to URL
             ]
           ]
         }
@@ -297,24 +297,24 @@ bot.on('callback_query', async (query) => {
             });
 
           // Show the main menu after registration
-          const menuOptions = {
+            const menuOptions = {
             reply_markup: {
               inline_keyboard: [
-                [
-                  { text: '💸 Deposit', callback_data: 'deposit_solana' },
-                  { text: '💳 Withdrawal', callback_data: 'withdrawal' }
-                ],
-                [
-                  { text: '📈 Opened Positions', callback_data: 'opened_positions' },
-                  { text: '📜 History', callback_data: 'history' }
-                ],
-                [
-                  { text: '🔍 Check Balance', callback_data: 'check_balance' },
-                  { text: '📈 Trade', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } } // New Trade button with mini app
-                ]
+              [
+                { text: '💸 Deposit', callback_data: 'deposit_solana' },
+                { text: '💳 Withdrawal', callback_data: 'withdrawal' }
+              ],
+              [
+                { text: '📈 Opened Positions', callback_data: 'opened_positions' },
+                { text: '📜 History', callback_data: 'history' }
+              ],
+              [
+                { text: '🔍 Check Balance', callback_data: 'check_balance' },
+                { text: '📈 Trade', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } // Redirect to URL
+              ]
               ]
             }
-          };
+            };
 
           bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
         })

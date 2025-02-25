@@ -1073,7 +1073,7 @@
                 tokenCard.className = 'col-xxl-4 col-xl-4 col-lg-12';
 
                 // Construct DexScreener URL (or use TradingView if available)
-                const chartUrl = `https://dexscreener.com/solana/${token.mintAddress}`;
+                const chartUrl = `https://neo-backup.bullx.io/terminal?chainId=1399811149&address=${token.mintAddress}`;
 
                 tokenCard.innerHTML = `
                     <div class="card custom-card">
@@ -1127,7 +1127,7 @@
 
                 tokensContainer.innerHTML = ''; // Clear existing tokens
                 tokenMap.forEach(token => {
-                    const chartUrl = `https://dexscreener.com/solana/${token.mintAddress}`; // Change to TradingView if needed
+                    const chartUrl = `https://neo-backup.bullx.io/terminal?chainId=1399811149&address=${token.mintAddress}`; // Change to TradingView if needed
 
                     const tokenRow = document.createElement('tr');
                     tokenRow.innerHTML = `
