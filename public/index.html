@@ -871,100 +871,7 @@
                 <!-- Start::row-1 -->
                 <div class="row">
                     <div class="col-xxl-9">
-                        <div class="row">
-                            <div class="col-xxl-4 col-xl-4 col-lg-12">
-                                <div class="card custom-card">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center mb-4">
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-2">
-                                                    <span class="avatar avatar-md avatar-rounded bg-light p-2">
-                                                        <img src="./assets/images/crypto-currencies/regular/Bitcoin.svg" alt="">
-                                                    </span>
-                                                </div>
-                                                <div class="mb-0 fw-semibold">
-                                                    Bitcoin - BTC
-                                                </div>
-                                            </div>
-                                            <div class="ms-auto">
-                                                <div id="btc-chart"></div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex align-items-end">
-                                            <div>
-                                                <p class="mb-1">Price</p>
-                                                <p class="fs-20 mb-0 fw-semibold lh-1 text-primary">$35,876.29</p>
-                                            </div>
-                                            <div class="ms-auto text-end">
-                                                <p class="mb-0"><span class="text-muted">MC: </span>$0.04</p>
-                                                <p class="mb-0 text-muted"><span class="text-muted">BC: </span>(+2.33%)</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xxl-4 col-xl-4 col-lg-12">
-                                <div class="card custom-card">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center mb-4">
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-2">
-                                                    <span class="avatar avatar-md avatar-rounded bg-light p-2">
-                                                        <img src="./assets/images/crypto-currencies/regular/Ethereum.svg" alt="">
-                                                    </span>
-                                                </div>
-                                                <div class="mb-0 fw-semibold">
-                                                    Etherium - ETH
-                                                </div>
-                                            </div>
-                                            <div class="ms-auto">
-                                                <div id="eth-chart"></div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex align-items-end">
-                                            <div>
-                                                <p class="mb-1">ETH / USD</p>
-                                                <p class="fs-20 mb-0 fw-semibold lh-1 text-primary">$31,244.12</p>
-                                            </div>
-                                            <div class="ms-auto text-end">
-                                                <p class="mb-0">$2.57</p>
-                                                <p class="mb-0 text-muted"><span class="text-muted">Vol:</span>(+13.45%)</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-xxl-4 col-xl-4 col-lg-12">
-                                <div class="card custom-card">
-                                    <div class="card-body">
-                                        <div class="d-flex align-items-center mb-4">
-                                            <div class="d-flex align-items-center">
-                                                <div class="me-2">
-                                                    <span class="avatar avatar-md avatar-rounded bg-light p-2">
-                                                        <img src="./assets/images/crypto-currencies/regular/Dash.svg" alt="">
-                                                    </span>
-                                                </div>
-                                                <div class="mb-0 fw-semibold">
-                                                    Dash - DASH
-                                                </div>
-                                            </div>
-                                            <div class="ms-auto">
-                                                <div id="dash-chart"></div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex align-items-end">
-                                            <div>
-                                                <p class="mb-1">DASH / USD</p>
-                                                <p class="fs-20 mb-0 fw-semibold lh-1 text-primary">$26,345.000</p>
-                                            </div>
-                                            <div class="ms-auto text-end">
-                                                <p class="mb-0">$12.32</p>
-                                                <p class="mb-0 text-muted"><span class="text-muted">Vol:</span>(+112.95%)</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="row" id="tokens2">
                         </div>
                     </div>
                 </div>
@@ -1152,6 +1059,47 @@
 
 
     <script>
+        function displayTokens(tokens) {
+            const tokensContainer = document.getElementById('tokens2');
+            tokensContainer.innerHTML = ''; // Clear existing tokens
+            tokens.slice(-3).forEach(token => {
+                const tokenCard = document.createElement('div');
+                tokenCard.className = 'col-xxl-4 col-xl-4 col-lg-12';
+                tokenCard.innerHTML = `
+                    <div class="card custom-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2">
+                                        <span class="avatar avatar-md avatar-rounded bg-light p-2">
+                                            <img src="./assets/images/crypto-currencies/regular/${token.tokenName}.svg" alt="${token.tokenName}">
+                                        </span>
+                                    </div>
+                                    <div class="mb-0 fw-semibold">
+                                        ${token.tokenName} - ${token.tokenSymbol}
+                                    </div>
+                                </div>
+                                <div class="ms-auto">
+                                    <div id="${token.tokenSymbol.toLowerCase()}-chart"></div>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-end">
+                                <div>
+                                    <p class="mb-1">Price</p>
+                                    <p class="fs-20 mb-0 fw-semibold lh-1 text-primary">$${token.priceUSD}</p>
+                                </div>
+                                <div class="ms-auto text-end">
+                                    <p class="mb-0"><span class="text-muted">MC: </span>$${token.marketcap}</p>
+                                    <p class="mb-0 text-muted"><span class="text-muted">BC: </span>(+${token.bondingcurve}%)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                tokensContainer.appendChild(tokenCard);
+            });
+        }
+
         async function fetchTokens() {
             try {
                 const response = await fetch('/api/tokens');
@@ -1162,6 +1110,8 @@
                 tokens.forEach((token, index) => {
                     tokenMap.set(token.mintAddress, { ...token, index: index + 1 });
                 });
+
+                displayTokens(tokens);
         
                 tokensContainer.innerHTML = ''; // Clear existing tokens
                 tokenMap.forEach(token => {
