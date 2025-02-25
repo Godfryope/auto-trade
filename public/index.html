@@ -1095,7 +1095,7 @@
                                 </div>
                                 <div class="ms-auto text-end">
                                     <p class="mb-0"><span class="text-muted">MC: </span>$${token.marketcap}</p>
-                                    <p class="mb-0 text-muted"><span class="text-muted">BC: </span>(+${token.bondingcurve}%)</p>
+                                    <p class="mb-0 text-muted"><span class="text-muted">BC: </span>(${token.bondingcurve}%)</p>
                                 </div>
                             </div>
                         </div>
@@ -1133,9 +1133,9 @@
                         </td>
                         <td>$${token.priceUSD}</td>
                         <td>${token.marketcap}</td>
-                        <td>${token.mintAddress}</td>
                         <td>${token.bondingcurve}%</td>
                         <td>${token.pair}</td>
+                        <td>${token.mintAddress}</td>
                         <td>${token.uri}</td>
                     `;
                     tokensContainer.appendChild(tokenRow);
