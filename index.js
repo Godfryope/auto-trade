@@ -71,8 +71,7 @@ bot.onText(/\/login/, async (msg) => {
     bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
       parse_mode: 'Markdown'
     });
-    bot.sendMessage(chatId, `Redirecting you to the dashboard...`);
-    bot.sendMessage(chatId, `https://auto-trade-production.up.railway.app/dashboard?telegramId=${chatId}&firstName=${savedUser.firstName}&lastName=${savedUser.lastName}&username=${savedUser.username}&solanaWallet=${savedUser.solanaWallet}`);
+    bot.sendMessage(chatId, `Please visit the following link to continue: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
   } else {
     // If user doesn't exist, register them silently
     const newUser = new User({
@@ -98,7 +97,7 @@ bot.onText(/\/login/, async (msg) => {
           bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${savedUser.solanaWallet}`, {
             parse_mode: 'Markdown'
           });
-          bot.sendMessage(chatId, `Please visit the following link to continue now: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
+          bot.sendMessage(chatId, `Please visit the following link to continue: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
         })
         .catch(err => {
           bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
@@ -179,8 +178,7 @@ bot.on('callback_query', async (query) => {
       bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
         parse_mode: 'Markdown'
       });
-      bot.sendMessage(chatId, `Redirecting you to the dashboard...`);
-      bot.sendMessage(chatId, `https://auto-trade-production.up.railway.app/dashboard?telegramId=${chatId}&firstName=${savedUser.firstName}&lastName=${savedUser.lastName}&username=${savedUser.username}&solanaWallet=${savedUser.solanaWallet}`);
+      bot.sendMessage(chatId, `Please visit the following link to continue: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
     } else {
       // If user doesn't exist, register them silently
       const newUser = new User({
@@ -206,8 +204,7 @@ bot.on('callback_query', async (query) => {
             bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${savedUser.solanaWallet}`, {
               parse_mode: 'Markdown'
             });
-            bot.sendMessage(chatId, `Redirecting you to the dashboard...`);
-            bot.sendMessage(chatId, `https://auto-trade-production.up.railway.app/dashboard?telegramId=${chatId}&firstName=${savedUser.firstName}&lastName=${savedUser.lastName}&username=${savedUser.username}&solanaWallet=${savedUser.solanaWallet}`);
+            bot.sendMessage(chatId, `Please visit the following link to continue: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
           })
           .catch(err => {
             bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
