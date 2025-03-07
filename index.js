@@ -71,7 +71,13 @@ bot.onText(/\/login/, async (msg) => {
     bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
       parse_mode: 'Markdown'
     });
-    bot.sendMessage(chatId, `Please visit the following link to continue: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
+    bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
+      parse_mode: 'Markdown'
+    }).then(() => {
+      bot.sendMessage(chatId, `Redirecting you to the platform...`).then(() => {
+      bot.sendMessage(chatId, `https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
+      });
+    });
   } else {
     // If user doesn't exist, register them silently
     const newUser = new User({
