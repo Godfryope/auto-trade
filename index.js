@@ -100,10 +100,14 @@ bot.onText(/\/login/, async (msg) => {
   
       await newUser.save()
         .then((savedUser) => {
-          bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${savedUser.solanaWallet}`, {
+          bot.sendMessage(chatId, `Registration successful! \n\nThank you for joining, ${msg.from.first_name}! \n\nYour unique Solana wallet address is: ${savedUser.solanaWallet}`, {
             parse_mode: 'Markdown'
           });
-          bot.sendMessage(chatId, `Please visit the following link to continue: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
+          bot.sendMessage(chatId, `Registration successful! \n\nThank you for joining, ${msg.from.first_name}! \n\nRedirecting you to the platform...`).then(() => {
+            bot.sendMessage(chatId, `https://auto-trade-production.up.railway.app?telegramId=${chatId}`, {
+              disable_web_page_preview: true
+            });
+          });
         })
         .catch(err => {
           bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
