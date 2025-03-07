@@ -557,26 +557,6 @@
                 <div class="header-content-right">
 
                     <!-- Start::header-element -->
-                    <div class="header-element header-search">
-                        <!-- Start::header-link -->
-                        <a href="javascript:void(0);" class="header-link" data-bs-toggle="modal" data-bs-target="#searchModal">
-                            <i class="bx bx-search-alt-2 header-link-icon"></i>
-                        </a>
-                        <!-- End::header-link -->
-                    </div>
-                    <!-- End::header-element -->
-
-                    <!-- Start::header-element -->
-                    <div class="header-element country-selector">
-                        <!-- Start::header-link -->
-                        <a href="javascript:void(0);" class="header-link" data-bs-toggle="modal" data-bs-target="#countryModal">
-                            <img src="./assets/images/flags/us_flag.jpg" alt="img" class="rounded-circle header-link-icon">
-                           <span class="fw-semibold mb-0 lh-1">EN</span>
-                        </a>
-                    </div>
-                    <!-- End::header-element -->
-
-                    <!-- Start::header-element -->
                     <div class="header-element header-theme-mode">
                         <!-- Start::header-link|layout-setting -->
                         <a href="javascript:void(0);" class="header-link layout-setting">
@@ -713,40 +693,21 @@
                     <!-- End::header-element -->
 
                     <!-- Start::header-element -->
-                    <div class="header-element header-fullscreen">
+                    <div class="header-element">
                         <!-- Start::header-link -->
                         <a onclick="openFullscreen();" href="javascript:void(0);" class="header-link">
-                            <i class="bx bx-fullscreen full-screen-open header-link-icon"></i>
-                            <i class="bx bx-exit-fullscreen full-screen-close header-link-icon d-none"></i>
-                        </a>
-                        <!-- End::header-link -->
-                    </div>
-                    <!-- End::header-element -->
-
-                    <!-- Start::header-element -->
-                    <div class="header-element">
-                        <!-- Start::header-link|dropdown-toggle -->
-                        <a href="javascript:void(0);" class="header-link dropdown-toggle" id="mainHeaderProfile" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                            <div class="d-flex align-items-center">
-                                <div class="me-sm-2 me-0">
-                                    <img src="./assets/images/faces/9.jpg" alt="img" width="32" height="32" class="rounded-circle">
-                                </div>
-                                <div class="d-sm-block d-none">
-                                    <p class="fw-semibold mb-0 lh-1">Json Taylor</p>
-                                    <span class="op-7 fw-normal d-block fs-11">Web Designer</span>
-                                </div>
+                            <div class="btn-group m-3 p-0" role="group" aria-label="Basic radio toggle button group">
+                                <input type="radio" class="btn-check pb-2" name="btnradio" id="btnon"
+                                    checked>
+                                <label class="btn btn-outline-primary" for="btnon">Trade</label>
+                            
+                                <input type="radio" class="btn-check" name="btnradio" id="btnoff"
+                                   >
+                                <label class="btn btn-outline-primary" for="btnoff">Offline</label>
                             </div>
                         </a>
-                        <!-- End::header-link|dropdown-toggle -->
-                        <ul class="main-header-dropdown dropdown-menu pt-0 overflow-hidden header-profile-dropdown dropdown-menu-end" aria-labelledby="mainHeaderProfile">
-                            <li><a class="dropdown-item d-flex" href="profile.html"><i class="ti ti-user-circle fs-18 me-2 op-7"></i>Profile</a></li>
-                            <li><a class="dropdown-item d-flex" href="mail.html"><i class="ti ti-inbox fs-18 me-2 op-7"></i>Inbox <span class="badge bg-success-transparent ms-auto">25</span></a></li>
-                            <li><a class="dropdown-item d-flex border-block-end" href="to-do-list.html"><i class="ti ti-clipboard-check fs-18 me-2 op-7"></i>Task Manager</a></li>
-                            <li><a class="dropdown-item d-flex" href="mail-settings.html"><i class="ti ti-adjustments-horizontal fs-18 me-2 op-7"></i>Settings</a></li>
-                            <li><a class="dropdown-item d-flex border-block-end" href="javascript:void(0);"><i class="ti ti-wallet fs-18 me-2 op-7"></i>Bal: $7,12,950</a></li>
-                            <li><a class="dropdown-item d-flex" href="chat.html"><i class="ti ti-headset fs-18 me-2 op-7"></i>Support</a></li>
-                            <li><a class="dropdown-item d-flex" href="sign-in-cover.html"><i class="ti ti-logout fs-18 me-2 op-7"></i>Log Out</a></li>
-                        </ul>
+                        <!-- End::header-link -->
+                        
                     </div>  
                     <!-- End::header-element -->
 
@@ -784,55 +745,27 @@
                     </div>
                     <ul class="main-menu">
                         <!-- Start::slide__category -->
-                        <li class="slide__category"><span class="category-name">Main</span></li>
+                        <li class="slide__category"><span class="category-name">Auto Trade</span></li>
                         <!-- End::slide__category -->
 
                         <!-- Start::slide -->
                         <li class="slide has-sub">
                             <a href="javascript:void(0);" class="side-menu__item">
                                 <i class="bx bx-home side-menu__icon"></i>
-                                <span class="side-menu__label">Dashboards<span class="badge bg-warning-transparent ms-2">12</span></span>
-                                <i class="fe fe-chevron-right side-menu__angle"></i>
+                                <span class="side-menu__label">Trading Dashboard</span>
                             </a>
                             <ul class="slide-menu child1">
                                 <li class="slide side-menu__label1">
                                     <a href="javascript:void(0)">Dashboards</a>
                                 </li>
                                 <li class="slide">
-                                    <a href="index.html" class="side-menu__item">CRM</a>
+                                    <a href="/" class="side-menu__item">Portfolio</a>
                                 </li>
                                 <li class="slide">
-                                    <a href="index-1.html" class="side-menu__item">Ecommerce</a>
+                                    <a href="index-1.html" class="side-menu__item">Trading Wallet</a>
                                 </li>
                                 <li class="slide">
-                                    <a href="index-2.html" class="side-menu__item">Crypto</a>
-                                </li>
-                                <li class="slide">
-                                    <a href="index-3.html" class="side-menu__item">Jobs</a>
-                                </li>
-                                <li class="slide">
-                                    <a href="index-4.html" class="side-menu__item">NFT</a>
-                                </li>
-                                <li class="slide">
-                                    <a href="index-5.html" class="side-menu__item">Sales</a>
-                                </li>
-                                <li class="slide">
-                                    <a href="index-6.html" class="side-menu__item">Analytics</a>
-                                </li>
-                                <li class="slide">
-                                    <a href="index-7.html" class="side-menu__item">Projects</a>
-                                </li>
-                                <li class="slide">
-                                    <a href="index-8.html" class="side-menu__item">HRM</a>
-                                </li>
-                                <li class="slide">
-                                    <a href="index-9.html" class="side-menu__item">Stocks</a>
-                                </li>
-                                <li class="slide">
-                                    <a href="index-10.html" class="side-menu__item">Courses</a>
-                                </li>
-                                <li class="slide">
-                                    <a href="index-11.html" class="side-menu__item">Personal</a>
+                                    <a href="index-2.html" class="side-menu__item">Settings</a>
                                 </li>
                             </ul>
                         </li>
@@ -850,10 +783,88 @@
         </aside>
         <!-- End::app-sidebar -->
 
+
+        
+
         <!-- Start::app-content -->
         <div class="main-content app-content">
             <div class="container-fluid">
-
+                <!-- Page Header -->
+                <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
+                    <h1 class="page-title fw-semibold fs-18 mb-0">Auto trader</h1>
+                    <div class="ms-md-1 ms-0">
+                        <nav>
+                            <ol class="breadcrumb mb-0">
+                                <li class="breadcrumb-item"><a href="javascript:void(0);">Dashboards</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Auto trader</li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+                <!-- Page Header Close -->
+            </div>
+            <!-- <div class="main-content app-content"> -->
+            <div class="container-fluid">
+                <!-- <div class="col-xxl-4 col-xl-5"> -->
+                    <div class="card custom-card">
+                        <!-- Top Row with Balance on the Left and Earnings on the Right -->
+                        <div class="balance-container pt-2 d-flex justify-content-between align-items-center ms-4 me-4">
+                            <h2 class="balance-amount pt-4 mb-0"><i class="bx bx-wallet"></i> <span id="user-balance">$0.00</span></h2>
+                        </div>
+                    
+                        <!-- Header with Icons -->
+                        <div class="card-header d-flex justify-content-end flex-wrap">
+                            <ul class="icons-list list-unstyled d-flex justify-content-between align-items-center text-center flex-grow-1">
+                                <div class="icon-wrapper d-flex flex-column align-items-center mx-1 my-1 flex-grow-1 text-center">
+                                    <a href="./deposit.html">
+                                        <button class="btn btn-icon btn-success-transparent rounded-pill btn-wave icons-list-item">
+                                            <i class="ri-wallet-line text-success"></i>
+                                        </button>
+                                        <div>Deposit</div>
+                                    </a>
+                                </div>
+                                
+                                <div class="icon-wrapper d-flex flex-column align-items-center mx-1 my-1 flex-grow-1 text-center">
+                                    <a href="./withdraw.html">
+                                        <button class="btn btn-icon btn-success-transparent rounded-pill btn-wave icons-list-item">
+                                            <i class="ri-bank-card-line text-danger"></i>
+                                        </button>
+                                        <div>Withdraw</div>
+                                    </a>
+                                </div>
+                                
+                                <div class="icon-wrapper d-flex flex-column align-items-center mx-1 my-1 flex-grow-1 text-center">
+                                    <a href="./transfer.html">
+                                        <button class="btn btn-icon btn-success-transparent rounded-pill btn-wave icons-list-item">
+                                            <i class="ri-exchange-line text-primary"></i>
+                                        </button>
+                                        <div>Transfer</div>
+                                    </a>
+                                </div>
+                                
+                                <div class="icon-wrapper d-flex flex-column align-items-center mx-1 my-1 flex-grow-1 text-center">
+                                    <a href="./history.html">
+                                        <button class="btn btn-icon btn-success-transparent rounded-pill btn-wave icons-list-item">
+                                            <i class="ri-history-line text-warning"></i>
+                                        </button>
+                                        <div>History</div>
+                                    </a> 
+                                </div>
+                                
+                                <!-- <a href="./history.html">
+                                    <div class="icon-wrapper d-flex flex-column align-items-center mx-2 my-1 flex-grow-1 text-center">
+                                        <li class="icons-list-item rounded-pill p-2" data-bs-toggle="tooltip" data-bs-placement="top">
+                                            <i class="bx bx-history"></i>
+                                        </li>
+                                        <div>History</div>
+                                    </div>
+                                </a> -->
+                            </ul>
+                        </div>
+                    </div>
+                <!-- </div> -->
+            </div>
+            <div class="container-fluid">
                 <!-- Page Header -->
                 <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
                     <h1 class="page-title fw-semibold fs-18 mb-0">Pump.fun Tokens</h1>

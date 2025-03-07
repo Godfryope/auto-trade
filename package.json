@@ -10,9 +10,9 @@
     "dev3": "nodemon trade.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "index.html",
   "license": "ISC",
-  "description": "",
+  "description": "index.html",
   "dependencies": {
     "@solana/web3.js": "^1.98.0",
     "axios": "^1.7.9",
