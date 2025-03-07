@@ -7,7 +7,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 const bodyParser = require('body-parser');
 
-
 // MongoDB connection
 mongoose.connect('mongodb+srv://bitcoption:Precious1@autotrader.myq0i.mongodb.net/?retryWrites=true&w=majority&appName=autotrader')
   .then(() => console.log('Connected to MongoDB'))
@@ -68,32 +67,11 @@ bot.onText(/\/login/, async (msg) => {
   const user = await User.findOne({ telegramId: chatId });
 
   if (user) {
-    // If user exists, show the main menu
+    // If user exists, redirect to the URL
     bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
       parse_mode: 'Markdown'
     });
-
-    // Display menu options for the user
-    const menuOptions = {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: '💸 Deposit', callback_data: 'deposit_solana' },
-            { text: '💳 Withdrawal', callback_data: 'withdrawal' }
-          ],
-          [
-            { text: '📈 Opened Positions', callback_data: 'opened_positions' },
-            { text: '📜 History', callback_data: 'history' }
-          ],
-          [
-            { text: '🔍 Check Balance', callback_data: 'check_balance' },
-            { text: '📈 Trade', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } // Redirect to URL
-          ]
-        ]
-      }
-    };
-
-    bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
+    bot.sendMessage(chatId, `Please visit the following link to continue: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
   } else {
     // If user doesn't exist, register them silently
     const newUser = new User({
@@ -116,37 +94,16 @@ bot.onText(/\/login/, async (msg) => {
   
       await newUser.save()
         .then((savedUser) => {
-          bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${savedUser.solanaWallet}`, {
+          bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${savedUser.solanaWallet}`, {
             parse_mode: 'Markdown'
           });
-
-        // Show the main menu after registration
-        const menuOptions = {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: '💸 Deposit', callback_data: 'deposit_solana' },
-                { text: '💳 Withdrawal', callback_data: 'withdrawal' }
-              ],
-              [
-                { text: '📈 Opened Positions', callback_data: 'opened_positions' },
-                { text: '📜 History', callback_data: 'history' }
-              ],
-              [
-                { text: '🔍 Check Balance', callback_data: 'check_balance' },
-                { text: '📈 Trade', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } // Redirect to URL
-              ]
-            ]
-          }
-        };
-
-        bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
-      })
-      .catch(err => {
-        bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
-          parse_mode: 'Markdown'
+          bot.sendMessage(chatId, `Please visit the following link to continue now: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
+        })
+        .catch(err => {
+          bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
+            parse_mode: 'Markdown'
+          });
         });
-      });
     }
   }
 });
@@ -173,36 +130,9 @@ bot.onText(/\/help/, (msg) => {
   const helpMessage = `Available Commands:
 /start - Start the bot and display the login button
 /login - Log in or register to the platform
-/menu - Show the main menu with available options
 /help - Show this help message`;
 
   bot.sendMessage(msg.chat.id, helpMessage);
-});
-
-// Updated Menu Command with a "Check Balance" Button
-bot.onText(/\/menu/, (msg) => {
-  const chatId = msg.chat.id;
-
-  const menuOptions = {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: '💸 Deposit', callback_data: 'deposit_solana' },
-          { text: '💳 Withdrawal', callback_data: 'withdrawal' }
-        ],
-        [
-          { text: '📈 Opened Positions', callback_data: 'opened_positions' },
-          { text: '📜 History', callback_data: 'history' }
-        ],
-        [
-          { text: '🔍 Check Balance', callback_data: 'check_balance' },
-          { text: '📈 Trade', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } // Redirect to URL
-        ]
-      ]
-    }
-  };
-
-  bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
 });
 
 // Handle Check Balance Callback Query
@@ -244,32 +174,11 @@ bot.on('callback_query', async (query) => {
     const user = await User.findOne({ telegramId: chatId });
 
     if (user) {
-      // If user exists, show the main menu
+      // If user exists, redirect to the URL
       bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
         parse_mode: 'Markdown'
       });
-
-      // Display menu options for the user
-      const menuOptions = {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: '💸 Deposit', callback_data: 'deposit_solana' },
-              { text: '💳 Withdrawal', callback_data: 'withdrawal' }
-            ],
-            [
-              { text: '📈 Opened Positions', callback_data: 'opened_positions' },
-              { text: '📜 History', callback_data: 'history' }
-            ],
-            [
-              { text: '🔍 Check Balance', callback_data: 'check_balance' },
-              { text: '📈 Trade', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } // Redirect to URL
-            ]
-          ]
-        }
-      };
-
-      bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
+      bot.sendMessage(chatId, `Please visit the following link to continue: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
     } else {
       // If user doesn't exist, register them silently
       const newUser = new User({
@@ -295,34 +204,13 @@ bot.on('callback_query', async (query) => {
             bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${savedUser.solanaWallet}`, {
               parse_mode: 'Markdown'
             });
-
-          // Show the main menu after registration
-            const menuOptions = {
-            reply_markup: {
-              inline_keyboard: [
-              [
-                { text: '💸 Deposit', callback_data: 'deposit_solana' },
-                { text: '💳 Withdrawal', callback_data: 'withdrawal' }
-              ],
-              [
-                { text: '📈 Opened Positions', callback_data: 'opened_positions' },
-                { text: '📜 History', callback_data: 'history' }
-              ],
-              [
-                { text: '🔍 Check Balance', callback_data: 'check_balance' },
-                { text: '📈 Trade', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } // Redirect to URL
-              ]
-              ]
-            }
-            };
-
-          bot.sendMessage(chatId, 'Choose an action from the menu below:', menuOptions);
-        })
-        .catch(err => {
-          bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
-            parse_mode: 'Markdown'
+            bot.sendMessage(chatId, `Please visit the following link to continue: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
+          })
+          .catch(err => {
+            bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
+              parse_mode: 'Markdown'
+            });
           });
-        });
       }
     }
   }
