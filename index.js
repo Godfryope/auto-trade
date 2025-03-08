@@ -145,7 +145,6 @@ bot.onText(/\/help/, (msg) => {
   bot.sendMessage(msg.chat.id, helpMessage);
 });
 
-
 const solanaWeb3 = require('@solana/web3.js'); // Ensure it's required
 
 // Handle Check Balance and Login Callback Query
@@ -226,7 +225,6 @@ bot.on('callback_query', async (query) => {
   } catch (err) {
     bot.sendMessage(chatId, `⚠️ *Error:* ${err.message}`, { parse_mode: 'Markdown' });
   }
-});
 
   // Handling menu options
   if (query.data === 'buy_token') {
