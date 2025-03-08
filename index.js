@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const mongoose = require('mongoose');
 const axios = require('axios');
-const WebSocket = require('ws');
+const QRCode = require('qrcode');
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
@@ -27,12 +27,14 @@ const userSchema = new mongoose.Schema({
   solanaWallet: String, // Store Solana wallet address for each user
   privateKey: String, // Store private key for each user
   apiKey: String, // Store API key for each user
-  solanaBalance: { type: Number, default: 0 } // Track balance of Solana for the user
+  solanaBalance: { type: Number, default: 0 }, // Track balance of Solana for the user
+  qrCodeImage: String // Store QR code image as a base64 string
 });
 
 // Create a model for the schema
 const User = mongoose.model('User', userSchema);
 
+// Function to create a Solana wallet and generate QR code
 const createSolanaWallet = async () => {
   try {
     // Step 1: Create a wallet
@@ -47,7 +49,10 @@ const createSolanaWallet = async () => {
       console.log(`Private Key: ${privateKey}`);
       console.log(`Wallet Address: ${walletAddress}`);
       console.log(`API Key: ${apiKey}`);
-      return { walletAddress, privateKey, apiKey };
+
+      // Generate QR code for the wallet address
+      const qrCodeImage = await QRCode.toDataURL(walletAddress);
+      return { walletAddress, privateKey, apiKey, qrCodeImage };
     } else {
       console.error('Failed to create wallet: Invalid response data');
       return null;
@@ -88,6 +93,7 @@ bot.onText(/\/login/, async (msg) => {
       newUser.solanaWallet = walletDetails.walletAddress;
       newUser.privateKey = walletDetails.privateKey;
       newUser.apiKey = walletDetails.apiKey;
+      newUser.qrCodeImage = walletDetails.qrCodeImage;
       await newUser.save();
 
       bot.sendMessage(
@@ -95,6 +101,10 @@ bot.onText(/\/login/, async (msg) => {
         `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``,
         { parse_mode: 'Markdown' }
       );
+
+      bot.sendPhoto(chatId, walletDetails.qrCodeImage, {
+        caption: 'Here is your QR code for the Solana wallet address.',
+      });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
@@ -139,6 +149,7 @@ bot.onText(/\/login/, async (msg) => {
 //   });
 // });
 
+// Handle /start command
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
 
@@ -169,6 +180,7 @@ bot.onText(/\/start/, async (msg) => {
       newUser.solanaWallet = walletDetails.walletAddress;
       newUser.privateKey = walletDetails.privateKey;
       newUser.apiKey = walletDetails.apiKey;
+      newUser.qrCodeImage = walletDetails.qrCodeImage;
       await newUser.save();
 
       bot.sendMessage(
@@ -176,6 +188,10 @@ bot.onText(/\/start/, async (msg) => {
         `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``,
         { parse_mode: 'Markdown' }
       );
+
+      bot.sendPhoto(chatId, walletDetails.qrCodeImage, {
+        caption: 'Here is your QR code for the Solana wallet address.',
+      });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
