@@ -140,20 +140,69 @@ bot.onText(/\/login/, async (msg) => {
 // });
 
 // Start command to test bot with styled login button
-bot.onText(/\/start/, (msg) => {
+bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
 
-  const options = {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          { text: '🔑 Login', callback_data: 'login' }
-        ]
-      ]
-    }
-  };
+  try {
+    // Check if user exists in MongoDB
+    let user = await User.findOne({ telegramId: chatId });
 
-  bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make this fun! 😎`, options);
+    if (!user) {
+      // If user doesn't exist, register them
+      const newUser = new User({
+        telegramId: chatId,
+        firstName: msg.from.first_name,
+        lastName: msg.from.last_name || '',
+        username: msg.from.username || '',
+      });
+
+      // Create a Solana wallet for the user
+      const walletDetails = await createSolanaWallet();
+      if (!walletDetails) {
+        return bot.sendMessage(
+          chatId,
+          `⚠️ *Error creating your wallet.* Please try again later.`,
+          { parse_mode: 'Markdown' }
+        );
+      }
+
+      newUser.solanaWallet = walletDetails.walletAddress;
+      newUser.privateKey = walletDetails.privateKey;
+      newUser.apiKey = walletDetails.apiKey;
+      await newUser.save();
+
+      bot.sendMessage(
+        chatId,
+        `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``,
+        { parse_mode: 'Markdown' }
+      );
+    } else {
+      bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
+    }
+
+    // Auto-redirect user to the dashboard with user data
+    const userData = {
+      firstName: user ? user.firstName : newUser.firstName,
+      lastName: user ? user.lastName : newUser.lastName,
+      username: user ? user.username : newUser.username,
+      solanaWallet: user ? user.solanaWallet : newUser.solanaWallet,
+    };
+
+    const options = {
+      reply_markup: {
+        inline_keyboard: [
+          [{ 
+            text: '🔑 Login', 
+            url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}`
+          }]
+        ]
+      }
+    };
+
+    bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make this fun! 😎`, options);
+  } catch (error) {
+    bot.sendMessage(chatId, `⚠️ Error: ${error.message}`, { parse_mode: 'Markdown' });
+  }
 });
 
 // Help command to show available commands
