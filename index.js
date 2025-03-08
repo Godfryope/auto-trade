@@ -146,41 +146,53 @@ bot.onText(/\/help/, (msg) => {
 });
 
 
-// Handle Check Balance Callback Query
+const solanaWeb3 = require('@solana/web3.js'); // Ensure it's required
+
+// Handle Check Balance and Login Callback Query
 bot.on('callback_query', async (query) => {
   const chatId = query.message.chat.id;
+  const data = query.data;
 
-  if (query.data === 'check_balance') {
-    try {
+  try {
+    if (data === 'check_balance') {
       // Fetch the user from the database
       const user = await User.findOne({ telegramId: chatId });
 
       if (!user || !user.solanaWallet) {
-        return bot.sendMessage(chatId, '⚠️ *User not found or wallet not set.*\n\nPlease log in first using the /login command.', { parse_mode: 'Markdown' });
+        return bot.sendMessage(
+          chatId,
+          '⚠️ *User not found or wallet not set.*\n\nPlease log in first using the /login command.',
+          { parse_mode: 'Markdown' }
+        );
       }
 
-      const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
+      const connection = new solanaWeb3.Connection(
+        solanaWeb3.clusterApiUrl('mainnet-beta'),
+        'confirmed'
+      );
       const publicKey = new solanaWeb3.PublicKey(user.solanaWallet);
 
       // Get the current balance of the user's wallet from Solana blockchain
       const balance = await connection.getBalance(publicKey);
       const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL; // Convert from lamports to SOL
 
-      bot.sendMessage(chatId, `📊 Your current Solana balance is: *${solBalance.toFixed(4)} SOL*`, {
-        parse_mode: 'Markdown'
-      });
-    } catch (err) {
-      bot.sendMessage(chatId, `⚠️ Error fetching balance: ${err.message}`);
+      return bot.sendMessage(
+        chatId,
+        `📊 Your current Solana balance is: *${solBalance.toFixed(4)} SOL*`,
+        { parse_mode: 'Markdown' }
+      );
     }
-  } else if (query.data === 'login') {
-    try {
-      // Check if the user is already registered in MongoDB
+
+    if (data === 'login') {
+      // Check if the user is already registered
       let user = await User.findOne({ telegramId: chatId });
 
       if (user) {
-        bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`, { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`, {
+          parse_mode: 'Markdown'
+        });
       } else {
-        // Register new user
+        // Register a new user
         user = new User({
           telegramId: chatId,
           firstName: query.from.first_name,
@@ -197,17 +209,22 @@ bot.on('callback_query', async (query) => {
         user.apiKey = walletDetails.apiKey;
 
         await user.save();
-        bot.sendMessage(chatId, `🎉 Registration successful!\n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${user.solanaWallet}\``, { parse_mode: 'Markdown' });
+        bot.sendMessage(
+          chatId,
+          `🎉 Registration successful!\n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${user.solanaWallet}\``,
+          { parse_mode: 'Markdown' }
+        );
       }
 
       // Send login link
-      bot.sendMessage(chatId, `🔗 Please visit the following link to continue: [Click Here](https://auto-trade-production.up.railway.app?telegramId=${chatId})`, {
-        parse_mode: 'Markdown',
-        disable_web_page_preview: true
-      });
-    } catch (err) {
-      bot.sendMessage(chatId, `⚠️ *Error:* ${err.message}`, { parse_mode: 'Markdown' });
+      bot.sendMessage(
+        chatId,
+        `🔗 Please visit the following link to continue: [Click Here](https://auto-trade-production.up.railway.app?telegramId=${chatId})`,
+        { parse_mode: 'Markdown', disable_web_page_preview: true }
+      );
     }
+  } catch (err) {
+    bot.sendMessage(chatId, `⚠️ *Error:* ${err.message}`, { parse_mode: 'Markdown' });
   }
 });
 
