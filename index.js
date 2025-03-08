@@ -63,57 +63,56 @@ const createSolanaWallet = async () => {
 bot.onText(/\/login/, async (msg) => {
   const chatId = msg.chat.id;
 
-  // Check if user exists in MongoDB
-  let user = await User.findOne({ telegramId: chatId });
+  try {
+    // Check if user exists in MongoDB
+    let user = await User.findOne({ telegramId: chatId });
 
-  if (!user) {
-    // If user doesn't exist, register them
-    const newUser = new User({
-      telegramId: chatId,
-      firstName: msg.from.first_name,
-      lastName: msg.from.last_name || '',
-      username: msg.from.username || '',
-    });
+    if (!user) {
+      // If user doesn't exist, register them
+      const newUser = new User({
+        telegramId: chatId,
+        firstName: msg.from.first_name,
+        lastName: msg.from.last_name || '',
+        username: msg.from.username || '',
+      });
 
-    // Create a Solana wallet for the user
-    const walletDetails = await createSolanaWallet();
-    if (walletDetails) {
+      // Create a Solana wallet for the user
+      const walletDetails = await createSolanaWallet();
+      if (!walletDetails) {
+        return bot.sendMessage(
+          chatId,
+          `⚠️ *Error creating your wallet.* Please try again later.`,
+          { parse_mode: 'Markdown' }
+        );
+      }
+
       newUser.solanaWallet = walletDetails.walletAddress;
       newUser.privateKey = walletDetails.privateKey;
       newUser.apiKey = walletDetails.apiKey;
-
       await newUser.save();
-      bot.sendMessage(chatId, `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``, { parse_mode: 'Markdown' });
+
+      bot.sendMessage(
+        chatId,
+        `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``,
+        { parse_mode: 'Markdown' }
+      );
     } else {
-      return bot.sendMessage(chatId, `⚠️ *Error creating your wallet.* Please try again later.`, { parse_mode: 'Markdown' });
+      bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
-  } else {
-    bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
-  }
 
-  // Authenticate user & generate a token
-  try {
-    const response = await axios.post('https://auto-trade-production.up.railway.app/api/auth/login', { telegramId: chatId });
-
-    if (response.data.success) {
-      const authToken = response.data.token; // Secure JWT or session token
-
-      // Auto-redirect user to the dashboard
-      bot.sendMessage(chatId, `🚀 Redirecting you to the platform...`, {
-        reply_markup: {
-          inline_keyboard: [
-            [{ 
-              text: '🚀 Open Dashboard', 
-              web_app: { url: `https://auto-trade-production.up.railway.app/dashboard?token=${authToken}` } 
-            }]
-          ]
-        }
-      });
-    } else {
-      bot.sendMessage(chatId, `❌ Authentication failed. Please try again.`);
-    }
+    // Auto-redirect user to the dashboard
+    bot.sendMessage(chatId, `🚀 Redirecting you to the platform...`, {
+      reply_markup: {
+        inline_keyboard: [
+          [{ 
+            text: '🚀 Open Dashboard', 
+            web_app: { url: `https://auto-trade-production.up.railway.app/dashboard?telegramId=${chatId}` } 
+          }]
+        ]
+      }
+    });
   } catch (error) {
-    bot.sendMessage(chatId, `⚠️ Error during login: ${error.message}`);
+    bot.sendMessage(chatId, `⚠️ Error: ${error.message}`, { parse_mode: 'Markdown' });
   }
 });
 
