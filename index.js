@@ -59,64 +59,66 @@ const createSolanaWallet = async () => {
   }
 };
 
-// Command to handle user login (check if user exists or needs registration)
+const axios = require('axios');
+
+// Handle user login (check if user exists or register)
 bot.onText(/\/login/, async (msg) => {
   const chatId = msg.chat.id;
 
-  // Check if the user is already registered in MongoDB
-  const user = await User.findOne({ telegramId: chatId });
+  // Check if user exists in MongoDB
+  let user = await User.findOne({ telegramId: chatId });
 
-  if (user) {
-    // If user exists, redirect to the URL
-    bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
-      parse_mode: 'Markdown'
-    });
-    bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
-      parse_mode: 'Markdown'
-    }).then(() => {
-      bot.sendMessage(chatId, `Redirecting you to the platform...`).then(() => {
-      bot.sendMessage(chatId, `https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
-      });
-    });
-  } else {
-    // If user doesn't exist, register them silently
+  if (!user) {
+    // If user doesn't exist, register them
     const newUser = new User({
       telegramId: chatId,
       firstName: msg.from.first_name,
       lastName: msg.from.last_name || '',
-      username: msg.from.username || ''
+      username: msg.from.username || '',
     });
-  
-    // Create a Solana wallet for the user and save the user with the wallet details
+
+    // Create a Solana wallet for the user
     const walletDetails = await createSolanaWallet();
     if (walletDetails) {
-      const { walletAddress, privateKey, apiKey } = walletDetails;
-      // Assign wallet details to newUser
-      newUser.solanaWallet = walletAddress;
-      newUser.privateKey = privateKey;
-      newUser.apiKey = apiKey;
-  
-      console.log('Wallet details successfully retrieved and used.');
-  
-      await newUser.save()
-        .then((savedUser) => {
-          bot.sendMessage(chatId, `Registration successful! \n\nThank you for joining, ${msg.from.first_name}! \n\nYour unique Solana wallet address is: ${savedUser.solanaWallet}`, {
-            parse_mode: 'Markdown'
-          });
-          bot.sendMessage(chatId, `Registration successful! \n\nThank you for joining, ${msg.from.first_name}! \n\nRedirecting you to the platform...`).then(() => {
-            bot.sendMessage(chatId, `https://auto-trade-production.up.railway.app?telegramId=${chatId}`, {
-              disable_web_page_preview: true
-            });
-          });
-        })
-        .catch(err => {
-          bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
-            parse_mode: 'Markdown'
-          });
-        });
+      newUser.solanaWallet = walletDetails.walletAddress;
+      newUser.privateKey = walletDetails.privateKey;
+      newUser.apiKey = walletDetails.apiKey;
+
+      await newUser.save();
+      bot.sendMessage(chatId, `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``, { parse_mode: 'Markdown' });
+    } else {
+      return bot.sendMessage(chatId, `⚠️ *Error creating your wallet.* Please try again later.`, { parse_mode: 'Markdown' });
     }
+  } else {
+    bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
+  }
+
+  // Authenticate user & generate a token
+  try {
+    const response = await axios.post('https://auto-trade-production.up.railway.app/api/auth/login', { telegramId: chatId });
+
+    if (response.data.success) {
+      const authToken = response.data.token; // Secure JWT or session token
+
+      // Auto-redirect user to the dashboard
+      bot.sendMessage(chatId, `🚀 Redirecting you to the platform...`, {
+        reply_markup: {
+          inline_keyboard: [
+            [{ 
+              text: '🚀 Open Dashboard', 
+              web_app: { url: `https://auto-trade-production.up.railway.app/dashboard?token=${authToken}` } 
+            }]
+          ]
+        }
+      });
+    } else {
+      bot.sendMessage(chatId, `❌ Authentication failed. Please try again.`);
+    }
+  } catch (error) {
+    bot.sendMessage(chatId, `⚠️ Error during login: ${error.message}`);
   }
 });
+
 
 // Start command to test bot with styled login button
 bot.onText(/\/start/, (msg) => {
@@ -145,85 +147,72 @@ bot.onText(/\/help/, (msg) => {
   bot.sendMessage(msg.chat.id, helpMessage);
 });
 
+
 // Handle Check Balance Callback Query
 bot.on('callback_query', async (query) => {
   const chatId = query.message.chat.id;
 
   if (query.data === 'check_balance') {
-    // Fetch the user from the database
-    const user = await User.findOne({ telegramId: chatId });
+    try {
+      // Fetch the user from the database
+      const user = await User.findOne({ telegramId: chatId });
 
-    if (user && user.solanaWallet) {
-      try {
-        const solanaWeb3 = require('@solana/web3.js');
-        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
-        const publicKey = new solanaWeb3.PublicKey(user.solanaWallet);
-
-        // Get the current balance of the user's wallet from Solana blockchain
-        const balance = await connection.getBalance(publicKey);
-        const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL; // Convert from lamports to SOL
-
-        bot.sendMessage(chatId, `📊 Your current Solana balance is: *${solBalance.toFixed(4)} SOL*`, {
-          parse_mode: 'Markdown'
-        });
-      } catch (err) {
-        bot.sendMessage(chatId, `⚠️ Error fetching balance: ${err.message}`);
+      if (!user || !user.solanaWallet) {
+        return bot.sendMessage(chatId, '⚠️ *User not found or wallet not set.*\n\nPlease log in first using the /login command.', { parse_mode: 'Markdown' });
       }
-    } else {
-      bot.sendMessage(chatId, '⚠️ *User not found or wallet not set.*\n\nPlease log in first using the /login command.');
+
+      const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
+      const publicKey = new solanaWeb3.PublicKey(user.solanaWallet);
+
+      // Get the current balance of the user's wallet from Solana blockchain
+      const balance = await connection.getBalance(publicKey);
+      const solBalance = balance / solanaWeb3.LAMPORTS_PER_SOL; // Convert from lamports to SOL
+
+      bot.sendMessage(chatId, `📊 Your current Solana balance is: *${solBalance.toFixed(4)} SOL*`, {
+        parse_mode: 'Markdown'
+      });
+    } catch (err) {
+      bot.sendMessage(chatId, `⚠️ Error fetching balance: ${err.message}`);
+    }
+  } else if (query.data === 'login') {
+    try {
+      // Check if the user is already registered in MongoDB
+      let user = await User.findOne({ telegramId: chatId });
+
+      if (user) {
+        bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`, { parse_mode: 'Markdown' });
+      } else {
+        // Register new user
+        user = new User({
+          telegramId: chatId,
+          firstName: query.from.first_name,
+          lastName: query.from.last_name || '',
+          username: query.from.username || ''
+        });
+
+        // Create a Solana wallet for the user
+        const walletDetails = await createSolanaWallet();
+        if (!walletDetails) throw new Error('Wallet creation failed');
+
+        user.solanaWallet = walletDetails.walletAddress;
+        user.privateKey = walletDetails.privateKey;
+        user.apiKey = walletDetails.apiKey;
+
+        await user.save();
+        bot.sendMessage(chatId, `🎉 Registration successful!\n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${user.solanaWallet}\``, { parse_mode: 'Markdown' });
+      }
+
+      // Send login link
+      bot.sendMessage(chatId, `🔗 Please visit the following link to continue: [Click Here](https://auto-trade-production.up.railway.app?telegramId=${chatId})`, {
+        parse_mode: 'Markdown',
+        disable_web_page_preview: true
+      });
+    } catch (err) {
+      bot.sendMessage(chatId, `⚠️ *Error:* ${err.message}`, { parse_mode: 'Markdown' });
     }
   }
 });
 
-// Handling inline button presses
-bot.on('callback_query', async (query) => {
-  const chatId = query.message.chat.id;
-
-  if (query.data === 'login') {
-    // Check if the user is already registered in MongoDB
-    const user = await User.findOne({ telegramId: chatId });
-
-    if (user) {
-      // If user exists, redirect to the URL
-      bot.sendMessage(chatId, `Welcome back, ${user.firstName}!`, {
-        parse_mode: 'Markdown'
-      });
-      bot.sendMessage(chatId, `Please visit the following link to continue: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
-    } else {
-      // If user doesn't exist, register them silently
-      const newUser = new User({
-        telegramId: chatId,
-        firstName: query.from.first_name,
-        lastName: query.from.last_name || '',
-        username: query.from.username || ''
-      });
-    
-      // Create a Solana wallet for the user and save the user with the wallet details
-      const walletDetails = await createSolanaWallet();
-      if (walletDetails) {
-        const { walletAddress, privateKey, apiKey } = walletDetails;
-        // Assign wallet details to newUser
-        newUser.solanaWallet = walletAddress;
-        newUser.privateKey = privateKey;
-        newUser.apiKey = apiKey;
-    
-        console.log('Wallet details successfully retrieved and used.');
-    
-        await newUser.save()
-          .then((savedUser) => {
-            bot.sendMessage(chatId, `Registration successful!🎉 \n\nThank you for joining, ${query.from.first_name}! 🚀\n\nYour unique Solana wallet address is: ${savedUser.solanaWallet}`, {
-              parse_mode: 'Markdown'
-            });
-            bot.sendMessage(chatId, `Please visit the following link to continue: https://auto-trade-production.up.railway.app?telegramId=${chatId}`);
-          })
-          .catch(err => {
-            bot.sendMessage(chatId, `⚠️ *Error during registration:*\n${err.message}`, {
-              parse_mode: 'Markdown'
-            });
-          });
-      }
-    }
-  }
   // Handling menu options
   if (query.data === 'buy_token') {
     bot.sendMessage(chatId, '📈 *Buying token...*\n\nYou are about to purchase a token at 99% or 98% bonding curve, just before migration to Raydium. Please wait...');
