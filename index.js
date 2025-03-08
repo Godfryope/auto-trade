@@ -139,17 +139,17 @@ bot.onText(/\/login/, async (msg) => {
 //   });
 // });
 
-// Start command to test bot with styled login button
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
 
   try {
     // Check if user exists in MongoDB
     let user = await User.findOne({ telegramId: chatId });
+    let newUser = null;
 
     if (!user) {
       // If user doesn't exist, register them
-      const newUser = new User({
+      newUser = new User({
         telegramId: chatId,
         firstName: msg.from.first_name,
         lastName: msg.from.last_name || '',
