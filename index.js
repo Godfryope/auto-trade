@@ -59,8 +59,6 @@ const createSolanaWallet = async () => {
   }
 };
 
-const axios = require('axios');
-
 // Handle user login (check if user exists or register)
 bot.onText(/\/login/, async (msg) => {
   const chatId = msg.chat.id;
