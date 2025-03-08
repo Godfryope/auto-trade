@@ -3,8 +3,12 @@ const mongoose = require('mongoose');
 const axios = require('axios');
 const QRCode = require('qrcode');
 const express = require('express');
+const session = require('express-session');
 const app = express();
 const port = process.env.PORT || 3000;
+const crypto = require('crypto');
+const secret = crypto.randomBytes(64).toString('hex');
+console.log(secret);
 
 // MongoDB connection
 mongoose.connect('mongodb+srv://bitcoption:Precious1@autotrader.myq0i.mongodb.net/?retryWrites=true&w=majority&appName=autotrader')
@@ -16,6 +20,14 @@ const bot = new TelegramBot('7423072615:AAE4n0XMukzbdsW_lsvhY2KcmJ2uS_RjR20', { 
 
 app.use(express.json());
 app.use(express.static('public'));
+
+// Session setup
+app.use(session({
+  secret: secret,
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Set to true if using https
+}));
 
 // Define User Schema for MongoDB
 const userSchema = new mongoose.Schema({
@@ -105,8 +117,20 @@ bot.onText(/\/login/, async (msg) => {
       bot.sendPhoto(chatId, walletDetails.qrCodeImage, {
         caption: 'Here is your QR code for the Solana wallet address.',
       });
+
+      // Store userId in session
+      app.use((req, res, next) => {
+        req.session.userId = newUser._id;
+        next();
+      });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
+
+      // Store userId in session
+      app.use((req, res, next) => {
+        req.session.userId = user._id;
+        next();
+      });
     }
 
     // Auto-redirect user to the dashboard with user data
@@ -131,23 +155,6 @@ bot.onText(/\/login/, async (msg) => {
     bot.sendMessage(chatId, `⚠️ Error: ${error.message}`, { parse_mode: 'Markdown' });
   }
 });
-
-// // Handle user login (open specified URL)
-// bot.onText(/\/login/, (msg) => {
-//   const chatId = msg.chat.id;
-
-//   // Send a message with a button that opens the specified URL
-//   bot.sendMessage(chatId, `🚀 Click the button below to log in:`, {
-//     reply_markup: {
-//       inline_keyboard: [
-//         [{ 
-//           text: '🔑 Login', 
-//           url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}`
-//         }]
-//       ]
-//     }
-//   });
-// });
 
 // Handle /start command
 bot.onText(/\/start/, async (msg) => {
@@ -192,8 +199,20 @@ bot.onText(/\/start/, async (msg) => {
       bot.sendPhoto(chatId, walletDetails.qrCodeImage, {
         caption: 'Here is your QR code for the Solana wallet address.',
       });
+
+      // Store userId in session
+      app.use((req, res, next) => {
+        req.session.userId = newUser._id;
+        next();
+      });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
+
+      // Store userId in session
+      app.use((req, res, next) => {
+        req.session.userId = user._id;
+        next();
+      });
     }
 
     // Auto-redirect user to the dashboard with user data
@@ -229,6 +248,26 @@ bot.onText(/\/help/, (msg) => {
 /help - Show this help message`;
 
   bot.sendMessage(msg.chat.id, helpMessage);
+});
+
+// Endpoint to get user's wallet address and QR code
+app.get('/api/user/:telegramId', async (req, res) => {
+  const telegramId = req.params.telegramId;
+
+  try {
+    const user = await User.findOne({ telegramId });
+
+    if (user) {
+      res.json({
+        walletAddress: user.solanaWallet,
+        qrCodeImage: user.qrCodeImage,
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 // Start the Express server
