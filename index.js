@@ -1,24 +1,29 @@
+require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const mongoose = require('mongoose');
 const axios = require('axios');
 const QRCode = require('qrcode');
 const express = require('express');
+const crypto = require('crypto');
+const userRoutes = require('./routes/userRoutes');
 const app = express();
 const port = process.env.PORT || 3000;
-const crypto = require('crypto');
+
+// Generate secret key
 const secret = crypto.randomBytes(64).toString('hex');
 console.log(secret);
 
 // MongoDB connection
-mongoose.connect('mongodb+srv://bitcoption:Precious1@autotrader.myq0i.mongodb.net/?retryWrites=true&w=majority&appName=autotrader')
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.log(err));
 
 // Telegram Bot Setup
-const bot = new TelegramBot('7423072615:AAE4n0XMukzbdsW_lsvhY2KcmJ2uS_RjR20', { polling: true });
+const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/api/user', userRoutes);
 
 // Define User Schema for MongoDB
 const userSchema = new mongoose.Schema({
@@ -42,23 +47,14 @@ const createSolanaWallet = async () => {
   try {
     // Step 1: Create a wallet
     const response = await axios.get('https://pumpportal.fun/api/create-wallet');
-    console.log('API Response:', response.data); // Log the response data
     const data = response.data;
-    const privateKey = data.privateKey;
-    const walletAddress = data.walletPublicKey;
-    const apiKey = data.apiKey;
+    const { privateKey, walletPublicKey: walletAddress, apiKey } = data;
 
     if (walletAddress && apiKey) {
-      console.log(`Private Key: ${privateKey}`);
-      console.log(`Wallet Address: ${walletAddress}`);
-      console.log(`API Key: ${apiKey}`);
-
-      // Generate QR code for the wallet address
       const qrCodeImage = await QRCode.toDataURL(walletAddress);
       return { walletAddress, privateKey, apiKey, qrCodeImage };
     } else {
-      console.error('Failed to create wallet: Invalid response data');
-      return null;
+      throw new Error('Invalid response data');
     }
   } catch (error) {
     console.error('Failed to create wallet:', error.response ? error.response.data : error.message);
@@ -86,11 +82,7 @@ bot.onText(/\/login/, async (msg) => {
       // Create a Solana wallet for the user
       const walletDetails = await createSolanaWallet();
       if (!walletDetails) {
-        return bot.sendMessage(
-          chatId,
-          `⚠️ *Error creating your wallet.* Please try again later.`,
-          { parse_mode: 'Markdown' }
-        );
+        return bot.sendMessage(chatId, `⚠️ *Error creating your wallet.* Please try again later.`, { parse_mode: 'Markdown' });
       }
 
       newUser.solanaWallet = walletDetails.walletAddress;
@@ -99,27 +91,14 @@ bot.onText(/\/login/, async (msg) => {
       newUser.qrCodeImage = walletDetails.qrCodeImage;
       await newUser.save();
 
-      bot.sendMessage(
-        chatId,
-        `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``,
-        { parse_mode: 'Markdown' }
-      );
-
-      bot.sendPhoto(chatId, walletDetails.qrCodeImage, {
-        caption: 'Here is your QR code for the Solana wallet address.',
-      });
+      bot.sendMessage(chatId, `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``, { parse_mode: 'Markdown' });
+      bot.sendPhoto(chatId, walletDetails.qrCodeImage, { caption: 'Here is your QR code for the Solana wallet address.' });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
 
     // Send the script to store telegramId in local storage to the frontend
-    const script = `
-      <script>
-        localStorage.setItem('telegramId', '${chatId}');
-      </script>
-    `;
-
-    // Auto-redirect user to the dashboard with user data
+    const script = `<script>localStorage.setItem('telegramId', '${chatId}');</script>`;
     const userData = {
       firstName: user ? user.firstName : newUser.firstName,
       lastName: user ? user.lastName : newUser.lastName,
@@ -130,10 +109,7 @@ bot.onText(/\/login/, async (msg) => {
     bot.sendMessage(chatId, `🚀 Redirecting you to the platform...`, {
       reply_markup: {
         inline_keyboard: [
-          [{ 
-            text: '🚀 Open Dashboard', 
-            web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` } 
-          }]
+          [{ text: '🚀 Open Dashboard', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` } }]
         ]
       }
     });
@@ -163,11 +139,7 @@ bot.onText(/\/start/, async (msg) => {
       // Create a Solana wallet for the user
       const walletDetails = await createSolanaWallet();
       if (!walletDetails) {
-        return bot.sendMessage(
-          chatId,
-          `⚠️ *Error creating your wallet.* Please try again later.`,
-          { parse_mode: 'Markdown' }
-        );
+        return bot.sendMessage(chatId, `⚠️ *Error creating your wallet.* Please try again later.`, { parse_mode: 'Markdown' });
       }
 
       newUser.solanaWallet = walletDetails.walletAddress;
@@ -176,27 +148,13 @@ bot.onText(/\/start/, async (msg) => {
       newUser.qrCodeImage = walletDetails.qrCodeImage;
       await newUser.save();
 
-      bot.sendMessage(
-        chatId,
-        `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``,
-        { parse_mode: 'Markdown' }
-      );
-
-      bot.sendPhoto(chatId, walletDetails.qrCodeImage, {
-        caption: 'Here is your QR code for the Solana wallet address.',
-      });
+      bot.sendMessage(chatId, `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``, { parse_mode: 'Markdown' });
+      bot.sendPhoto(chatId, walletDetails.qrCodeImage, { caption: 'Here is your QR code for the Solana wallet address.' });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
 
-    // Send the script to store telegramId in local storage to the frontend
-    const script = `
-      <script>
-        localStorage.setItem('telegramId', '${chatId}');
-      </script>
-    `;
-
-    // Auto-redirect user to the dashboard with user data
+    const script = `<script>localStorage.setItem('telegramId', '${chatId}');</script>`;
     const userData = {
       firstName: user ? user.firstName : newUser.firstName,
       lastName: user ? user.lastName : newUser.lastName,
@@ -207,10 +165,7 @@ bot.onText(/\/start/, async (msg) => {
     const options = {
       reply_markup: {
         inline_keyboard: [
-          [{ 
-            text: '🔑 Login', 
-            url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}`
-          }]
+          [{ text: '🔑 Login', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` }]
         ]
       }
     };
@@ -229,25 +184,6 @@ bot.onText(/\/help/, (msg) => {
 /help - Show this help message`;
 
   bot.sendMessage(msg.chat.id, helpMessage);
-});
-
-// Endpoint to get user's wallet address and QR code
-app.get('/api/user/:telegramId', async (req, res) => {
-  const telegramId = req.params.telegramId;
-  try {
-    const user = await User.findOne({ telegramId });
-
-    if (user) {
-      res.json({
-        walletAddress: user.solanaWallet,
-        qrCodeImage: user.qrCodeImage,
-      });
-    } else {
-      res.status(404).json({ message: 'User not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
 });
 
 // Start the Express server
