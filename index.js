@@ -118,17 +118,17 @@ bot.onText(/\/login/, async (msg) => {
         caption: 'Here is your QR code for the Solana wallet address.',
       });
 
-      // Store userId in session
+      // Store telegramId in session
       app.use((req, res, next) => {
-        req.session.userId = newUser._id;
+        req.session.telegramId = chatId;
         next();
       });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
 
-      // Store userId in session
+      // Store telegramId in session
       app.use((req, res, next) => {
-        req.session.userId = user._id;
+        req.session.telegramId = chatId;
         next();
       });
     }
@@ -200,17 +200,17 @@ bot.onText(/\/start/, async (msg) => {
         caption: 'Here is your QR code for the Solana wallet address.',
       });
 
-      // Store userId in session
+      // Store telegramId in session
       app.use((req, res, next) => {
-        req.session.userId = newUser._id;
+        req.session.telegramId = chatId;
         next();
       });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
 
-      // Store userId in session
+      // Store telegramId in session
       app.use((req, res, next) => {
-        req.session.userId = user._id;
+        req.session.telegramId = chatId;
         next();
       });
     }
@@ -234,7 +234,7 @@ bot.onText(/\/start/, async (msg) => {
       }
     };
 
-    bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make this fun! 😎`, options);
+    bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make this journey exciting! 🚀`, options);
   } catch (error) {
     bot.sendMessage(chatId, `⚠️ Error: ${error.message}`, { parse_mode: 'Markdown' });
   }
