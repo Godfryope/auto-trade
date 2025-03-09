@@ -943,10 +943,28 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             console.log('DOM fully loaded and parsed');
-            const telegramId = new URLSearchParams(window.location.search).get('telegramId');
-            console.log('telegramId:', telegramId);
+            let telegramId = new URLSearchParams(window.location.search).get('telegramId');
+            console.log('telegramId from URL:', telegramId);
     
-            if (telegramId) {
+            if (!telegramId) {
+                console.log('No telegramId found in URL, fetching from session');
+                fetch('/api/session/telegramId')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Data fetched from session:', data);
+                        if (data.telegramId) {
+                            telegramId = data.telegramId;
+                            fetchUserData(telegramId);
+                        } else {
+                            console.error('No telegramId found in session');
+                        }
+                    })
+                    .catch(error => console.error('Error fetching telegramId from session:', error));
+            } else {
+                fetchUserData(telegramId);
+            }
+    
+            function fetchUserData(telegramId) {
                 console.log('Fetching user data for telegramId:', telegramId);
                 fetch(`/api/user/${telegramId}`)
                     .then(response => {
@@ -963,8 +981,6 @@
                         }
                     })
                     .catch(error => console.error('Error fetching user data:', error));
-            } else {
-                console.error('No telegramId found in URL');
             }
     
             document.getElementById("share-button").addEventListener("click", function (event) {

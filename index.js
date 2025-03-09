@@ -269,6 +269,15 @@ app.get('/api/user/:telegramId', async (req, res) => {
   }
 });
 
+// Endpoint to get telegramId from session
+app.get('/api/session/telegramId', (req, res) => {
+  if (req.session.telegramId) {
+    res.json({ telegramId: req.session.telegramId });
+  } else {
+    res.status(404).json({ message: 'Telegram ID not found in session' });
+  }
+});
+
 // Start the Express server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
