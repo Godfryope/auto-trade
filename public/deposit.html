@@ -874,45 +874,44 @@
                 </div>
                 <div>
                     <p class="mb-0 fs-5 fw-semibold">SOL <span class="badge">Solana Coin</span></p>
-                    <!-- <p class="mb-0 fs-11 text-success fw-semibold">-1.25%</p> -->
                 </div>
             </div>
             
-        <!-- Success Message (hidden by default, styled as per instructions) -->
+            <!-- Success Message (hidden by default, styled as per instructions) -->
             <div id="copySuccess" class="alert alert-success mt-3 p-2 text-center" role="alert" style="display: none; background-color: #002a00; color: #00c851; border-radius: 5px; padding-right: 0; position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 2000; max-width: 300px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);">
                 <i class="fas fa-check-circle me-2" style="color: #00c851;"></i> Copied
             </div>
             
             <div class="qr-container mb-3">
                 <div class="qr-code">
-                    <img src="./assets/images/crypto-currencies/square-color/sol.jpg" alt="QR Code" id="qrImage">
+                    <img src="" alt="QR Code" id="qrImage">
                 </div>
-                <div id="wallet-address" class="wallet-address">5RpDDU27hSVXDXXVyVRi62tD4apLAkr11Y6qAT99RWdP</div>
+                <div id="wallet-address" class="wallet-address"></div>
             </div>
-            
+
             <div class="card-header d-flex justify-content-end mt-0 flex-wrap"></div>
-                <ul class="icons-list list-unstyled mx-5 d-flex justify-content-between align-items-center text-center">
+            <ul class="icons-list list-unstyled mx-5 d-flex justify-content-between align-items-center text-center">
+                <div class="icon-wrapper d-flex flex-column align-items-center mx-2 my-1 flex-grow-1 text-center">
+                    <li class="icons-list-item rounded-pill p-4" data-bs-toggle="tooltip" data-bs-placement="top" id="copy-button">
+                        <i class="bx bx-wallet fs-3"></i>
+                    </li>
+                    <div class="fs-6 fw-semibold">Copy</div>
+                </div>
+                <a href="/">
                     <div class="icon-wrapper d-flex flex-column align-items-center mx-2 my-1 flex-grow-1 text-center">
-                        <li class="icons-list-item rounded-pill p-4" data-bs-toggle="tooltip" data-bs-placement="top" id="copy-button">
-                            <i class="bx bx-wallet fs-3"></i>
+                        <li class="icons-list-item rounded-pill p-4" data-bs-toggle="tooltip" data-bs-placement="top">
+                            <i class="bx bx-home fs-3"></i>
                         </li>
-                        <div class="fs-6 fw-semibold">Copy</div>
+                        <div class="fs-6 fw-semibold">Home</div>
                     </div>
-                    <a href="/">
-                        <div class="icon-wrapper d-flex flex-column align-items-center mx-2 my-1 flex-grow-1 text-center">
-                            <li class="icons-list-item rounded-pill p-4" data-bs-toggle="tooltip" data-bs-placement="top">
-                                <i class="bx bx-home fs-3"></i>
-                            </li>
-                            <div class="fs-6 fw-semibold">Home</div>
-                        </div>
-                    </a>
-                    <div class="icon-wrapper d-flex flex-column align-items-center mx-2 my-1 flex-grow-1 text-center">
-                        <li class="icons-list-item rounded-pill p-4" data-bs-toggle="tooltip" data-bs-placement="top" id="share-button">
-                            <i class="bx bx-share fs-3"></i>
-                        </li>
-                        <div class="fs-6 fw-semibold">Share</div>
-                    </div>
-                </ul>
+                </a>
+                <div class="icon-wrapper d-flex flex-column align-items-center mx-2 my-1 flex-grow-1 text-center">
+                    <li class="icons-list-item rounded-pill p-4" data-bs-toggle="tooltip" data-bs-placement="top" id="share-button">
+                        <i class="bx bx-share fs-3"></i>
+                    </li>
+                    <div class="fs-6 fw-semibold">Share</div>
+                </div>
+            </ul>
             </div>
         </div>
 
@@ -942,56 +941,67 @@
     <!-- Scroll To Top -->
 
     <script>
-    
-        document.getElementById("share-button").addEventListener("click", function (event) {
-            event.preventDefault();
-        
-            // Get the QR code image URL and wallet address
-            const qrImageUrl = document.getElementById("qrImage").src;
-            const walletAddress = document.getElementById("wallet-address").textContent;
-        
-            // Formulate the message for Telegram
-            const message = `Here's my wallet address: ${walletAddress} and QR code: ${qrImageUrl}`;
-            const telegramLink = `https://t.me/share/url?url=${encodeURIComponent(qrImageUrl)}&text=${encodeURIComponent(message)}`;
-        
-            // Open Telegram link to share
-            window.open(telegramLink, '_blank');
-        });
+        document.addEventListener("DOMContentLoaded", function() {
+            const telegramId = new URLSearchParams(window.location.search).get('telegramId');
 
-        function copyToClipboard(text) {
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(text)
-                    .then(() => {
-                        console.log('Wallet address copied to clipboard:', text);
-                        showCopySuccess();
+            if (telegramId) {
+                fetch(`/api/user/${telegramId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.walletAddress && data.qrCodeImage) {
+                            document.getElementById('wallet-address').textContent = data.walletAddress;
+                            document.getElementById('qrImage').src = data.qrCodeImage;
+                        }
                     })
-                    .catch(err => {
-                        console.error('Failed to copy: ', err);
-                    });
-            } else {
-                const tempInput = document.createElement("input");
-                tempInput.value = text;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand("copy");
-                document.body.removeChild(tempInput);
-                showCopySuccess();
+                    .catch(error => console.error('Error fetching user data:', error));
             }
-        }
-    
-        function showCopySuccess() {
-            const copySuccess = document.getElementById("copySuccess");
-            copySuccess.style.display = 'block';
-    
-            // Hide after 3 seconds
-            setTimeout(() => {
-                copySuccess.style.display = 'none';
-            }, 3000);
-        }
-    
-        document.getElementById('copy-button').addEventListener('click', function () {
-            const walletAddress = document.getElementById('wallet-address').textContent;
-            copyToClipboard(walletAddress);
+
+            document.getElementById("share-button").addEventListener("click", function (event) {
+                event.preventDefault();
+            
+                const qrImageUrl = document.getElementById("qrImage").src;
+                const walletAddress = document.getElementById("wallet-address").textContent;
+            
+                const message = `Here's my wallet address: ${walletAddress} and QR code: ${qrImageUrl}`;
+                const telegramLink = `https://t.me/share/url?url=${encodeURIComponent(qrImageUrl)}&text=${encodeURIComponent(message)}`;
+            
+                window.open(telegramLink, '_blank');
+            });
+
+            function copyToClipboard(text) {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(text)
+                        .then(() => {
+                            console.log('Wallet address copied to clipboard:', text);
+                            showCopySuccess();
+                        })
+                        .catch(err => {
+                            console.error('Failed to copy: ', err);
+                        });
+                } else {
+                    const tempInput = document.createElement("input");
+                    tempInput.value = text;
+                    document.body.appendChild(tempInput);
+                    tempInput.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(tempInput);
+                    showCopySuccess();
+                }
+            }
+        
+            function showCopySuccess() {
+                const copySuccess = document.getElementById("copySuccess");
+                copySuccess.style.display = 'block';
+        
+                setTimeout(() => {
+                    copySuccess.style.display = 'none';
+                }, 3000);
+            }
+        
+            document.getElementById('copy-button').addEventListener('click', function () {
+                const walletAddress = document.getElementById('wallet-address').textContent;
+                copyToClipboard(walletAddress);
+            });
         });
     </script>
     <!-- Popper JS -->

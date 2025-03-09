@@ -243,9 +243,9 @@ bot.onText(/\/start/, async (msg) => {
 // Help command to show available commands
 bot.onText(/\/help/, (msg) => {
   const helpMessage = `Available Commands:
-/start - Start the bot and display the login button
-/login - Log in or register to the platform
-/help - Show this help message`;
+  /start - Start the bot and display the login button
+  /login - Log in or register to the platform
+  /help - Show this help message`;
 
   bot.sendMessage(msg.chat.id, helpMessage);
 });
@@ -253,7 +253,6 @@ bot.onText(/\/help/, (msg) => {
 // Endpoint to get user's wallet address and QR code
 app.get('/api/user/:telegramId', async (req, res) => {
   const telegramId = req.params.telegramId;
-
   try {
     const user = await User.findOne({ telegramId });
 
