@@ -942,33 +942,49 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            console.log('DOM fully loaded and parsed');
             const telegramId = new URLSearchParams(window.location.search).get('telegramId');
-
+            console.log('telegramId:', telegramId);
+    
             if (telegramId) {
+                console.log('Fetching user data for telegramId:', telegramId);
                 fetch(`/api/user/${telegramId}`)
-                    .then(response => response.json())
+                    .then(response => {
+                        console.log('Response received from /api/user/', response);
+                        return response.json();
+                    })
                     .then(data => {
+                        console.log('Data fetched:', data);
                         if (data.walletAddress && data.qrCodeImage) {
                             document.getElementById('wallet-address').textContent = data.walletAddress;
                             document.getElementById('qrImage').src = data.qrCodeImage;
+                        } else {
+                            console.error('Incomplete user data:', data);
                         }
                     })
                     .catch(error => console.error('Error fetching user data:', error));
+            } else {
+                console.error('No telegramId found in URL');
             }
-
+    
             document.getElementById("share-button").addEventListener("click", function (event) {
                 event.preventDefault();
-            
+                console.log('Share button clicked');
+    
                 const qrImageUrl = document.getElementById("qrImage").src;
                 const walletAddress = document.getElementById("wallet-address").textContent;
-            
+                console.log('QR Image URL:', qrImageUrl);
+                console.log('Wallet Address:', walletAddress);
+    
                 const message = `Here's my wallet address: ${walletAddress} and QR code: ${qrImageUrl}`;
                 const telegramLink = `https://t.me/share/url?url=${encodeURIComponent(qrImageUrl)}&text=${encodeURIComponent(message)}`;
-            
+                console.log('Telegram link:', telegramLink);
+    
                 window.open(telegramLink, '_blank');
             });
-
+    
             function copyToClipboard(text) {
+                console.log('Copying to clipboard:', text);
                 if (navigator.clipboard) {
                     navigator.clipboard.writeText(text)
                         .then(() => {
@@ -976,7 +992,7 @@
                             showCopySuccess();
                         })
                         .catch(err => {
-                            console.error('Failed to copy: ', err);
+                            console.error('Failed to copy:', err);
                         });
                 } else {
                     const tempInput = document.createElement("input");
@@ -985,20 +1001,24 @@
                     tempInput.select();
                     document.execCommand("copy");
                     document.body.removeChild(tempInput);
+                    console.log('Wallet address copied to clipboard using fallback:', text);
                     showCopySuccess();
                 }
             }
         
             function showCopySuccess() {
+                console.log('Showing copy success message');
                 const copySuccess = document.getElementById("copySuccess");
                 copySuccess.style.display = 'block';
         
                 setTimeout(() => {
                     copySuccess.style.display = 'none';
+                    console.log('Hiding copy success message');
                 }, 3000);
             }
         
             document.getElementById('copy-button').addEventListener('click', function () {
+                console.log('Copy button clicked');
                 const walletAddress = document.getElementById('wallet-address').textContent;
                 copyToClipboard(walletAddress);
             });
