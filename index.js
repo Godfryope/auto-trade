@@ -119,19 +119,24 @@ bot.onText(/\/login/, async (msg) => {
       </script>
     `;
 
-    // Send the script to the user to store telegramId in local storage
-    bot.sendMessage(chatId, `Storing your Telegram ID in local storage...`, {
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
+    // Auto-redirect user to the dashboard with user data
+    const userData = {
+      firstName: user ? user.firstName : newUser.firstName,
+      lastName: user ? user.lastName : newUser.lastName,
+      username: user ? user.username : newUser.username,
+      solanaWallet: user ? user.solanaWallet : newUser.solanaWallet,
+    };
+
+    bot.sendMessage(chatId, `🚀 Redirecting you to the platform...`, {
       reply_markup: {
         inline_keyboard: [
-          [{ text: 'Open Dashboard', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } }]
+          [{ 
+            text: '🚀 Open Dashboard', 
+            web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` } 
+          }]
         ]
       }
-    }).then(() => {
-      bot.sendMessage(chatId, script, { parse_mode: 'HTML' });
     });
-
   } catch (error) {
     bot.sendMessage(chatId, `⚠️ Error: ${error.message}`, { parse_mode: 'Markdown' });
   }
@@ -191,19 +196,26 @@ bot.onText(/\/start/, async (msg) => {
       </script>
     `;
 
-    // Send the script to the user to store telegramId in local storage
-    bot.sendMessage(chatId, `Storing your Telegram ID in local storage...`, {
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
+    // Auto-redirect user to the dashboard with user data
+    const userData = {
+      firstName: user ? user.firstName : newUser.firstName,
+      lastName: user ? user.lastName : newUser.lastName,
+      username: user ? user.username : newUser.username,
+      solanaWallet: user ? user.solanaWallet : newUser.solanaWallet,
+    };
+
+    const options = {
       reply_markup: {
         inline_keyboard: [
-          [{ text: 'Open Dashboard', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}` } }]
+          [{ 
+            text: '🔑 Login', 
+            url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}`
+          }]
         ]
       }
-    }).then(() => {
-      bot.sendMessage(chatId, script, { parse_mode: 'HTML' });
-    });
+    };
 
+    bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make this journey exciting! 🚀`, options);
   } catch (error) {
     bot.sendMessage(chatId, `⚠️ Error: ${error.message}`, { parse_mode: 'Markdown' });
   }
