@@ -119,6 +119,7 @@ bot.onText(/\/login/, async (msg) => {
       </script>
     `;
 
+    // Send the script to the user to store telegramId in local storage
     bot.sendMessage(chatId, `Storing your Telegram ID in local storage...`, {
       parse_mode: 'HTML',
       disable_web_page_preview: true,
@@ -190,6 +191,7 @@ bot.onText(/\/start/, async (msg) => {
       </script>
     `;
 
+    // Send the script to the user to store telegramId in local storage
     bot.sendMessage(chatId, `Storing your Telegram ID in local storage...`, {
       parse_mode: 'HTML',
       disable_web_page_preview: true,
