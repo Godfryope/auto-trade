@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Create a model for the schema
-const User = mongoose.model('User', userSchema);
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 // Function to create a Solana wallet and generate QR code
 const createSolanaWallet = async () => {
