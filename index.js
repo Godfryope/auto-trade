@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const axios = require('axios');
 const QRCode = require('qrcode');
 const express = require('express');
-const session = require('express-session');
 const app = express();
 const port = process.env.PORT || 3000;
 const crypto = require('crypto');
@@ -20,14 +19,6 @@ const bot = new TelegramBot('7423072615:AAE4n0XMukzbdsW_lsvhY2KcmJ2uS_RjR20', { 
 
 app.use(express.json());
 app.use(express.static('public'));
-
-// Session setup
-app.use(session({
-  secret: secret,
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false } // Set to true if using https
-}));
 
 // Define User Schema for MongoDB
 const userSchema = new mongoose.Schema({
@@ -117,20 +108,8 @@ bot.onText(/\/login/, async (msg) => {
       bot.sendPhoto(chatId, walletDetails.qrCodeImage, {
         caption: 'Here is your QR code for the Solana wallet address.',
       });
-
-      // Store telegramId in session
-      app.use((req, res, next) => {
-        req.session.telegramId = chatId;
-        next();
-      });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
-
-      // Store telegramId in session
-      app.use((req, res, next) => {
-        req.session.telegramId = chatId;
-        next();
-      });
     }
 
     // Auto-redirect user to the dashboard with user data
@@ -199,20 +178,8 @@ bot.onText(/\/start/, async (msg) => {
       bot.sendPhoto(chatId, walletDetails.qrCodeImage, {
         caption: 'Here is your QR code for the Solana wallet address.',
       });
-
-      // Store telegramId in session
-      app.use((req, res, next) => {
-        req.session.telegramId = chatId;
-        next();
-      });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
-
-      // Store telegramId in session
-      app.use((req, res, next) => {
-        req.session.telegramId = chatId;
-        next();
-      });
     }
 
     // Auto-redirect user to the dashboard with user data
@@ -243,9 +210,9 @@ bot.onText(/\/start/, async (msg) => {
 // Help command to show available commands
 bot.onText(/\/help/, (msg) => {
   const helpMessage = `Available Commands:
-  /start - Start the bot and display the login button
-  /login - Log in or register to the platform
-  /help - Show this help message`;
+/start - Start the bot and display the login button
+/login - Log in or register to the platform
+/help - Show this help message`;
 
   bot.sendMessage(msg.chat.id, helpMessage);
 });
@@ -266,15 +233,6 @@ app.get('/api/user/:telegramId', async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-});
-
-// Endpoint to get telegramId from session
-app.get('/api/session/telegramId', (req, res) => {
-  if (req.session.telegramId) {
-    res.json({ telegramId: req.session.telegramId });
-  } else {
-    res.status(404).json({ message: 'Telegram ID not found in session' });
   }
 });
 

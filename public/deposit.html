@@ -947,21 +947,18 @@
             console.log('telegramId from URL:', telegramId);
     
             if (!telegramId) {
-                console.log('No telegramId found in URL, fetching from session');
-                fetch('/api/session/telegramId')
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Data fetched from session:', data);
-                        if (data.telegramId) {
-                            telegramId = data.telegramId;
-                            fetchUserData(telegramId);
-                        } else {
-                            console.error('No telegramId found in session');
-                        }
-                    })
-                    .catch(error => console.error('Error fetching telegramId from session:', error));
+                console.log('No telegramId found in URL, fetching from local storage');
+                telegramId = localStorage.getItem('telegramId');
+                console.log('telegramId from local storage:', telegramId);
             } else {
+                console.log('Storing telegramId in local storage');
+                localStorage.setItem('telegramId', telegramId);
+            }
+    
+            if (telegramId) {
                 fetchUserData(telegramId);
+            } else {
+                console.error('No telegramId found in URL or local storage');
             }
     
             function fetchUserData(telegramId) {
