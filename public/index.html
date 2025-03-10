@@ -1095,7 +1095,7 @@
                     if (data.success) {
                         localStorage.setItem('telegramId', telegramId);
                         localStorage.setItem('user', JSON.stringify(data.user));
-                        window.location.href = '/dashboard';
+                        window.location.href = '/';
                     } else {
                         alert('Authentication failed.');
                     }
