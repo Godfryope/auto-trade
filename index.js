@@ -25,18 +25,18 @@ app.use(express.json());
 app.use(express.static('public'));
 app.use('/api/user', userRoutes);
 
-// Define User Schema for MongoDB
+// Define User Schema for MongoDB (Ensure this matches your existing schema)
 const userSchema = new mongoose.Schema({
   telegramId: { type: String, required: true, unique: true },
   firstName: String,
   lastName: String,
   username: String,
   registrationDate: { type: Date, default: Date.now },
-  solanaWallet: String, // Store Solana wallet address for each user
-  privateKey: String, // Store private key for each user
-  apiKey: String, // Store API key for each user
-  solanaBalance: { type: Number, default: 0 }, // Track balance of Solana for the user
-  qrCodeImage: String // Store QR code image as a base64 string
+  solanaWallet: String,
+  privateKey: String,
+  apiKey: String,
+  solanaBalance: { type: Number, default: 0 },
+  qrCodeImage: String
 });
 
 // Create a model for the schema
@@ -45,7 +45,6 @@ const User = mongoose.models.User || mongoose.model('User', userSchema);
 // Function to create a Solana wallet and generate QR code
 const createSolanaWallet = async () => {
   try {
-    // Step 1: Create a wallet
     const response = await axios.get('https://pumpportal.fun/api/create-wallet');
     const data = response.data;
     const { privateKey, walletPublicKey: walletAddress, apiKey } = data;
@@ -67,11 +66,9 @@ bot.onText(/\/login/, async (msg) => {
   const chatId = msg.chat.id;
 
   try {
-    // Check if user exists in MongoDB
     let user = await User.findOne({ telegramId: chatId });
 
     if (!user) {
-      // If user doesn't exist, register them
       const newUser = new User({
         telegramId: chatId,
         firstName: msg.from.first_name,
@@ -79,7 +76,6 @@ bot.onText(/\/login/, async (msg) => {
         username: msg.from.username || '',
       });
 
-      // Create a Solana wallet for the user
       const walletDetails = await createSolanaWallet();
       if (!walletDetails) {
         return bot.sendMessage(chatId, `⚠️ *Error creating your wallet.* Please try again later.`, { parse_mode: 'Markdown' });
@@ -97,7 +93,6 @@ bot.onText(/\/login/, async (msg) => {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
 
-    // Send the script to store telegramId in local storage to the frontend
     const script = `<script>localStorage.setItem('telegramId', '${chatId}');</script>`;
     const userData = {
       firstName: user ? user.firstName : newUser.firstName,
@@ -106,10 +101,10 @@ bot.onText(/\/login/, async (msg) => {
       solanaWallet: user ? user.solanaWallet : newUser.solanaWallet,
     };
 
-    bot.sendMessage(chatId, `🚀 Redirecting you to the platform...`, {
+    bot.sendMessage(chatId, `🚀 Redirecting you to the dashboard...`, {
       reply_markup: {
         inline_keyboard: [
-          [{ text: '🚀 Open Dashboard', web_app: { url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` } }]
+          [{ text: '🔑 Go to Dashboard', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` }]
         ]
       }
     });
@@ -123,12 +118,10 @@ bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
 
   try {
-    // Check if user exists in MongoDB
     let user = await User.findOne({ telegramId: chatId });
     let newUser = null;
 
     if (!user) {
-      // If user doesn't exist, register them
       newUser = new User({
         telegramId: chatId,
         firstName: msg.from.first_name,
@@ -136,7 +129,6 @@ bot.onText(/\/start/, async (msg) => {
         username: msg.from.username || '',
       });
 
-      // Create a Solana wallet for the user
       const walletDetails = await createSolanaWallet();
       if (!walletDetails) {
         return bot.sendMessage(chatId, `⚠️ *Error creating your wallet.* Please try again later.`, { parse_mode: 'Markdown' });
