@@ -1095,7 +1095,10 @@
                     if (data.success) {
                         localStorage.setItem('telegramId', telegramId);
                         localStorage.setItem('user', JSON.stringify(data.user));
-                        window.location.href = '/';
+                        // Redirect to dashboard without reloading the page
+                        window.history.pushState({}, '', '/');
+                        // Load dashboard content dynamically
+                        loadDashboard();
                     } else {
                         alert('Authentication failed.');
                     }
@@ -1106,6 +1109,18 @@
                 });
             }
         });
+    
+        function loadDashboard() {
+            // Implement AJAX call to load dashboard content dynamically
+            fetch('/')
+                .then(response => response.text())
+                .then(html => {
+                    document.body.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error loading dashboard:', error);
+                });
+        }
     </script>
 
     <!-- <script>

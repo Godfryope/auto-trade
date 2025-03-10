@@ -5,14 +5,14 @@ const axios = require('axios');
 const QRCode = require('qrcode');
 const express = require('express');
 const crypto = require('crypto');
-const session = require('express-session'); // Add express-session for session management
+const session = require('express-session');
 const userRoutes = require('./routes/userRoutes');
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Generate secret key
 const secret = crypto.randomBytes(64).toString('hex');
-console.log(secret);
+console.log(`Generated secret key: ${secret}`);
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -24,10 +24,14 @@ const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
 
 // Session setup
 app.use(session({
-  secret: secret,
+  secret: secret, // Use the generated secret key
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false } // Set to true if using HTTPS
+  cookie: { 
+    secure: false, // Set to true if using HTTPS
+    httpOnly: true, // Helps prevent XSS attacks
+    sameSite: 'Lax' // Helps prevent CSRF attacks
+  }
 }));
 
 app.use(express.json());
