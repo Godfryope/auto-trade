@@ -5,6 +5,7 @@ const axios = require('axios');
 const QRCode = require('qrcode');
 const express = require('express');
 const crypto = require('crypto');
+const session = require('express-session'); // Add express-session for session management
 const userRoutes = require('./routes/userRoutes');
 const app = express();
 const port = process.env.PORT || 3000;
@@ -20,6 +21,14 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTop
 
 // Telegram Bot Setup
 const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, { polling: true });
+
+// Session setup
+app.use(session({
+  secret: secret,
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Set to true if using HTTPS
+}));
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -162,7 +171,7 @@ bot.onText(/\/start/, async (msg) => {
       }
     };
 
-    bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make this journey exciting! 🚀`, options);
+    bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make this happen! 🚀`, options);
   } catch (error) {
     bot.sendMessage(chatId, `⚠️ Error: ${error.message}`, { parse_mode: 'Markdown' });
   }
@@ -176,6 +185,27 @@ bot.onText(/\/help/, (msg) => {
 /help - Show this help message`;
 
   bot.sendMessage(msg.chat.id, helpMessage);
+});
+
+// Authentication endpoint
+app.post('/api/user/authenticate', async (req, res) => {
+  const { telegramId } = req.body;
+
+  try {
+    const user = await User.findOne({ telegramId });
+
+    if (user) {
+      // Start session
+      req.session.telegramId = telegramId;
+      req.session.user = user;
+      res.json({ success: true, user });
+    } else {
+      res.json({ success: false, message: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
 });
 
 // Start the Express server

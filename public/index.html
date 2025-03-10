@@ -1078,8 +1078,35 @@
     </div>
     <div id="responsive-overlay"></div>
     <!-- Scroll To Top -->
-
-
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const telegramId = urlParams.get('telegramId');
+            if (telegramId) {
+                fetch('/api/user/authenticate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ telegramId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        localStorage.setItem('telegramId', telegramId);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        window.location.href = '/dashboard';
+                    } else {
+                        alert('Authentication failed.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred during authentication.');
+                });
+            }
+        });
+    </script>
 
     <!-- <script>
         function displayTokens(tokens) {
