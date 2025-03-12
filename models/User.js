@@ -4,7 +4,8 @@ const walletSchema = new mongoose.Schema({
   address: String,
   privateKey: String,
   apiKey: String,
-  qrCodeImage: String
+  qrCodeImage: String,
+  solanaBalance: { type: Number, default: 0 } // Add solanaBalance field
 });
 
 const userSchema = new mongoose.Schema({
@@ -15,7 +16,7 @@ const userSchema = new mongoose.Schema({
   registrationDate: { type: Date, default: Date.now },
   mainWallet: walletSchema,
   tradingWallet: walletSchema,
-  solanaBalance: { type: Number, default: 0 }
 });
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+module.exports = User;

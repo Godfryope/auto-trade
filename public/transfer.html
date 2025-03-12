@@ -912,13 +912,13 @@
                                     const toWalletKey = toWallet === 'main' ? 'mainWallet' : 'tradingWallet';
                 
                                     // Perform the swap between wallets
-                                    if (!user[fromWalletKey] || user[fromWalletKey].balance < amount) {
+                                    if (!user[fromWalletKey] || user[fromWalletKey].solanaBalance < amount) {
                                         alert('Insufficient balance in the selected wallet.');
                                         return;
                                     }
                 
-                                    user[fromWalletKey].balance -= amount;
-                                    user[toWalletKey].balance += amount;
+                                    user[fromWalletKey].solanaBalance -= amount;
+                                    user[toWalletKey].solanaBalance += amount;
                 
                                     // Update the user data in the database
                                     fetch(`/api/user/${telegramId}`, {
@@ -926,7 +926,10 @@
                                         headers: {
                                             'Content-Type': 'application/json'
                                         },
-                                        body: JSON.stringify(user)
+                                        body: JSON.stringify({
+                                            mainWallet: { solanaBalance: user.mainWallet.solanaBalance },
+                                            tradingWallet: { solanaBalance: user.tradingWallet.solanaBalance }
+                                        })
                                     })
                                         .then(response => {
                                             if (!response.ok) {
