@@ -823,14 +823,14 @@
                                             <input type="text" class="form-control text-end border-0 w-auto" placeholder="0" id="from-amount" style="width: auto; min-width: 20px;">
                                         </div>
                                     </div>
-                                    
+                
                                     <div class="text-center my-1 position-relative d-flex align-items-center justify-content-center">
                                         <div class="swap-line position-absolute w-100 border-bottom"></div>
                                         <button class="btn btn-light border rounded-circle p-2 swap-btn position-relative z-1">
                                             <i class="ri-swap-line fs-20"></i>
                                         </button>
                                     </div>
-                                    
+                
                                     <div class="mb-3">
                                         <div class="position-relative p-2 border rounded d-flex align-items-center justify-content-between gap-3 mt-1">
                                             <div class="gap-2 d-flex align-items-center">
@@ -845,16 +845,105 @@
                                             <input type="text" class="form-control text-end border-0 w-auto" placeholder="0" id="to-amount" style="width: auto; min-width: 20px;">
                                         </div>
                                     </div>
-                                    
+                
                                     <div class="d-grid mt-4">
-                                        <button type="button" class="btn btn-success btn-wave btn-lg">Swap</button>
+                                        <button type="button" class="btn btn-success btn-wave btn-lg" id="swap-action">Swap</button>
                                     </div>
                                 </div>
-                                                                
                             </div>
                         </div>
                     </div>
                 </div>
+                
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        const fromAmountInput = document.getElementById('from-amount');
+                        const toAmountInput = document.getElementById('to-amount');
+                        const swapButton = document.querySelector('.swap-btn');
+                        const swapActionButton = document.getElementById('swap-action');
+                
+                        // Auto-populate the to-amount input based on the from-amount input
+                        fromAmountInput.addEventListener('input', function() {
+                            toAmountInput.value = fromAmountInput.value;
+                        });
+                
+                        // Auto-populate the from-amount input based on the to-amount input
+                        toAmountInput.addEventListener('input', function() {
+                            fromAmountInput.value = toAmountInput.value;
+                        });
+                
+                        // Swap the wallet selections when the swap button is clicked
+                        swapButton.addEventListener('click', function() {
+                            const fromWalletSelect = document.getElementById('from-wallet');
+                            const toWalletSelect = document.getElementById('to-wallet');
+                
+                            const tempValue = fromWalletSelect.value;
+                            fromWalletSelect.value = toWalletSelect.value;
+                            toWalletSelect.value = tempValue;
+                        });
+                
+                        // Handle the swap action
+                        swapActionButton.addEventListener('click', function() {
+                            const fromWallet = document.getElementById('from-wallet').value;
+                            const toWallet = document.getElementById('to-wallet').value;
+                            const amount = parseFloat(fromAmountInput.value);
+                
+                            if (!amount || isNaN(amount) || amount <= 0) {
+                                alert('Please enter a valid amount to swap.');
+                                return;
+                            }
+                
+                            // Fetch user data using telegramId stored in localStorage
+                            const telegramId = localStorage.getItem('telegramId');
+                            if (!telegramId) {
+                                alert('No telegramId found. Please log in again.');
+                                return;
+                            }
+                
+                            fetch(`/api/user/${telegramId}`)
+                                .then(response => response.json())
+                                .then(user => {
+                                    if (!user) {
+                                        alert('User not found. Please log in again.');
+                                        return;
+                                    }
+                
+                                    const fromWalletKey = fromWallet === 'main' ? 'mainWallet' : 'tradingWallet';
+                                    const toWalletKey = toWallet === 'main' ? 'mainWallet' : 'tradingWallet';
+                
+                                    // Perform the swap between wallets
+                                    if (user[fromWalletKey].balance < amount) {
+                                        alert('Insufficient balance in the selected wallet.');
+                                        return;
+                                    }
+                
+                                    user[fromWalletKey].balance -= amount;
+                                    user[toWalletKey].balance += amount;
+                
+                                    // Update the user data in the database
+                                    fetch(`/api/user/${telegramId}`, {
+                                        method: 'PUT',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify(user)
+                                    })
+                                        .then(response => response.json())
+                                        .then(updatedUser => {
+                                            alert('Swap successful!');
+                                        })
+                                        .catch(error => {
+                                            console.error('Error updating user data:', error);
+                                            alert('Failed to complete the swap. Please try again.');
+                                        });
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching user data:', error);
+                                    alert('Failed to fetch user data. Please try again.');
+                                });
+                        });
+                    });
+                </script>
                 <!--End::row-1 -->
             </div>
         </div>
