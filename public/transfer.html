@@ -901,13 +901,13 @@
                             }
                 
                             fetch(`/api/user/${telegramId}`)
-                                .then(response => response.json())
-                                .then(user => {
-                                    if (!user) {
-                                        alert('User not found. Please log in again.');
-                                        return;
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error('User not found');
                                     }
-                
+                                    return response.json();
+                                })
+                                .then(user => {
                                     const fromWalletKey = fromWallet === 'main' ? 'mainWallet' : 'tradingWallet';
                                     const toWalletKey = toWallet === 'main' ? 'mainWallet' : 'tradingWallet';
                 
@@ -928,7 +928,12 @@
                                         },
                                         body: JSON.stringify(user)
                                     })
-                                        .then(response => response.json())
+                                        .then(response => {
+                                            if (!response.ok) {
+                                                throw new Error('Failed to update user data');
+                                            }
+                                            return response.json();
+                                        })
                                         .then(updatedUser => {
                                             alert('Swap successful!');
                                         })
