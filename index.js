@@ -242,6 +242,25 @@ app.post('/api/user/authenticate', async (req, res) => {
   }
 });
 
+// Endpoint to update user data
+app.put('/api/user/:telegramId', async (req, res) => {
+  const { telegramId } = req.params;
+  const updateData = req.body;
+
+  try {
+    const user = await User.findOneAndUpdate({ telegramId }, updateData, { new: true, runValidators: true });
+
+    if (user) {
+      res.json({ success: true, user });
+    } else {
+      res.status(404).json({ success: false, message: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error updating user data:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
 // Start the Express server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

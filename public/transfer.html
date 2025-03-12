@@ -813,7 +813,7 @@
                                         <div class="position-relative p-2 border rounded d-flex align-items-center justify-content-between gap-3 mt-1">
                                             <div class="gap-2 d-flex align-items-center">
                                                 <span class="avatar bg-light p-2">
-                                                    <img src="./assets/images/crypto-currencies/square-color/solana-sol-logo.svg" alt="index.html">
+                                                    <img src="./assets/images/crypto-currencies/square-color/solana-sol-logo.svg" alt="Solana Logo">
                                                 </span>
                                                 <select class="form-control border-0 w-auto" id="from-wallet">
                                                     <option value="main">Main Wallet</option>
@@ -912,7 +912,7 @@
                                     const toWalletKey = toWallet === 'main' ? 'mainWallet' : 'tradingWallet';
                 
                                     // Perform the swap between wallets
-                                    if (user[fromWalletKey].balance < amount) {
+                                    if (!user[fromWalletKey] || user[fromWalletKey].balance < amount) {
                                         alert('Insufficient balance in the selected wallet.');
                                         return;
                                     }
