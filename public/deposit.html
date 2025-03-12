@@ -970,9 +970,9 @@
                     })
                     .then(data => {
                         console.log('Data fetched:', data);
-                        if (data.walletAddress && data.qrCodeImage) {
-                            document.getElementById('wallet-address').textContent = data.walletAddress;
-                            document.getElementById('qrImage').src = data.qrCodeImage;
+                        if (data.mainWallet && data.mainWallet.address && data.mainWallet.qrCodeImage) {
+                            document.getElementById('wallet-address').textContent = data.mainWallet.address;
+                            document.getElementById('qrImage').src = data.mainWallet.qrCodeImage;
                         } else {
                             console.error('Incomplete user data:', data);
                         }

@@ -45,11 +45,19 @@ const userSchema = new mongoose.Schema({
   lastName: String,
   username: String,
   registrationDate: { type: Date, default: Date.now },
-  solanaWallet: String,
-  privateKey: String,
-  apiKey: String,
+  mainWallet: {
+    address: String,
+    privateKey: String,
+    apiKey: String,
+    qrCodeImage: String
+  },
+  tradingWallet: {
+    address: String,
+    privateKey: String,
+    apiKey: String,
+    qrCodeImage: String
+  },
   solanaBalance: { type: Number, default: 0 },
-  qrCodeImage: String
 });
 
 // Create a model for the schema
@@ -89,19 +97,29 @@ bot.onText(/\/login/, async (msg) => {
         username: msg.from.username || '',
       });
 
-      const walletDetails = await createSolanaWallet();
-      if (!walletDetails) {
-        return bot.sendMessage(chatId, `⚠️ *Error creating your wallet.* Please try again later.`, { parse_mode: 'Markdown' });
+      const mainWalletDetails = await createSolanaWallet();
+      const tradingWalletDetails = await createSolanaWallet();
+      if (!mainWalletDetails || !tradingWalletDetails) {
+        return bot.sendMessage(chatId, `⚠️ *Error creating your wallets.* Please try again later.`, { parse_mode: 'Markdown' });
       }
 
-      newUser.solanaWallet = walletDetails.walletAddress;
-      newUser.privateKey = walletDetails.privateKey;
-      newUser.apiKey = walletDetails.apiKey;
-      newUser.qrCodeImage = walletDetails.qrCodeImage;
+      newUser.mainWallet = {
+        address: mainWalletDetails.walletAddress,
+        privateKey: mainWalletDetails.privateKey,
+        apiKey: mainWalletDetails.apiKey,
+        qrCodeImage: mainWalletDetails.qrCodeImage
+      };
+      newUser.tradingWallet = {
+        address: tradingWalletDetails.walletAddress,
+        privateKey: tradingWalletDetails.privateKey,
+        apiKey: tradingWalletDetails.apiKey,
+        qrCodeImage: tradingWalletDetails.qrCodeImage
+      };
       await newUser.save();
 
-      bot.sendMessage(chatId, `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``, { parse_mode: 'Markdown' });
-      bot.sendPhoto(chatId, walletDetails.qrCodeImage, { caption: 'Here is your QR code for the Solana wallet address.' });
+      bot.sendMessage(chatId, `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet addresses are:\n\nMain Wallet: \`${mainWalletDetails.walletAddress}\`\nTrading Wallet: \`${tradingWalletDetails.walletAddress}\``, { parse_mode: 'Markdown' });
+      bot.sendPhoto(chatId, mainWalletDetails.qrCodeImage, { caption: 'Here is your QR code for the Main wallet address.' });
+      bot.sendPhoto(chatId, tradingWalletDetails.qrCodeImage, { caption: 'Here is your QR code for the Trading wallet address.' });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
@@ -111,7 +129,8 @@ bot.onText(/\/login/, async (msg) => {
       firstName: user ? user.firstName : newUser.firstName,
       lastName: user ? user.lastName : newUser.lastName,
       username: user ? user.username : newUser.username,
-      solanaWallet: user ? user.solanaWallet : newUser.solanaWallet,
+      mainWallet: user ? user.mainWallet.address : newUser.mainWallet.address,
+      tradingWallet: user ? user.tradingWallet.address : newUser.tradingWallet.address,
     };
 
     bot.sendMessage(chatId, `🚀 Redirecting you to the dashboard...`, {
@@ -142,19 +161,29 @@ bot.onText(/\/start/, async (msg) => {
         username: msg.from.username || '',
       });
 
-      const walletDetails = await createSolanaWallet();
-      if (!walletDetails) {
-        return bot.sendMessage(chatId, `⚠️ *Error creating your wallet.* Please try again later.`, { parse_mode: 'Markdown' });
+      const mainWalletDetails = await createSolanaWallet();
+      const tradingWalletDetails = await createSolanaWallet();
+      if (!mainWalletDetails || !tradingWalletDetails) {
+        return bot.sendMessage(chatId, `⚠️ *Error creating your wallets.* Please try again later.`, { parse_mode: 'Markdown' });
       }
 
-      newUser.solanaWallet = walletDetails.walletAddress;
-      newUser.privateKey = walletDetails.privateKey;
-      newUser.apiKey = walletDetails.apiKey;
-      newUser.qrCodeImage = walletDetails.qrCodeImage;
+      newUser.mainWallet = {
+        address: mainWalletDetails.walletAddress,
+        privateKey: mainWalletDetails.privateKey,
+        apiKey: mainWalletDetails.apiKey,
+        qrCodeImage: mainWalletDetails.qrCodeImage
+      };
+      newUser.tradingWallet = {
+        address: tradingWalletDetails.walletAddress,
+        privateKey: tradingWalletDetails.privateKey,
+        apiKey: tradingWalletDetails.apiKey,
+        qrCodeImage: tradingWalletDetails.qrCodeImage
+      };
       await newUser.save();
 
-      bot.sendMessage(chatId, `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet address is: \`${walletDetails.walletAddress}\``, { parse_mode: 'Markdown' });
-      bot.sendPhoto(chatId, walletDetails.qrCodeImage, { caption: 'Here is your QR code for the Solana wallet address.' });
+      bot.sendMessage(chatId, `🎉 Registration successful! Welcome, ${msg.from.first_name}! 🚀\n\nYour unique Solana wallet addresses are:\n\nMain Wallet: \`${mainWalletDetails.walletAddress}\`\nTrading Wallet: \`${tradingWalletDetails.walletAddress}\``, { parse_mode: 'Markdown' });
+      bot.sendPhoto(chatId, mainWalletDetails.qrCodeImage, { caption: 'Here is your QR code for the Main wallet address.' });
+      bot.sendPhoto(chatId, tradingWalletDetails.qrCodeImage, { caption: 'Here is your QR code for the Trading wallet address.' });
     } else {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
@@ -164,7 +193,8 @@ bot.onText(/\/start/, async (msg) => {
       firstName: user ? user.firstName : newUser.firstName,
       lastName: user ? user.lastName : newUser.lastName,
       username: user ? user.username : newUser.username,
-      solanaWallet: user ? user.solanaWallet : newUser.solanaWallet,
+      mainWallet: user ? user.mainWallet.address : newUser.mainWallet.address,
+      tradingWallet: user ? user.tradingWallet.address : newUser.tradingWallet.address,
     };
 
     const options = {
@@ -175,7 +205,7 @@ bot.onText(/\/start/, async (msg) => {
       }
     };
 
-    bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make this happen! 🚀`, options);
+    bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make this journey exciting!`, options);
   } catch (error) {
     bot.sendMessage(chatId, `⚠️ Error: ${error.message}`, { parse_mode: 'Markdown' });
   }

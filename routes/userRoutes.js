@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 
-// Endpoint to get user's wallet address and QR code
+// Endpoint to get user's wallet addresses and QR codes
 router.get('/:telegramId', async (req, res) => {
   const telegramId = req.params.telegramId;
   try {
@@ -10,8 +10,14 @@ router.get('/:telegramId', async (req, res) => {
 
     if (user) {
       res.json({
-        walletAddress: user.solanaWallet,
-        qrCodeImage: user.qrCodeImage,
+        mainWallet: {
+          address: user.mainWallet.address,
+          qrCodeImage: user.mainWallet.qrCodeImage,
+        },
+        tradingWallet: {
+          address: user.tradingWallet.address,
+          qrCodeImage: user.tradingWallet.qrCodeImage,
+        }
       });
     } else {
       res.status(404).json({ message: 'User not found' });
