@@ -248,13 +248,22 @@ app.put('/api/user/:telegramId', async (req, res) => {
   const updateData = req.body;
 
   try {
-    const user = await User.findOneAndUpdate({ telegramId }, updateData, { new: true, runValidators: true });
+    const user = await User.findOne({ telegramId });
 
-    if (user) {
-      res.json({ success: true, user });
-    } else {
-      res.status(404).json({ success: false, message: 'User not found' });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
+
+    if (updateData.mainWallet) {
+      user.mainWallet.balance = updateData.mainWallet.balance;
+    }
+    if (updateData.tradingWallet) {
+      user.tradingWallet.balance = updateData.tradingWallet.balance;
+    }
+
+    await user.save();
+
+    res.json({ success: true, user });
   } catch (error) {
     console.error('Error updating user data:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
