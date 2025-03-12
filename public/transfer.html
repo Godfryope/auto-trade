@@ -816,7 +816,7 @@
                                                     <img src="./assets/images/crypto-currencies/square-color/solana-sol-logo.svg" alt="index.html">
                                                 </span>
                                                 <select class="form-control border-0 w-auto" id="from-wallet">
-                                                    <option value="solana">Solana Wallet</option>
+                                                    <option value="main">Main Wallet</option>
                                                     <option value="trading">Trading Wallet</option>
                                                 </select>
                                             </div>
@@ -839,7 +839,7 @@
                                                 </span>
                                                 <select class="form-control border-0 w-auto" id="to-wallet">
                                                     <option value="trading">Trading Wallet</option>
-                                                    <option value="solana">Solana Wallet</option>
+                                                    <option value="main">Main Wallet</option>
                                                 </select>
                                             </div>
                                             <input type="text" class="form-control text-end border-0 w-auto" placeholder="0" id="to-amount" style="width: auto; min-width: 20px;">
@@ -860,89 +860,6 @@
         </div>
         <!-- End::app-content -->
 
-        
-        <!--Search Modal Popup-->
-        <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModal" aria-hidden="true">
-            <div class="modal-dialog">
-              <div class="modal-content">
-                <div class="modal-body">
-                  <div class="input-group">
-                    <a href="javascript:void(0);" class="input-group-text" id="Search-Grid"><i class="fe fe-search header-link-icon fs-18"></i></a>
-                    <input type="search" class="form-control border-0 px-2" placeholder="Search" aria-label="Username">
-                    <a href="javascript:void(0);" class="input-group-text" id="voice-search"><i class="fe fe-mic header-link-icon"></i></a>
-                    <a href="javascript:void(0);" class="btn btn-light btn-icon" data-bs-toggle="dropdown" aria-expanded="false">
-                      <i class="fe fe-more-vertical"></i>
-                    </a>
-                    <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" href="javascript:void(0);">Action</a></li>
-                      <li><a class="dropdown-item" href="javascript:void(0);">Another action</a></li>
-                      <li><a class="dropdown-item" href="javascript:void(0);">Something else here</a></li>
-                      <li><hr class="dropdown-divider"></li>
-                      <li><a class="dropdown-item" href="javascript:void(0);">Separated link</a></li>
-                    </ul>
-                  </div>
-                  <div class="mt-4">
-                    <p class="font-weight-semibold text-muted mb-2">Are You Looking For...</p>
-                    <span class="search-tags alert"><i class="fe fe-user me-2"></i>People<a href="javascript:void(0)" class="tag-addon" data-bs-dismiss="alert"><i class="fe fe-x"></i></a></span>
-                    <span class="search-tags alert"><i class="fe fe-file-text me-2"></i>Pages<a href="javascript:void(0)" class="tag-addon" data-bs-dismiss="alert"><i class="fe fe-x"></i></a></span>
-                    <span class="search-tags alert"><i class="fe fe-align-left me-2"></i>Articles<a href="javascript:void(0)" class="tag-addon" data-bs-dismiss="alert"><i class="fe fe-x"></i></a></span>
-                    <span class="search-tags alert"><i class="fe fe-server me-2"></i>Tags<a href="javascript:void(0)" class="tag-addon" data-bs-dismiss="alert"><i class="fe fe-x"></i></a></span>
-                  </div>
-                  <div class="my-4">
-                    <p class="font-weight-semibold text-muted mb-2">Recent Search :</p>
-                    <div class="p-2 border br-5 d-flex align-items-center text-muted mb-2 alert">
-                      <a href="notifications.html"><span>Notifications</span></a>
-                      <a class="ms-auto lh-1" href="javascript:void(0);" data-bs-dismiss="alert" aria-label="Close"><i class="fe fe-x text-muted"></i></a>
-                    </div>
-                    <div class="p-2 border br-5 d-flex align-items-center text-muted mb-2 alert">
-                      <a href="alerts.html"><span>Alerts</span></a>
-                      <a class="ms-auto lh-1" href="javascript:void(0);" data-bs-dismiss="alert" aria-label="Close"><i class="fe fe-x text-muted"></i></a>
-                    </div>
-                    <div class="p-2 border br-5 d-flex align-items-center text-muted mb-0 alert">
-                      <a href="mail.html"><span>Mail</span></a>
-                      <a class="ms-auto lh-1" href="javascript:void(0);" data-bs-dismiss="alert" aria-label="Close"><i class="fe fe-x text-muted"></i></a>
-                    </div>
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <div class="btn-group ms-auto">
-                    <button type="button" class="btn btn-sm btn-primary-light">Search</button>
-                    <button type="button" class="btn btn-sm btn-primary">Clear Recents</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-        </div>
-        <!--Search Modal Popup-->
-
-
-        <!--Country Modal Popup-->
-        <div class="modal fade" id="countryModal" tabindex="-1" aria-labelledby="countryModal" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-body p-4">
-                <label class="form-label fs-16">Select Location</label>
-                <select class="form-control choices-images"></select>
-                <label class="form-label fs-16">Select Language</label>
-                <select class="form-control" data-trigger>
-                  <option value="1">English (En)</option>
-                  <option value="2">Española (ES)</option>
-                  <option value="3">Français (FR)</option>
-                  <option value="4">Deutsch (DE)</option>
-                  <option value="5">Italiana (IT)</option>
-                  <option value="6">Русский (RU)</option>
-                  <option value="7">عربي (AR)</option>
-                  <option value="8">한국인 (KO)</option>
-                </select>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-primary-light" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
-            </div>
-            </div>
-          </div>
-        </div>
-        <!--Country Modal Popup-->
         <!-- Footer Start -->
         <footer class="footer mt-auto py-3 bg-white text-center">
             <div class="container">
@@ -970,106 +887,9 @@
 
 
     <script>
-        function displayTokens(tokens) {
-            const tokensContainer = document.getElementById('tokens2');
-            const tokenMap = new Map();
+        
 
-            tokens.forEach((token, index) => {
-                tokenMap.set(token.mintAddress, { ...token, index: index + 1 });
-            });
-
-            tokensContainer.innerHTML = ''; // Clear existing tokens
-            tokens.slice(-3).forEach(token => {
-                const tokenCard = document.createElement('div');
-                tokenCard.className = 'col-xxl-4 col-xl-4 col-lg-12';
-
-                // Construct DexScreener URL (or use TradingView if available)
-                const chartUrl = `https://neo-backup.bullx.io/terminal?chainId=1399811149&address=${token.mintAddress}`;
-
-                tokenCard.innerHTML = `
-                    <div class="card custom-card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-4">
-                                <div class="d-flex align-items-center">
-                                    <div class="me-2">
-                                        <span class="avatar avatar-md avatar-rounded bg-light p-2">
-                                            <img src="./assets/images/crypto-currencies/regular/${token.tokenName}.svg" alt="${token.tokenName}">
-                                        </span>
-                                    </div>
-                                    <div class="mb-0 fw-semibold">
-                                        <a href="${chartUrl}" target="_blank" class="text-primary">${token.tokenName} - ${token.tokenSymbol}</a>
-                                    </div>
-                                </div>
-                                <div class="ms-auto">
-                                    <div id="${token.tokenSymbol.toLowerCase()}-chart"></div>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-end">
-                                <div>
-                                    <p class="mb-1">Price</p>
-                                    <p class="fs-20 mb-0 fw-semibold lh-1 text-primary">$${token.priceUSD}</p>
-                                </div>
-                                <div class="ms-auto text-end">
-                                    <p class="mb-0"><span class="text-muted">MC: </span>$${token.marketcap}</p>
-                                    <p class="mb-0 text-muted"><span class="text-muted">BC: </span>(${token.bondingcurve}%)</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                tokensContainer.appendChild(tokenCard);
-            });
-        }
-
-
-        async function fetchTokens() {
-            try {
-                const response = await fetch('/api/tokens');
-                const tokens = await response.json();
-                const tokensContainer = document.getElementById('tokens');
-                const tokenMap = new Map();
-
-                tokens.forEach((token, index) => {
-                    tokenMap.set(token.mintAddress, { ...token, index: index + 1 });
-                });
-
-                displayTokens(tokens);
-
-                tokensContainer.innerHTML = ''; // Clear existing tokens
-                tokenMap.forEach(token => {
-                    const chartUrl = `https://neo-backup.bullx.io/terminal?chainId=1399811149&address=${token.mintAddress}`; // Change to TradingView if needed
-
-                    const tokenRow = document.createElement('tr');
-                    tokenRow.innerHTML = `
-                        <td>${token.index}</td>
-                        <td>
-                            <a href="${chartUrl}" target="_blank" class="text-primary fw-semibold">${token.tokenName}</a>
-                        </td>
-                        <td>
-                            <div class="lh-1 d-flex align-items-center">
-                                <span class="avatar avatar-xs avatar-rounded">
-                                    <img src="./assets/images/crypto-currencies/regular/${token.tokenName}.svg" alt="index.html">
-                                </span> - ${token.tokenSymbol}
-                            </div>
-                        </td>
-                        <td>$${token.priceUSD}</td>
-                        <td>${token.marketcap}</td>
-                        <td>${token.bondingcurve}%</td>
-                        <td>${token.pair}</td>
-                        <td>${token.mintAddress}</td>
-                        <td>${token.uri}</td>
-                    `;
-                    tokensContainer.appendChild(tokenRow);
-                });
-            } catch (error) {
-                console.error('Error fetching tokens:', error);
-            }
-        }
-
-        fetchTokens();
-
-        </script>
+    </script>
 
     <!-- Popper JS -->
     <script src="./assets/libs/@popperjs/core/umd/popper.min.js"></script>
