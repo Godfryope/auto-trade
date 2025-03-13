@@ -852,7 +852,6 @@
                                         <button type="button" class="btn btn-success btn-wave btn-lg" id="swap-action">Swap</button>
                                     </div>
                 
-                                    
                                 </div>
                             </div>
                         </div>
@@ -927,6 +926,11 @@
                             const fromWallet = fromWalletSelect.value;
                             const toWallet = toWalletSelect.value;
                             const amount = parseFloat(fromAmountInput.value);
+                
+                            if (fromWallet === toWallet) {
+                                showAlert('warning', 'Please select different wallets for the swap.');
+                                return;
+                            }
                 
                             if (!amount || isNaN(amount) || amount <= 0) {
                                 showAlert('warning', 'Please enter a valid amount to swap.');
