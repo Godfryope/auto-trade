@@ -849,6 +849,9 @@
                                     <div class="d-grid mt-4">
                                         <button type="button" class="btn btn-success btn-wave btn-lg" id="swap-action">Swap</button>
                                     </div>
+                
+                                    <!-- Alerts -->
+                                    <div id="alert-container"></div>
                                 </div>
                             </div>
                         </div>
@@ -865,6 +868,7 @@
                         const toWalletSelect = document.getElementById('to-wallet');
                         const fromWalletIcon = document.getElementById('from-wallet-icon');
                         const toWalletIcon = document.getElementById('to-wallet-icon');
+                        const alertContainer = document.getElementById('alert-container');
                 
                         // Function to update wallet icons
                         function updateWalletIcon(walletSelect, walletIcon) {
@@ -873,6 +877,14 @@
                             } else {
                                 walletIcon.innerHTML = '<i class="ri-bank-line text-info fs-20"></i>';
                             }
+                        }
+                
+                        // Function to show alerts
+                        function showAlert(type, message) {
+                            const alert = document.createElement('div');
+                            alert.className = `alert alert-outline-${type} rounded-pill alert-dismissible fade show`;
+                            alert.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"><i class="bi bi-x"></i></button>`;
+                            alertContainer.appendChild(alert);
                         }
                 
                         // Initial icon update
@@ -916,14 +928,14 @@
                             const amount = parseFloat(fromAmountInput.value);
                 
                             if (!amount || isNaN(amount) || amount <= 0) {
-                                alert('Please enter a valid amount to swap.');
+                                showAlert('warning', 'Please enter a valid amount to swap.');
                                 return;
                             }
                 
                             // Fetch user data using telegramId stored in localStorage
                             const telegramId = localStorage.getItem('telegramId');
                             if (!telegramId) {
-                                alert('No telegramId found. Please log in again.');
+                                showAlert('danger', 'No telegramId found. Please log in again.');
                                 return;
                             }
                 
@@ -940,7 +952,7 @@
                 
                                     // Perform the swap between wallets
                                     if (!user[fromWalletKey] || user[fromWalletKey].solanaBalance < amount) {
-                                        alert('Insufficient balance in the selected wallet.');
+                                        showAlert('warning', 'Insufficient balance in the selected wallet.');
                                         return;
                                     }
                 
@@ -965,16 +977,16 @@
                                             return response.json();
                                         })
                                         .then(updatedUser => {
-                                            alert('Swap successful!');
+                                            showAlert('primary', 'Swap successful!');
                                         })
                                         .catch(error => {
                                             console.error('Error updating user data:', error);
-                                            alert('Failed to complete the swap. Please try again.');
+                                            showAlert('danger', 'Failed to complete the swap. Please try again.');
                                         });
                                 })
                                 .catch(error => {
                                     console.error('Error fetching user data:', error);
-                                    alert('Failed to fetch user data. Please try again.');
+                                    showAlert('danger', 'Failed to fetch user data. Please try again.');
                                 });
                         });
                     });
