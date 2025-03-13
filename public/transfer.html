@@ -812,7 +812,7 @@
                                     <div class="mb-3">
                                         <div class="position-relative p-2 border rounded d-flex align-items-center justify-content-between gap-3 mt-1">
                                             <div class="gap-2 d-flex align-items-center">
-                                                <span class="avatar bg-light p-2">
+                                                <span class="avatar bg-light p-2" id="from-wallet-icon">
                                                     <img src="./assets/images/crypto-currencies/square-color/solana-sol-logo.svg" alt="Solana Logo">
                                                 </span>
                                                 <select class="form-control border-0 w-auto" id="from-wallet">
@@ -834,7 +834,7 @@
                                     <div class="mb-3">
                                         <div class="position-relative p-2 border rounded d-flex align-items-center justify-content-between gap-3 mt-1">
                                             <div class="gap-2 d-flex align-items-center">
-                                                <span class="avatar bg-light p-2">
+                                                <span class="avatar bg-light p-2" id="to-wallet-icon">
                                                     <i class="ri-bank-line text-info fs-20"></i>
                                                 </span>
                                                 <select class="form-control border-0 w-auto" id="to-wallet">
@@ -861,6 +861,32 @@
                         const toAmountInput = document.getElementById('to-amount');
                         const swapButton = document.querySelector('.swap-btn');
                         const swapActionButton = document.getElementById('swap-action');
+                        const fromWalletSelect = document.getElementById('from-wallet');
+                        const toWalletSelect = document.getElementById('to-wallet');
+                        const fromWalletIcon = document.getElementById('from-wallet-icon');
+                        const toWalletIcon = document.getElementById('to-wallet-icon');
+                
+                        // Function to update wallet icons
+                        function updateWalletIcon(walletSelect, walletIcon) {
+                            if (walletSelect.value === 'main') {
+                                walletIcon.innerHTML = '<img src="./assets/images/crypto-currencies/square-color/solana-sol-logo.svg" alt="Solana Logo">';
+                            } else {
+                                walletIcon.innerHTML = '<i class="ri-bank-line text-info fs-20"></i>';
+                            }
+                        }
+                
+                        // Initial icon update
+                        updateWalletIcon(fromWalletSelect, fromWalletIcon);
+                        updateWalletIcon(toWalletSelect, toWalletIcon);
+                
+                        // Event listeners for wallet selection changes
+                        fromWalletSelect.addEventListener('change', function() {
+                            updateWalletIcon(fromWalletSelect, fromWalletIcon);
+                        });
+                
+                        toWalletSelect.addEventListener('change', function() {
+                            updateWalletIcon(toWalletSelect, toWalletIcon);
+                        });
                 
                         // Auto-populate the to-amount input based on the from-amount input
                         fromAmountInput.addEventListener('input', function() {
@@ -874,18 +900,19 @@
                 
                         // Swap the wallet selections when the swap button is clicked
                         swapButton.addEventListener('click', function() {
-                            const fromWalletSelect = document.getElementById('from-wallet');
-                            const toWalletSelect = document.getElementById('to-wallet');
-                
                             const tempValue = fromWalletSelect.value;
                             fromWalletSelect.value = toWalletSelect.value;
                             toWalletSelect.value = tempValue;
+                
+                            // Update icons after swap
+                            updateWalletIcon(fromWalletSelect, fromWalletIcon);
+                            updateWalletIcon(toWalletSelect, toWalletIcon);
                         });
                 
                         // Handle the swap action
                         swapActionButton.addEventListener('click', function() {
-                            const fromWallet = document.getElementById('from-wallet').value;
-                            const toWallet = document.getElementById('to-wallet').value;
+                            const fromWallet = fromWalletSelect.value;
+                            const toWallet = toWalletSelect.value;
                             const amount = parseFloat(fromAmountInput.value);
                 
                             if (!amount || isNaN(amount) || amount <= 0) {
@@ -952,7 +979,6 @@
                         });
                     });
                 </script>
-                <!--End::row-1 -->
             </div>
         </div>
         <!-- End::app-content -->
