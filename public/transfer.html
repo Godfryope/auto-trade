@@ -809,6 +809,8 @@
                             </div>
                             <div class="card-body">
                                 <div class="tab-pane border-0 p-0" id="swap-wallet" role="tabpanel" aria-labelledby="swap-wallet">
+                                    <!-- Alerts -->
+                                    <div id="alert-container"></div>
                                     <div class="mb-3">
                                         <div class="position-relative p-2 border rounded d-flex align-items-center justify-content-between gap-3 mt-1">
                                             <div class="gap-2 d-flex align-items-center">
@@ -850,8 +852,7 @@
                                         <button type="button" class="btn btn-success btn-wave btn-lg" id="swap-action">Swap</button>
                                     </div>
                 
-                                    <!-- Alerts -->
-                                    <div id="alert-container"></div>
+                                    
                                 </div>
                             </div>
                         </div>
@@ -952,7 +953,7 @@
                 
                                     // Perform the swap between wallets
                                     if (!user[fromWalletKey] || user[fromWalletKey].solanaBalance < amount) {
-                                        showAlert('warning', 'Insufficient balance in the selected wallet.');
+                                        showAlert('warning', 'Insufficient balance.');
                                         return;
                                     }
                 
