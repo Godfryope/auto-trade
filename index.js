@@ -39,28 +39,25 @@ app.use(express.static('public'));
 app.use('/api/user', userRoutes);
 
 // Define User Schema for MongoDB (Ensure this matches your existing schema)
+const walletSchema = new mongoose.Schema({
+  address: String,
+  privateKey: String,
+  apiKey: String,
+  qrCodeImage: String,
+  solanaBalance: { type: Number, default: 0 },
+  __v: { type: Number, select: false }
+});
+
 const userSchema = new mongoose.Schema({
   telegramId: { type: String, required: true, unique: true },
   firstName: String,
   lastName: String,
   username: String,
   registrationDate: { type: Date, default: Date.now },
-  mainWallet: {
-    address: String,
-    privateKey: String,
-    apiKey: String,
-    qrCodeImage: String
-  },
-  tradingWallet: {
-    address: String,
-    privateKey: String,
-    apiKey: String,
-    qrCodeImage: String
-  },
-  solanaBalance: { type: Number, default: 0 },
+  mainWallet: walletSchema,
+  tradingWallet: walletSchema,
 });
 
-// Create a model for the schema
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 
 // Function to create a Solana wallet and generate QR code
@@ -255,10 +252,10 @@ app.put('/api/user/:telegramId', async (req, res) => {
     }
 
     if (updateData.mainWallet) {
-      user.mainWallet.balance = updateData.mainWallet.balance;
+      user.mainWallet.solanaBalance = updateData.mainWallet.solanaBalance;
     }
     if (updateData.tradingWallet) {
-      user.tradingWallet.balance = updateData.tradingWallet.balance;
+      user.tradingWallet.solanaBalance = updateData.tradingWallet.solanaBalance;
     }
 
     await user.save();
