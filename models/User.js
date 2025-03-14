@@ -6,7 +6,6 @@ const walletSchema = new mongoose.Schema({
   apiKey: String,
   qrCodeImage: String,
   solanaBalance: { type: Number, default: 0 },
-  __v: { type: Number, select: false }
 });
 
 const userSchema = new mongoose.Schema({
