@@ -809,8 +809,6 @@
                             </div>
                             <div class="card-body">
                                 <div class="tab-pane border-0 p-0" id="swap-wallet" role="tabpanel" aria-labelledby="swap-wallet">
-                                    <!-- Alerts -->
-                                    <div id="alert-container"></div>
                                     <div class="mb-3">
                                         <div class="position-relative p-2 border rounded d-flex align-items-center justify-content-between gap-3 mt-1">
                                             <div class="gap-2 d-flex align-items-center">
@@ -825,14 +823,14 @@
                                             <input type="text" class="form-control text-end border-0 w-auto" placeholder="0" id="from-amount" style="width: auto; min-width: 20px;">
                                         </div>
                                     </div>
-                
+
                                     <div class="text-center my-1 position-relative d-flex align-items-center justify-content-center">
                                         <div class="swap-line position-absolute w-100 border-bottom"></div>
                                         <button class="btn btn-light border rounded-circle p-2 swap-btn position-relative z-1">
                                             <i class="ri-swap-line fs-20"></i>
                                         </button>
                                     </div>
-                
+
                                     <div class="mb-3">
                                         <div class="position-relative p-2 border rounded d-flex align-items-center justify-content-between gap-3 mt-1">
                                             <div class="gap-2 d-flex align-items-center">
@@ -847,17 +845,19 @@
                                             <input type="text" class="form-control text-end border-0 w-auto" placeholder="0" id="to-amount" style="width: auto; min-width: 20px;">
                                         </div>
                                     </div>
-                
+
                                     <div class="d-grid mt-4">
                                         <button type="button" class="btn btn-success btn-wave btn-lg" id="swap-action">Swap</button>
                                     </div>
-                
+
+                                    <!-- Alerts -->
+                                    <div id="alert-container"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
+
                 <script>
                     document.addEventListener("DOMContentLoaded", function() {
                         const fromAmountInput = document.getElementById('from-amount');
@@ -869,7 +869,7 @@
                         const fromWalletIcon = document.getElementById('from-wallet-icon');
                         const toWalletIcon = document.getElementById('to-wallet-icon');
                         const alertContainer = document.getElementById('alert-container');
-                
+
                         // Function to update wallet icons
                         function updateWalletIcon(walletSelect, walletIcon) {
                             if (walletSelect.value === 'main') {
@@ -878,7 +878,7 @@
                                 walletIcon.innerHTML = '<i class="ri-bank-line text-info fs-20"></i>';
                             }
                         }
-                
+
                         // Function to show alerts
                         function showAlert(type, message) {
                             const alert = document.createElement('div');
@@ -886,64 +886,67 @@
                             alert.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"><i class="bi bi-x"></i></button>`;
                             alertContainer.appendChild(alert);
                         }
-                
+
                         // Initial icon update
                         updateWalletIcon(fromWalletSelect, fromWalletIcon);
                         updateWalletIcon(toWalletSelect, toWalletIcon);
-                
+
                         // Event listeners for wallet selection changes
                         fromWalletSelect.addEventListener('change', function() {
                             updateWalletIcon(fromWalletSelect, fromWalletIcon);
-                        });
-                
-                        toWalletSelect.addEventListener('change', function() {
+                            
+                            // Automatically select the opposite wallet
+                            toWalletSelect.value = fromWalletSelect.value === 'main' ? 'trading' : 'main';
                             updateWalletIcon(toWalletSelect, toWalletIcon);
                         });
-                
+
+                        toWalletSelect.addEventListener('change', function() {
+                            updateWalletIcon(toWalletSelect, toWalletIcon);
+                            
+                            // Automatically select the opposite wallet
+                            fromWalletSelect.value = toWalletSelect.value === 'main' ? 'trading' : 'main';
+                            updateWalletIcon(fromWalletSelect, fromWalletIcon);
+                        });
+
                         // Auto-populate the to-amount input based on the from-amount input
                         fromAmountInput.addEventListener('input', function() {
                             toAmountInput.value = fromAmountInput.value;
                         });
-                
+
                         // Auto-populate the from-amount input based on the to-amount input
                         toAmountInput.addEventListener('input', function() {
                             fromAmountInput.value = toAmountInput.value;
                         });
-                
+
                         // Swap the wallet selections when the swap button is clicked
                         swapButton.addEventListener('click', function() {
                             const tempValue = fromWalletSelect.value;
                             fromWalletSelect.value = toWalletSelect.value;
                             toWalletSelect.value = tempValue;
-                
+
                             // Update icons after swap
                             updateWalletIcon(fromWalletSelect, fromWalletIcon);
                             updateWalletIcon(toWalletSelect, toWalletIcon);
                         });
-                
+
                         // Handle the swap action
                         swapActionButton.addEventListener('click', function() {
                             const fromWallet = fromWalletSelect.value;
                             const toWallet = toWalletSelect.value;
                             const amount = parseFloat(fromAmountInput.value);
-                
-                            if (fromWallet === toWallet) {
-                                showAlert('warning', 'Please select different wallets for the swap.');
-                                return;
-                            }
-                
+
                             if (!amount || isNaN(amount) || amount <= 0) {
                                 showAlert('warning', 'Please enter a valid amount to swap.');
                                 return;
                             }
-                
+
                             // Fetch user data using telegramId stored in localStorage
                             const telegramId = localStorage.getItem('telegramId');
                             if (!telegramId) {
                                 showAlert('danger', 'No telegramId found. Please log in again.');
                                 return;
                             }
-                
+
                             fetch(`/api/user/${telegramId}`)
                                 .then(response => {
                                     if (!response.ok) {
@@ -954,16 +957,16 @@
                                 .then(user => {
                                     const fromWalletKey = fromWallet === 'main' ? 'mainWallet' : 'tradingWallet';
                                     const toWalletKey = toWallet === 'main' ? 'mainWallet' : 'tradingWallet';
-                
+
                                     // Perform the swap between wallets
                                     if (!user[fromWalletKey] || user[fromWalletKey].solanaBalance < amount) {
-                                        showAlert('warning', 'Insufficient balance.');
+                                        showAlert('warning', 'Insufficient balance in the selected wallet.');
                                         return;
                                     }
-                
+
                                     user[fromWalletKey].solanaBalance -= amount;
                                     user[toWalletKey].solanaBalance += amount;
-                
+
                                     // Update the user data in the database
                                     fetch(`/api/user/${telegramId}`, {
                                         method: 'PUT',
