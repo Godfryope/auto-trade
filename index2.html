@@ -1,60 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top Tokens at 98% Bonding Curve</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 20px;
-        }
-        #tokenList {
-            list-style: none;
-            padding: 0;
-        }
-        li {
-            background: #f4f4f4;
-            margin: 10px auto;
-            padding: 10px;
-            width: 80%;
-            border-radius: 5px;
-            font-size: 18px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Token Tracker</title>
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="pumpportal.js" defer></script>
+  <style>
+    #chart {
+      width: 600px;
+      height: 400px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Top 10 Tokens at 98% Bonding Curve</h1>
-    <ul id="tokenList">Loading...</ul>
-
-    <script>
-        async function fetchTokens() {
-            try {
-                const response = await fetch('https://api.pumpportal.com/tokens'); // Replace with actual API
-                const tokens = await response.json();
-                
-                // Filter tokens that hit 98% bonding curve
-                const filteredTokens = tokens.filter(token => token.bondingCurveProgress >= 98);
-                
-                // Sort and get the top 10
-                const topTokens = filteredTokens.sort((a, b) => b.bondingCurveProgress - a.bondingCurveProgress).slice(0, 10);
-                
-                const tokenList = document.getElementById('tokenList');
-                tokenList.innerHTML = "index.html";
-                
-                topTokens.forEach(token => {
-                    const li = document.createElement('li');
-                    li.textContent = `${token.name} - ${token.bondingCurveProgress.toFixed(2)}%`;
-                    tokenList.appendChild(li);
-                });
-            } catch (error) {
-                document.getElementById('tokenList').textContent = 'Error fetching data';
-                console.error('Error fetching tokens:', error);
-            }
-        }
-        
-        fetchTokens();
-    </script>
+  <div id="chart"></div>
 </body>
 </html>

@@ -15,7 +15,7 @@
   "description": "index.html",
   "dependencies": {
     "@solana/web3.js": "^1.98.0",
-    "axios": "^1.7.9",
+    "axios": "^1.8.3",
     "canvas": "^3.1.0",
     "chart.js": "^4.4.7",
     "cors": "^2.8.5",
@@ -23,6 +23,7 @@
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "graphql-ws": "^6.0.4",
+    "lightweight-charts": "^5.0.3",
     "mongodb": "^6.13.0",
     "mongoose": "^8.9.6",
     "node-telegram-bot-api": "^0.66.0",
