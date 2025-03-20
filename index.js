@@ -275,7 +275,6 @@ app.put('/api/user/:telegramId', async (req, res) => {
 
 // WebSocket setup for Raydium liquidity events
 const ws = new WebSocket('wss://pumpportal.fun/api/data');
-const socket = io();
 
 ws.on('open', function open() {
   // Subscribing to Raydium liquidity events
