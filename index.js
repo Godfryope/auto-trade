@@ -286,6 +286,7 @@ ws.on('open', function open() {
 
 ws.on('message', function message(data) {
   const tokens = JSON.parse(data);
+  console.log('Tokens detected:', tokens); // Log tokens to the console
   io.emit('tokensDetected', tokens);
 });
 
