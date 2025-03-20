@@ -6,8 +6,7 @@
     "start": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "serve": "node index.js",
-    "dev": "nodemon index.js",
-    "dev3": "nodemon trade.js"
+    "dev": "nodemon index.js"
   },
   "keywords": [],
   "author": "index.html",
