@@ -10,6 +10,13 @@ const userRoutes = require('./routes/userRoutes');
 const app = express();
 const port = process.env.PORT || 3000;
 
+const http = require('http');
+const { Server } = require('socket.io');
+const WebSocket = require('ws');
+
+const server = http.createServer(app);
+const io = new Server(server);
+
 // Generate secret key
 const secret = crypto.randomBytes(64).toString('hex');
 console.log(`Generated secret key: ${secret}`);
@@ -201,7 +208,7 @@ bot.onText(/\/start/, async (msg) => {
       }
     };
 
-    bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make this journey exciting!`, options);
+    bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make some trades! 🚀`, options);
   } catch (error) {
     bot.sendMessage(chatId, `⚠️ Error: ${error.message}`, { parse_mode: 'Markdown' });
   }
@@ -210,9 +217,9 @@ bot.onText(/\/start/, async (msg) => {
 // Help command to show available commands
 bot.onText(/\/help/, (msg) => {
   const helpMessage = `Available Commands:
-/start - Start the bot and display the login button
-/login - Log in or register to the platform
-/help - Show this help message`;
+  /start - Start the bot and display the login button
+  /login - Log in or register to the platform
+  /help - Show this help message`;
 
   bot.sendMessage(msg.chat.id, helpMessage);
 });
@@ -266,7 +273,31 @@ app.put('/api/user/:telegramId', async (req, res) => {
   }
 });
 
-// Start the Express server
-app.listen(port, () => {
+// WebSocket setup for Raydium liquidity events
+const ws = new WebSocket('wss://pumpportal.fun/api/data');
+
+ws.on('open', function open() {
+  // Subscribing to Raydium liquidity events
+  const payload = {
+    method: "subscribeRaydiumLiquidity",
+  };
+  ws.send(JSON.stringify(payload));
+});
+
+ws.on('message', function message(data) {
+  const tokens = JSON.parse(data);
+  io.emit('tokensDetected', tokens);
+});
+
+// Endpoint to fetch detected tokens
+app.get('/api/tokens', (req, res) => {
+  ws.on('message', function message(data) {
+    const tokens = JSON.parse(data);
+    res.json(tokens);
+  });
+});
+
+// Start the server
+server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
