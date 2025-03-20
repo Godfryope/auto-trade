@@ -1128,54 +1128,66 @@
 
 
     <script>
-        const socket = io();
+        document.addEventListener("DOMContentLoaded", function() {
+            // Check if Socket.IO is defined
+            if (typeof io !== 'undefined') {
+                const socket = io();
 
-        socket.on('tokensDetected', function(tokens) {
-            const tokensContainer = document.getElementById('tokens');
-            tokensContainer.innerHTML = '';
+                socket.on('tokensDetected', function(tokens) {
+                    const tokensContainer = document.getElementById('tokens');
+                    if (tokensContainer) {
+                        tokensContainer.innerHTML = '';
 
-            tokens.forEach((token, index) => {
-                const tokenRow = `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${token.name}</td>
-                        <td>${token.symbol}</td>
-                        <td>${token.price}</td>
-                        <td>${token.marketCap}</td>
-                        <td>${token.bondingCurve}</td>
-                        <td>${token.pair}</td>
-                        <td>${token.mintAddress}</td>
-                        <td>${token.uri}</td>
-                    </tr>
-                `;
-                tokensContainer.innerHTML += tokenRow;
-            });
-        });
-
-        // Fetch initial tokens list
-        fetch('/api/tokens')
-            .then(response => response.json())
-            .then(tokens => {
-                const tokensContainer = document.getElementById('tokens');
-                tokensContainer.innerHTML = '';
-
-                tokens.forEach((token, index) => {
-                    const tokenRow = `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${token.name}</td>
-                            <td>${token.symbol}</td>
-                            <td>${token.price}</td>
-                            <td>${token.marketCap}</td>
-                            <td>${token.bondingCurve}</td>
-                            <td>${token.pair}</td>
-                            <td>${token.mintAddress}</td>
-                            <td>${token.uri}</td>
-                        </tr>
-                    `;
-                    tokensContainer.innerHTML += tokenRow;
+                        tokens.forEach((token, index) => {
+                            const tokenRow = `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${token.name}</td>
+                                    <td>${token.symbol}</td>
+                                    <td>${token.price}</td>
+                                    <td>${token.marketCap}</td>
+                                    <td>${token.bondingCurve}</td>
+                                    <td>${token.pair}</td>
+                                    <td>${token.mintAddress}</td>
+                                    <td>${token.uri}</td>
+                                </tr>
+                            `;
+                            tokensContainer.innerHTML += tokenRow;
+                        });
+                    }
                 });
-            });
+
+                // Fetch initial tokens list
+                fetch('/api/tokens')
+                    .then(response => response.json())
+                    .then(tokens => {
+                        const tokensContainer = document.getElementById('tokens');
+                        if (tokensContainer) {
+                            tokensContainer.innerHTML = '';
+
+                            tokens.forEach((token, index) => {
+                                const tokenRow = `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${token.name}</td>
+                                        <td>${token.symbol}</td>
+                                        <td>${token.price}</td>
+                                        <td>${token.marketCap}</td>
+                                        <td>${token.bondingCurve}</td>
+                                        <td>${token.pair}</td>
+                                        <td>${token.mintAddress}</td>
+                                        <td>${token.uri}</td>
+                                    </tr>
+                                `;
+                                tokensContainer.innerHTML += tokenRow;
+                            });
+                        }
+                    })
+                    .catch(error => console.error('Error fetching tokens:', error));
+            } else {
+                console.error('Socket.IO is not defined');
+            }
+        }, false);
     </script>
 
     <!-- <script>

@@ -12,7 +12,7 @@ const ws = new WebSocket('wss://pumpportal.fun/api/data');
 ws.on('open', function open() {
   // Subscribing to Raydium liquidity events
   const payload = {
-    method: "subscribeRaydiumLiquidity",
+    method: "subscribeNewToken",
   };
   ws.send(JSON.stringify(payload));
 });
