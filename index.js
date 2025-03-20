@@ -285,15 +285,37 @@ ws.on('open', function open() {
 });
 
 ws.on('message', function message(data) {
-  const tokens = JSON.parse(data);
+  let tokens;
+  try {
+    tokens = JSON.parse(data);
+  } catch (e) {
+    console.error('Failed to parse tokens:', e);
+    return;
+  }
   console.log('Tokens detected:', tokens); // Log tokens to the console
+
+  if (!Array.isArray(tokens)) {
+    tokens = [tokens]; // Convert to an array if it's a single object
+  }
+
   io.emit('tokensDetected', tokens);
 });
 
-// Endpoint to fetch detected tokens
 app.get('/api/tokens', (req, res) => {
   ws.on('message', function message(data) {
-    const tokens = JSON.parse(data);
+    let tokens;
+    try {
+      tokens = JSON.parse(data);
+    } catch (e) {
+      console.error('Failed to parse tokens:', e);
+      res.status(500).json({ error: 'Failed to parse tokens' });
+      return;
+    }
+
+    if (!Array.isArray(tokens)) {
+      tokens = [tokens]; // Convert to an array if it's a single object
+    }
+
     res.json(tokens);
   });
 });

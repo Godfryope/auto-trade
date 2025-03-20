@@ -1133,33 +1133,7 @@
             const socket = io();
 
             socket.on('tokensDetected', function(tokens) {
-                const tokensContainer = document.getElementById('tokens');
-                if (tokensContainer) {
-                    tokensContainer.innerHTML = '';
-
-                    tokens.forEach((token, index) => {
-                        const tokenRow = `
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td>${token.name}</td>
-                                <td>${token.symbol}</td>
-                                <td>${token.price}</td>
-                                <td>${token.marketCap}</td>
-                                <td>${token.bondingCurve}</td>
-                                <td>${token.pair}</td>
-                                <td>${token.mintAddress}</td>
-                                <td>${token.uri}</td>
-                            </tr>
-                        `;
-                        tokensContainer.innerHTML += tokenRow;
-                    });
-                }
-            });
-
-            // Fetch initial tokens list
-            fetch('/api/tokens')
-                .then(response => response.json())
-                .then(tokens => {
+                if (Array.isArray(tokens)) {
                     const tokensContainer = document.getElementById('tokens');
                     if (tokensContainer) {
                         tokensContainer.innerHTML = '';
@@ -1170,20 +1144,53 @@
                                     <td>${index + 1}</td>
                                     <td>${token.name}</td>
                                     <td>${token.symbol}</td>
-                                    <td>${token.price}</td>
-                                    <td>${token.marketCap}</td>
-                                    <td>${token.bondingCurve}</td>
-                                    <td>${token.pair}</td>
-                                    <td>${token.mintAddress}</td>
+                                    <td>${token.price || 'N/A'}</td>
+                                    <td>${token.marketCapSol}</td>
+                                    <td>${token.bondingCurveKey}</td>
+                                    <td>${token.pool}</td>
+                                    <td>${token.mint}</td>
                                     <td>${token.uri}</td>
                                 </tr>
                             `;
                             tokensContainer.innerHTML += tokenRow;
                         });
                     }
+                } else {
+                    console.error('Tokens is not an array:', tokens);
+                }
+            });
+
+            // Fetch initial tokens list
+            fetch('/api/tokens')
+                .then(response => response.json())
+                .then(tokens => {
+                    if (Array.isArray(tokens)) {
+                        const tokensContainer = document.getElementById('tokens');
+                        if (tokensContainer) {
+                            tokensContainer.innerHTML = '';
+
+                            tokens.forEach((token, index) => {
+                                const tokenRow = `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${token.name}</td>
+                                        <td>${token.symbol}</td>
+                                        <td>${token.price || 'N/A'}</td>
+                                        <td>${token.marketCapSol}</td>
+                                        <td>${token.bondingCurveKey}</td>
+                                        <td>${token.pool}</td>
+                                        <td>${token.mint}</td>
+                                        <td>${token.uri}</td>
+                                    </tr>
+                                `;
+                                tokensContainer.innerHTML += tokenRow;
+                            });
+                        }
+                    } else {
+                        console.error('Tokens is not an array:', tokens);
+                    }
                 })
                 .catch(error => console.error('Error fetching tokens:', error));
-                
         }, false);
     </script>
     <!-- Popper JS -->
