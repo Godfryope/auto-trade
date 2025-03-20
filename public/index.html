@@ -890,7 +890,7 @@
                     </div>
                 </div>
                 <!-- Page Header Close -->
-
+        
                 <!-- Start::row-1 -->
                 <div class="row">
                     <div class="col-xxl-9">
@@ -899,7 +899,7 @@
                     </div>
                 </div>
                 <!--End::row-1 -->
-
+        
                 <!-- Start:: row-3 -->
                 <div class="row">
                     <div class="col-xl-12">
@@ -1078,6 +1078,9 @@
     </div>
     <div id="responsive-overlay"></div>
     <!-- Scroll To Top -->
+
+
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -1121,6 +1124,58 @@
                     console.error('Error loading dashboard:', error);
                 });
         }
+    </script>
+
+
+    <script>
+        const socket = io();
+
+        socket.on('tokensDetected', function(tokens) {
+            const tokensContainer = document.getElementById('tokens');
+            tokensContainer.innerHTML = '';
+
+            tokens.forEach((token, index) => {
+                const tokenRow = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${token.name}</td>
+                        <td>${token.symbol}</td>
+                        <td>${token.price}</td>
+                        <td>${token.marketCap}</td>
+                        <td>${token.bondingCurve}</td>
+                        <td>${token.pair}</td>
+                        <td>${token.mintAddress}</td>
+                        <td>${token.uri}</td>
+                    </tr>
+                `;
+                tokensContainer.innerHTML += tokenRow;
+            });
+        });
+
+        // Fetch initial tokens list
+        fetch('/api/tokens')
+            .then(response => response.json())
+            .then(tokens => {
+                const tokensContainer = document.getElementById('tokens');
+                tokensContainer.innerHTML = '';
+
+                tokens.forEach((token, index) => {
+                    const tokenRow = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${token.name}</td>
+                            <td>${token.symbol}</td>
+                            <td>${token.price}</td>
+                            <td>${token.marketCap}</td>
+                            <td>${token.bondingCurve}</td>
+                            <td>${token.pair}</td>
+                            <td>${token.mintAddress}</td>
+                            <td>${token.uri}</td>
+                        </tr>
+                    `;
+                    tokensContainer.innerHTML += tokenRow;
+                });
+            });
     </script>
 
     <!-- <script>
