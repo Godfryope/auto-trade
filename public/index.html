@@ -1128,35 +1128,6 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const socket = io();
-
-            socket.on('tokensDetected', function(tokens) {
-                if (Array.isArray(tokens)) {
-                    const tokensContainer = document.getElementById('tokens');
-                    if (tokensContainer) {
-                        tokensContainer.innerHTML = '';
-
-                        tokens.forEach((token, index) => {
-                            const tokenRow = `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${token.name}</td>
-                                    <td>${token.symbol}</td>
-                                    <td>${token.price || 'N/A'}</td>
-                                    <td>${token.marketCapSol}</td>
-                                    <td>${token.bondingCurveKey}</td>
-                                    <td>${token.pool}</td>
-                                    <td>${token.mint}</td>
-                                    <td><a href="${token.uri}" target="_blank">${token.uri}</a></td>
-                                </tr>
-                            `;
-                            tokensContainer.innerHTML += tokenRow;
-                        });
-                    }
-                } else {
-                    console.error('Tokens is not an array:', tokens);
-                }
-            });
 
             // Fetch initial tokens list
             fetch('/api/tokens')

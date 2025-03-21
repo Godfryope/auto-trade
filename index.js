@@ -7,7 +7,7 @@ const express = require('express');
 const crypto = require('crypto');
 const session = require('express-session');
 const userRoutes = require('./routes/userRoutes');
-const port = process.env.PORT || 3000;
+const port = 3000;
 
 const http = require('http');
 const socketIo = require('socket.io');
