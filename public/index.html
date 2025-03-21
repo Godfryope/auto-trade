@@ -1126,8 +1126,6 @@
         }
     </script>
 
-
-    <script src="/socket.io/socket.io.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const socket = io();
@@ -1149,7 +1147,7 @@
                                     <td>${token.bondingCurveKey}</td>
                                     <td>${token.pool}</td>
                                     <td>${token.mint}</td>
-                                    <td>${token.uri}</td>
+                                    <td><a href="${token.uri}" target="_blank">${token.uri}</a></td>
                                 </tr>
                             `;
                             tokensContainer.innerHTML += tokenRow;
@@ -1180,7 +1178,7 @@
                                         <td>${token.bondingCurveKey}</td>
                                         <td>${token.pool}</td>
                                         <td>${token.mint}</td>
-                                        <td>${token.uri}</td>
+                                        <td><a href="${token.uri}" target="_blank">${token.uri}</a></td>
                                     </tr>
                                 `;
                                 tokensContainer.innerHTML += tokenRow;
@@ -1191,7 +1189,7 @@
                     }
                 })
                 .catch(error => console.error('Error fetching tokens:', error));
-        }, false);
+        });
     </script>
     <!-- Popper JS -->
     <script src="./assets/libs/@popperjs/core/umd/popper.min.js"></script>

@@ -7,15 +7,16 @@ const express = require('express');
 const crypto = require('crypto');
 const session = require('express-session');
 const userRoutes = require('./routes/userRoutes');
-const app = express();
 const port = process.env.PORT || 3000;
 
+const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io');
+const socketIo = require('socket.io');
 const WebSocket = require('ws');
 
+const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = socketIo(server);
 
 // Generate secret key
 const secret = crypto.randomBytes(64).toString('hex');
@@ -273,9 +274,10 @@ app.put('/api/user/:telegramId', async (req, res) => {
   }
 });
 
-// WebSocket setup for Raydium liquidity events
+
 const ws = new WebSocket('wss://pumpportal.fun/api/data');
 
+// WebSocket setup for Raydium liquidity events
 ws.on('open', function open() {
   // Subscribing to Raydium liquidity events
   const payload = {
