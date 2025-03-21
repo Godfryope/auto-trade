@@ -9,7 +9,6 @@ const session = require('express-session');
 const userRoutes = require('./routes/userRoutes');
 const port = process.env.PORT || 3000;
 
-const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const WebSocket = require('ws');
