@@ -298,14 +298,24 @@ externalWs.on('message', (data) => {
     const parsedData = JSON.parse(data);
     console.log("New Token:", parsedData);
 
-    // Broadcast new token data to frontend
-    broadcast({ type: "newToken", data: parsedData });
+    // Extract marketCap and price correctly
+    const tokenData = {
+      name: parsedData.name || "Unknown",
+      symbol: parsedData.symbol || "N/A",
+      marketCap: parsedData.marketCap ? `$${parsedData.marketCap.toLocaleString()}` : "N/A",
+      price: parsedData.price ? `$${parsedData.price.toFixed(2)}` : "N/A",
+      bondingCurve: parsedData.bondingCurve || "N/A"
+    };
+
+    // Broadcast formatted token data to frontend
+    broadcast({ type: "newToken", data: tokenData });
 
   } catch (error) {
     console.error("Error parsing message:", error);
     broadcast({ type: "error", message: "Failed to process token data!" });
   }
 });
+
 
 externalWs.on('close', () => {
   console.log("External WebSocket closed");

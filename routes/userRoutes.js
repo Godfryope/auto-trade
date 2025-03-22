@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import User from '../models/User.js';
+
 const router = express.Router();
-const User = require('../models/User');
 
 // Endpoint to get user's wallet addresses and QR codes
 router.get('/:telegramId', async (req, res) => {
@@ -57,4 +58,4 @@ router.put('/:telegramId', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
