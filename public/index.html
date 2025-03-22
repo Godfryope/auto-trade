@@ -1138,11 +1138,9 @@
 
             if (response.type === "success") {
                 console.log(response.message);
-            } 
-            else if (response.type === "error") {
+            } else if (response.type === "error") {
                 console.log("Error: " + response.message);
-            } 
-            else if (response.type === "newToken") {
+            } else if (response.type === "newToken") {
                 const data = response.data;
                 const container = document.getElementById("tokens-container");
                 const now = Date.now();
@@ -1157,12 +1155,12 @@
                             <div class="d-flex align-items-center mb-3">
                                 <div class="me-2 lh-1">
                                     <span class="avatar avatar-rounded avatar-md">
-                                        <img src="../assets/images/faces/1.jpg" alt="">
+                                        <img src="${data.image}" alt="${data.name}">
                                     </span>
                                 </div>
                                 <div>
                                     <p class="mb-0 fw-semibold">MC: ${data.marketCap ? `$${data.marketCap.toLocaleString()}` : "N/A"}</p>
-                                    <p class="fs-12 text-muted mb-0">@${data.bondingCurve || "N/A"}</p>
+                                    <p class="fs-12 text-muted mb-0">BC: ${data.bondingCurve || "N/A"}%</p>
                                 </div>
                             </div>
                             <p class="fs-15 fw-semibold mb-2"><a href="javascript:void(0);">${data.name || "Unknown"}</a></p>
@@ -1180,16 +1178,17 @@
                         </div>
                     </div>
                 `;
-                
+
                 // Prepend the new card
                 container.prepend(card);
 
                 // Keep only the latest 10 tokens
-                while (container.children.length > 10) {
-                    container.removeChild(container.lastChild);
+                while (container.children.length > 12) {
+                container.removeChild(container.lastChild);
                 }
             }
         };
+
 
         ws.onerror = () => {
             console.log("WebSocket error! Unable to fetch token data.");

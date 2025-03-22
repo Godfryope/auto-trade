@@ -293,28 +293,48 @@ externalWs.on('open', () => {
   broadcast({ type: "success", message: "Connected to token updates!" });
 });
 
-externalWs.on('message', (data) => {
+async function fetchTokenMetadata(uri) {
+  try {
+    const response = await fetch(uri);
+    const metadata = await response.json();
+    return metadata.image || null; // Extract the image URL
+  } catch (error) {
+    console.error("Error fetching token metadata:", error);
+    return null;
+  }
+}
+
+externalWs.on("message", async (data) => {
   try {
     const parsedData = JSON.parse(data);
     console.log("New Token:", parsedData);
 
-    // Extract marketCap and price correctly
+    // Convert marketCap and price properly
+    const marketCap = Number(parsedData.marketCapSol) || 0;
+    const price = parsedData.initialBuy
+      ? Number(parsedData.solAmount) / Number(parsedData.initialBuy)
+      : 0;
+
+    // Fetch token image from metadata URI
+    const imageUrl = parsedData.uri ? await fetchTokenMetadata(parsedData.uri) : null;
+
     const tokenData = {
       name: parsedData.name || "Unknown",
       symbol: parsedData.symbol || "N/A",
-      marketCap: parsedData.marketCap ? `$${parsedData.marketCap.toLocaleString()}` : "N/A",
-      price: parsedData.price ? `$${parsedData.price.toFixed(2)}` : "N/A",
-      bondingCurve: parsedData.bondingCurve || "N/A"
+      marketCap: marketCap > 0 ? `$${marketCap.toLocaleString()}` : "N/A",
+      price: price > 0 ? `$${price.toFixed(8)}` : "N/A",
+      bondingCurve: Math.trunc(parsedData.vSolInBondingCurve), // Convert to integer
+      image: imageUrl || "../assets/images/faces/1.jpg", // Default image if not found
     };
 
     // Broadcast formatted token data to frontend
     broadcast({ type: "newToken", data: tokenData });
-
   } catch (error) {
     console.error("Error parsing message:", error);
     broadcast({ type: "error", message: "Failed to process token data!" });
   }
 });
+
 
 
 externalWs.on('close', () => {
