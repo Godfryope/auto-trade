@@ -10,6 +10,10 @@ import userRoutes from './routes/userRoutes.js';
 import WebSocket, { WebSocketServer } from 'ws';
 import http from 'http';
 
+
+const port = 3000;
+
+
 const app = express();
 
 // Generate secret key
