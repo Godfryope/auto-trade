@@ -1127,7 +1127,7 @@
     <!-- Scroll To Top -->
 
     <script>
-        const ws = new WebSocket(`wss://${window.location.host}`);
+        const ws = new WebSocket("ws://localhost:3000");
 
         ws.onopen = () => {
             console.log("Successfully connected to token updates!");
