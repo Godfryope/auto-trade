@@ -1,21 +1,20 @@
-require('dotenv').config();
-const TelegramBot = require('node-telegram-bot-api');
-const mongoose = require('mongoose');
-const axios = require('axios');
-const QRCode = require('qrcode');
-const express = require('express');
-const crypto = require('crypto');
-const session = require('express-session');
-const userRoutes = require('./routes/userRoutes');
-const port = 3000;
+import 'dotenv/config';
+import TelegramBot from 'node-telegram-bot-api';
+import mongoose from 'mongoose';
+import axios from 'axios';
+import QRCode from 'qrcode';
+import express from 'express';
+import crypto from 'crypto';
+import session from 'express-session';
+import userRoutes from './routes/userRoutes.js';
+import WebSocket, { WebSocketServer } from 'ws';
+import http from 'http';
 
-const http = require('http');
-const socketIo = require('socket.io');
-const WebSocket = require('ws');
+
+const port = 3001;
+
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
 
 // Generate secret key
 const secret = crypto.randomBytes(64).toString('hex');
@@ -274,52 +273,58 @@ app.put('/api/user/:telegramId', async (req, res) => {
 });
 
 
-const ws = new WebSocket('wss://pumpportal.fun/api/data');
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
 
-// WebSocket setup for Raydium liquidity events
-ws.on('open', function open() {
-  // Subscribing to Raydium liquidity events
-  const payload = {
-    method: "subscribeNewToken",
-  };
-  ws.send(JSON.stringify(payload));
+// Serve static files (HTML, JS)
+app.use(express.static('public'));
+
+// Connect to the external WebSocket API
+const externalWs = new WebSocket('wss://pumpportal.fun/api/data');
+
+externalWs.on('open', () => {
+  console.log("Connected to external WebSocket");
+
+  // Subscribe to new token creation events
+  const payload = { method: "subscribeNewToken" };
+  externalWs.send(JSON.stringify(payload));
+
+  // Notify frontend about successful connection
+  broadcast({ type: "success", message: "Connected to token updates!" });
 });
 
-ws.on('message', function message(data) {
-  let tokens;
+externalWs.on('message', (data) => {
   try {
-    tokens = JSON.parse(data);
-  } catch (e) {
-    console.error('Failed to parse tokens:', e);
-    return;
-  }
-  console.log('Tokens detected:', tokens); // Log tokens to the console
+    const parsedData = JSON.parse(data);
+    console.log("New Token:", parsedData);
 
-  if (!Array.isArray(tokens)) {
-    tokens = [tokens]; // Convert to an array if it's a single object
-  }
+    // Broadcast new token data to frontend
+    broadcast({ type: "newToken", data: parsedData });
 
-  io.emit('tokensDetected', tokens);
+  } catch (error) {
+    console.error("Error parsing message:", error);
+    broadcast({ type: "error", message: "Failed to process token data!" });
+  }
 });
 
-app.get('/api/tokens', (req, res) => {
-  ws.on('message', function message(data) {
-    let tokens;
-    try {
-      tokens = JSON.parse(data);
-    } catch (e) {
-      console.error('Failed to parse tokens:', e);
-      res.status(500).json({ error: 'Failed to parse tokens' });
-      return;
-    }
+externalWs.on('close', () => {
+  console.log("External WebSocket closed");
+  broadcast({ type: "error", message: "Connection closed! Trying to reconnect..." });
+});
 
-    if (!Array.isArray(tokens)) {
-      tokens = [tokens]; // Convert to an array if it's a single object
-    }
+externalWs.on('error', (err) => {
+  console.error("WebSocket error:", err);
+  broadcast({ type: "error", message: "WebSocket error occurred!" });
+});
 
-    res.json(tokens);
+// Function to send data to all connected frontend clients
+function broadcast(data) {
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(data));
+    }
   });
-});
+}
 
 // Start the server
 server.listen(port, () => {

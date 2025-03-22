@@ -922,7 +922,6 @@
                                     <table class="table table-hover text-nowrap table-bordered">
                                         <thead>
                                             <tr>
-                                                <th scope="col">S.No</th>
                                                 <th scope="col">Name</th>
                                                 <th scope="col">Symbol</th>
                                                 <th scope="col">Price</th>
@@ -931,6 +930,7 @@
                                                 <th scope="col">Pair</th>
                                                 <th scope="col">Mint Address</th>
                                                 <th scope="col">Uri</th>
+                                                <th scope="col">Time Ago</th>
                                             </tr>
                                         </thead>
                                         <tbody id="tokens">
@@ -1079,7 +1079,54 @@
     <div id="responsive-overlay"></div>
     <!-- Scroll To Top -->
 
+    <script>
+        const ws = new WebSocket("ws://localhost:3001");
 
+        ws.onopen = () => {
+            alert("Successfully connected to token updates!");
+        };
+
+        ws.onmessage = (event) => {
+            const response = JSON.parse(event.data);
+
+            if (response.type === "success") {
+                alert(response.message);
+            } 
+            else if (response.type === "error") {
+                alert("Error: " + response.message);
+            } 
+            else if (response.type === "newToken") {
+                const data = response.data;
+                const table = document.getElementById("tokens");
+                const now = new Date();
+
+                // Create a new row
+                const row = table.insertRow(0);
+                row.insertCell(0).innerText = data.name || "Unknown";
+                row.insertCell(1).innerText = data.symbol || "N/A";
+                row.insertCell(2).innerText = data.price || "N/A";
+                row.insertCell(3).innerText = data.marketCap || "N/A";
+                row.insertCell(4).innerText = data.bondingCurve || "N/A";
+                row.insertCell(5).innerText = data.pair || "N/A";
+                row.insertCell(6).innerText = data.mintAddress || "N/A";
+                row.insertCell(7).innerText = data.uri || "N/A";
+                row.insertCell(8).innerText = "Just now";
+                
+                // Keep only the latest 10 tokens
+                if (table.rows.length > 10) {
+                    table.deleteRow(10);
+                }
+            }
+        };
+
+        ws.onerror = () => {
+            alert("WebSocket error! Unable to fetch token data.");
+        };
+
+        ws.onclose = () => {
+            alert("Connection closed! Trying to reconnect...");
+        };
+    </script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -1126,42 +1173,7 @@
         }
     </script>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-
-            // Fetch initial tokens list
-            fetch('/api/tokens')
-                .then(response => response.json())
-                .then(tokens => {
-                    if (Array.isArray(tokens)) {
-                        const tokensContainer = document.getElementById('tokens');
-                        if (tokensContainer) {
-                            tokensContainer.innerHTML = '';
-
-                            tokens.forEach((token, index) => {
-                                const tokenRow = `
-                                    <tr>
-                                        <td>${index + 1}</td>
-                                        <td>${token.name}</td>
-                                        <td>${token.symbol}</td>
-                                        <td>${token.price || 'N/A'}</td>
-                                        <td>${token.marketCapSol}</td>
-                                        <td>${token.bondingCurveKey}</td>
-                                        <td>${token.pool}</td>
-                                        <td>${token.mint}</td>
-                                        <td><a href="${token.uri}" target="_blank">${token.uri}</a></td>
-                                    </tr>
-                                `;
-                                tokensContainer.innerHTML += tokenRow;
-                            });
-                        }
-                    } else {
-                        console.error('Tokens is not an array:', tokens);
-                    }
-                })
-                .catch(error => console.error('Error fetching tokens:', error));
-        });
-    </script>
+    
     <!-- Popper JS -->
     <script src="./assets/libs/@popperjs/core/umd/popper.min.js"></script>
 
