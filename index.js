@@ -272,80 +272,76 @@ app.put('/api/user/:telegramId', async (req, res) => {
   }
 });
 
-
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 // Serve static files (HTML, JS)
 app.use(express.static('public'));
 
-// Connect to the external WebSocket API
-const externalWs = new WebSocket('wss://pumpportal.fun/api/data');
+// Connect to external WebSocket APIs
+const externalWsUrls = [
+  { url: 'wss://pumpportal.fun/api/data', type: 'newToken', subscribeMethod: 'subscribeNewToken', broadcastFn: broadcast },
+  { url: 'wss://pumpportal.fun/api/data', type: 'raydiumLiquidity', subscribeMethod: 'subscribeRaydiumLiquidity', broadcastFn: broadcastRaydium }
+];
 
-externalWs.on('open', () => {
-  console.log("Connected to external WebSocket");
+externalWsUrls.forEach(({ url, type, subscribeMethod, broadcastFn }) => {
+  const ws = new WebSocket(url);
 
-  // Subscribe to new token creation events
-  const payload = { method: "subscribeNewToken" };
-  externalWs.send(JSON.stringify(payload));
+  ws.on('open', () => {
+    console.log(`Connected to ${type} WebSocket`);
+    ws.send(JSON.stringify({ method: subscribeMethod }));
+    broadcastFn({ type: "success", message: `Connected to ${type} updates!` });
+  });
 
-  // Notify frontend about successful connection
-  broadcast({ type: "success", message: "Connected to token updates!" });
+  ws.on('message', async (data) => {
+    try {
+      const parsedData = JSON.parse(data);
+      console.log(`${type}:`, parsedData);
+
+      const marketCap = Number(parsedData.marketCapSol) || 0;
+      const price = parsedData.initialBuy
+        ? Number(parsedData.solAmount) / Number(parsedData.initialBuy)
+        : 0;
+
+      const imageUrl = parsedData.uri ? await fetchTokenMetadata(parsedData.uri) : null;
+
+      const tokenData = {
+        name: parsedData.name || "Unknown",
+        symbol: parsedData.symbol || "N/A",
+        marketCap: marketCap > 0 ? `$${marketCap.toLocaleString()}` : "N/A",
+        price: price > 0 ? `$${price.toFixed(8)}` : "N/A",
+        bondingCurve: Math.trunc(parsedData.vSolInBondingCurve),
+        image: imageUrl || "../assets/images/faces/1.jpg",
+      };
+
+      broadcastFn({ type, data: tokenData });
+    } catch (error) {
+      console.error(`Error parsing ${type} message:`, error.message);
+      broadcastFn({ type: "error", message: `Failed to process ${type} data!` });
+    }
+  });
+
+  ws.on('close', () => {
+    console.log(`${type} WebSocket closed`);
+    broadcastFn({ type: "error", message: `${type} WebSocket connection closed!` });
+  });
+
+  ws.on('error', (err) => {
+    console.error(`${type} WebSocket error:`, err.message);
+    broadcastFn({ type: "error", message: `${type} WebSocket error occurred!` });
+  });
 });
 
+// Function to fetch token metadata
 async function fetchTokenMetadata(uri) {
   try {
-    const response = await fetch(uri);
-    const metadata = await response.json();
-    return metadata.image || null; // Extract the image URL
+    const response = await axios.get(uri);
+    return response.data.image || null;
   } catch (error) {
-    console.error("Error fetching token metadata:", error);
+    console.error("Error fetching token metadata:", error.message);
     return null;
   }
 }
-
-externalWs.on("message", async (data) => {
-  try {
-    const parsedData = JSON.parse(data);
-    console.log("New Token:", parsedData);
-
-    // Convert marketCap and price properly
-    const marketCap = Number(parsedData.marketCapSol) || 0;
-    const price = parsedData.initialBuy
-      ? Number(parsedData.solAmount) / Number(parsedData.initialBuy)
-      : 0;
-
-    // Fetch token image from metadata URI
-    const imageUrl = parsedData.uri ? await fetchTokenMetadata(parsedData.uri) : null;
-
-    const tokenData = {
-      name: parsedData.name || "Unknown",
-      symbol: parsedData.symbol || "N/A",
-      marketCap: marketCap > 0 ? `$${marketCap.toLocaleString()}` : "N/A",
-      price: price > 0 ? `$${price.toFixed(8)}` : "N/A",
-      bondingCurve: Math.trunc(parsedData.vSolInBondingCurve), // Convert to integer
-      image: imageUrl || "../assets/images/faces/1.jpg", // Default image if not found
-    };
-
-    // Broadcast formatted token data to frontend
-    broadcast({ type: "newToken", data: tokenData });
-  } catch (error) {
-    console.error("Error parsing message:", error);
-    broadcast({ type: "error", message: "Failed to process token data!" });
-  }
-});
-
-
-
-externalWs.on('close', () => {
-  console.log("External WebSocket closed");
-  broadcast({ type: "error", message: "Connection closed! Trying to reconnect..." });
-});
-
-externalWs.on('error', (err) => {
-  console.error("WebSocket error:", err);
-  broadcast({ type: "error", message: "WebSocket error occurred!" });
-});
 
 // Function to send data to all connected frontend clients
 function broadcast(data) {
@@ -356,69 +352,9 @@ function broadcast(data) {
   });
 }
 
-
-// Connect to the external WebSocket API for Raydium Liquidity
-const raydiumWs = new WebSocket('wss://pumpportal.fun/api/data');
-
-raydiumWs.on('open', () => {
-    console.log("Connected to Raydium Liquidity WebSocket");
-
-    // Subscribe to Raydium Liquidity events
-    const payload = { method: "subscribeRaydiumLiquidity" };
-    raydiumWs.send(JSON.stringify(payload));
-
-    // Notify frontend about successful connection
-    broadcastRaydium({ type: "success", message: "Connected to Raydium liquidity updates!" });
-});
-
-raydiumWs.on("message", async (data) => {
-    try {
-        const parsedData = JSON.parse(data);
-        console.log("Raydium Liquidity:", parsedData);
-
-        // Convert marketCap and price properly
-        const marketCap = Number(parsedData.marketCapSol) || 0;
-        const price = parsedData.initialBuy
-            ? Number(parsedData.solAmount) / Number(parsedData.initialBuy)
-            : 0;
-
-        // Fetch token image from metadata URI
-        const imageUrl = parsedData.uri ? await fetchTokenMetadata(parsedData.uri) : null;
-
-        const tokenData = {
-            name: parsedData.name || "Unknown",
-            symbol: parsedData.symbol || "N/A",
-            marketCap: marketCap > 0 ? `$${marketCap.toLocaleString()}` : "N/A",
-            price: price > 0 ? `$${price.toFixed(8)}` : "N/A",
-            bondingCurve: Math.trunc(parsedData.vSolInBondingCurve), // Convert to integer
-            image: imageUrl || "../assets/images/faces/1.jpg", // Default image if not found
-        };
-
-        // Broadcast Raydium Liquidity data separately
-        broadcastRaydium({ type: "raydiumLiquidity", data: tokenData });
-    } catch (error) {
-        console.error("Error parsing Raydium Liquidity message:", error);
-        broadcastRaydium({ type: "error", message: "Failed to process Raydium Liquidity data!" });
-    }
-});
-
-raydiumWs.on('close', () => {
-    console.log("Raydium WebSocket closed");
-    broadcastRaydium({ type: "error", message: "Raydium WebSocket connection closed!" });
-});
-
-raydiumWs.on('error', (err) => {
-    console.error("Raydium WebSocket error:", err);
-    broadcastRaydium({ type: "error", message: "Raydium WebSocket error occurred!" });
-});
-
 // Function to send data to all connected frontend clients (for Raydium)
 function broadcastRaydium(data) {
-    wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(data));
-        }
-    });
+  broadcast(data);
 }
 
 // Start the server
