@@ -908,6 +908,9 @@
                                             <li class="nav-item" role="presentation">
                                                 <a class="nav-link" data-bs-toggle="tab" role="tab" aria-current="page" href="#token-graduated" aria-selected="false" tabindex="-1">Graduated</a>
                                             </li>
+                                            <li class="nav-item" role="presentation">
+                                                <a class="nav-link" data-bs-toggle="tab" role="tab" aria-current="page" href="#token-raydium" aria-selected="false" tabindex="-1">Raydium Tokens</a>
+                                            </li>
                                         </ul>
                                     </div>
                                     <!-- <div class="btn-list">
@@ -974,7 +977,44 @@
                                 </div>
                             </div>
                             <div class="tab-pane p-0 border-0" id="token-graduated" role="tabpanel">
-                                <div id="raydium-container" class="row"></div>
+                                <div class="row">
+                                    <div class="col-xxl-2 col-xl-3 col-lg-4 col-md-4 col-sm-6 col-12">
+                                        <div class="card custom-card">
+                                            
+                                            <div class="card-body">
+                                                <div class="d-flex align-items-center mb-3">
+                                                    <div class="me-2 lh-1">
+                                                        <span class="avatar avatar-rounded avatar-md">
+                                                            <img src="../assets/images/faces/1.jpg" alt="">
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <p class="mb-0 fw-semibold">MC: 56k</p>
+                                                        <p class="fs-12 text-muted mb-0">@bondingcurve</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <p class="fs-15 fw-semibold mb-2"><a href="javascript:void(0);">Token name</a></p>
+                                                <div class="d-flex flex-wrap align-itesm-center justify-content-between mb-4">
+                                                    <div class="fw-semibold">
+                                                        Token symbol
+                                                    </div>
+                                                    <div class="d-flex flex-wrap align-items-center lh-1">
+                                                        <span class="avatar avatar-xs me-1">
+                                                            <img src="../assets/images/crypto-currencies/square-color/Ethereum.svg" alt="">
+                                                        </span>5s ago
+                                                    </div>
+                                                </div>
+                                                <div class="d-grid">
+                                                    <button type="button" class="btn btn-primary-light btn-wave waves-effect waves-light">Token name</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane p-0 border-0" id="token-raydium" role="tabpanel">
+                                <div id="pairs-container" class="row"></div>
                             </div>
                         </div>
                     </div>
@@ -1096,7 +1136,7 @@
         const ws = new WebSocket(`wss://${window.location.host}`);
     
         ws.onopen = () => {
-            console.log("Successfully connected to token updates!");
+            console.log("Successfully connected to updates!");
         };
     
         ws.onmessage = (event) => {
@@ -1107,74 +1147,107 @@
             } else if (response.type === "error") {
                 console.log("Error: " + response.message);
             } else if (response.type === "newToken") {
-                handleNewToken(response.data);
-            } else if (response.type === "raydiumLiquidity") {
-                handleRaydiumLiquidity(response.data);
+                const data = response.data;
+                const container = document.getElementById("tokens-container");
+                const now = Date.now();
+    
+                // Create a new card for token data
+                const card = document.createElement("div");
+                card.className = "col-xxl-2 col-xl-3 col-lg-4 col-md-4 col-sm-6 col-12";
+                card.setAttribute("data-time", now);
+                card.innerHTML = `
+                    <div class="card custom-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="me-2 lh-1">
+                                    <span class="avatar avatar-rounded avatar-md">
+                                        <img src="${data.image}" alt="${data.name}">
+                                    </span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-semibold">MC: ${data.marketCap ? data.marketCap : "N/A"}</p>
+                                    <p class="fs-12 text-muted mb-0">BC: ${data.bondingCurve || "N/A"}%</p>
+                                </div>
+                            </div>
+                            <p class="fs-15 fw-semibold mb-2"><a href="javascript:void(0);">${data.name || "Unknown"}</a></p>
+                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                                <div class="fw-semibold">
+                                    ${data.symbol || "N/A"}
+                                </div>
+                                <div class="d-flex flex-wrap align-items-center lh-1 time-elapsed">
+                                    <span>0s ago</span>
+                                </div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-primary-light btn-wave waves-effect waves-light">${data.name || "Unknown"}</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+    
+                // Prepend the new card
+                container.prepend(card);
+    
+                // Keep only the latest 12 tokens
+                while (container.children.length > 12) {
+                    container.removeChild(container.lastChild);
+                }
+            } else if (response.type === "newPair") {
+                const data = response.data;
+                const container = document.getElementById("pairs-container");
+                const now = Date.now();
+    
+                // Create a new card for pair data
+                const card = document.createElement("div");
+                card.className = "col-xxl-2 col-xl-3 col-lg-4 col-md-4 col-sm-6 col-12";
+                card.setAttribute("data-time", now);
+                card.innerHTML = `
+                    <div class="card custom-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="me-2 lh-1">
+                                    <span class="avatar avatar-rounded avatar-md">
+                                        <img src="${data.baseToken.logo}" alt="${data.baseToken.name}">
+                                    </span>
+                                </div>
+                                <div>
+                                    <p class="mb-0 fw-semibold">Source Exchange: ${data.sourceExchange || "Unknown"}</p>
+                                    <p class="fs-12 text-muted mb-0">Account: ${data.account || "N/A"}</p>
+                                </div>
+                            </div>
+                            <p class="fs-15 fw-semibold mb-2"><a href="javascript:void(0);">${data.baseToken.name || "Unknown"}</a></p>
+                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                                <div class="fw-semibold">
+                                    ${data.baseToken.symbol || "N/A"}
+                                </div>
+                                <div class="d-flex flex-wrap align-items-center lh-1 time-elapsed">
+                                    <span>0s ago</span>
+                                </div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="button" class="btn btn-primary-light btn-wave waves-effect waves-light">${data.baseToken.name || "Unknown"}</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+    
+                // Prepend the new card
+                container.prepend(card);
+    
+                // Keep only the latest 12 pairs
+                while (container.children.length > 12) {
+                    container.removeChild(container.lastChild);
+                }
             }
         };
     
         ws.onerror = () => {
-            console.log("WebSocket error! Unable to fetch token data.");
+            console.log("WebSocket error! Unable to fetch data.");
         };
     
         ws.onclose = () => {
             console.log("Connection closed! Trying to reconnect...");
         };
-    
-        // Function to handle new tokens
-        function handleNewToken(data) {
-            const container = document.getElementById("tokens-container");
-            addTokenCard(container, data);
-        }
-    
-        // Function to handle Raydium Liquidity
-        function handleRaydiumLiquidity(data) {
-            const container = document.getElementById("raydium-container");
-            addTokenCard(container, data);
-        }
-    
-        // Function to create and prepend token cards
-        function addTokenCard(container, data) {
-            const now = Date.now();
-            const card = document.createElement("div");
-            card.className = "col-xxl-2 col-xl-3 col-lg-4 col-md-4 col-sm-6 col-12";
-            card.setAttribute("data-time", now);
-            card.innerHTML = `
-                <div class="card custom-card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="me-2 lh-1">
-                                <span class="avatar avatar-rounded avatar-md">
-                                    <img src="${data.image}" alt="${data.name}">
-                                </span>
-                            </div>
-                            <div>
-                                <p class="mb-0 fw-semibold">MC: ${data.marketCap ? `$${data.marketCap.toLocaleString()}` : "N/A"}</p>
-                                <p class="fs-12 text-muted mb-0">BC: ${data.bondingCurve || "N/A"}%</p>
-                            </div>
-                        </div>
-                        <p class="fs-15 fw-semibold mb-2"><a href="javascript:void(0);">${data.name || "Unknown"}</a></p>
-                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
-                            <div class="fw-semibold">${data.symbol || "N/A"}</div>
-                            <div class="d-flex flex-wrap align-items-center lh-1 time-elapsed">
-                                <span>0s ago</span>
-                            </div>
-                        </div>
-                        <div class="d-grid">
-                            <button type="button" class="btn btn-primary-light btn-wave waves-effect waves-light">${data.name || "Unknown"}</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-    
-            // Prepend the new card
-            container.prepend(card);
-    
-            // Keep only the latest 12 items
-            while (container.children.length > 12) {
-                container.removeChild(container.lastChild);
-            }
-        }
     
         // Update timestamps dynamically
         setInterval(() => {
@@ -1192,7 +1265,7 @@
                 }
             });
         }, 5000);
-    </script>    
+    </script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {

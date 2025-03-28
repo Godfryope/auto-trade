@@ -1,27 +1,22 @@
-const axios = require("axios");
-
-// Fetch all tokens listed on Raydium
-async function getRaydiumTokens() {
-  try {
-    const response = await axios.get("https://api.raydium.io/v2/main/token/list");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching tokens from Raydium:", error.message);
-    return [];
-  }
-}
-
-// Display the token list
-async function main() {
-  const tokens = await getRaydiumTokens();
-  if (tokens.length > 0) {
-    console.log("List of Tokens on Raydium:");
-    tokens.forEach(token => {
-      console.log(`Name: ${token.name}, Symbol: ${token.symbol}, Mint: ${token.mint}`);
+// npm install ws
+import WebSocket from 'ws';
+ 
+(async function () {
+    // Connect
+    const ws = new WebSocket('wss://api.solanastreaming.com/', undefined,
+        {
+            headers: {
+                'X-API-KEY': 'bfda16ff9287f3ddc9c48ad89428619a'
+            }
+        }
+    );
+    ws.on('error', console.error);
+    ws.on('open', () => {
+        // Start the pair / price stream
+        ws.send('{"id":1,"method":"newPairSubscribe"}');
     });
-  } else {
-    console.log("No tokens found.");
-  }
-}
-
-main();
+    ws.on('message', (data) => {
+        // Continuously read pairs / prices
+        console.log('received: %s', data);
+    });
+})();
