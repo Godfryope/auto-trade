@@ -138,7 +138,7 @@ bot.onText(/\/login/, async (msg) => {
     bot.sendMessage(chatId, `🚀 Redirecting you to the dashboard...`, {
       reply_markup: {
         inline_keyboard: [
-          [{ text: '🔑 Go to Dashboard', url: `auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` }]
+          [{ text: '🔑 Go to Dashboard', url: `shimmering-liberation-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` }]
         ]
       }
     });
@@ -202,14 +202,15 @@ bot.onText(/\/start/, async (msg) => {
     const options = {
       reply_markup: {
         inline_keyboard: [
-          [{ text: '🔑 Login', url: `auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` }]
+          [{ text: '🔑 Login', url: `shimmering-liberation-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` }]
         ]
       }
     };
 
     bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make some trades! 🚀`, options);
   } catch (error) {
-    bot.sendMessage(chatId, `⚠️ Error: ${error.message}`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, `⚠️ Error: ${error.
+      message}`, { parse_mode: 'Markdown' });
   }
 });
 
