@@ -108,19 +108,20 @@ async function updateSolanaBalance(telegramId) {
     const solBalance = balance / LAMPORTS_PER_SOL; // Convert from lamports to SOL
 
     console.log(`📊 The Solana balance for wallet ${walletAddress} is: ${solBalance} SOL`);
-    document.getElementById('user-balance').innerText = `${solBalance.toFixed(2)} SOL`;
+    return solBalance;
   } catch (err) {
     console.log(`Error fetching balance for wallet: ${err.message}`);
+    throw err;
   }
 }
 
 app.get('/update-balance/:telegramId', async (req, res) => {
   const { telegramId } = req.params;
   try {
-    await updateSolanaBalance(telegramId);
-    res.status(200).send('Balance updated successfully');
+    const balance = await updateSolanaBalance(telegramId);
+    res.status(200).json({ balance }); // Return JSON response
   } catch (error) {
-    res.status(500).send('Error updating balance');
+    res.status(500).json({ error: 'Error updating balance' });
   }
 });
 
@@ -147,7 +148,6 @@ setInterval(async () => {
     console.log(`Error updating balances on startup: ${err.message}`);
   }
 })();
-
 
 // Handle user login (check if user exists or register)
 bot.onText(/\/login/, async (msg) => {
