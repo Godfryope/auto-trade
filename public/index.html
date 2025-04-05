@@ -891,7 +891,7 @@
                 </div>
                 <!-- Page Header Close -->
         
-                <!-- Start::row-1 -->
+               <!-- Start::row-1 -->
                 <div class="row">
                     <div class="col-xl-12">
                         <div class="card custom-card">
@@ -1013,9 +1013,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="tab-pane p-0 border-0" id="token-raydium" role="tabpanel">
-                                <div id="pairs-container" class="row"></div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1134,11 +1131,11 @@
 
     <script>
         const ws = new WebSocket(`wss://${window.location.host}`);
-    
+
         ws.onopen = () => {
-            console.log("Successfully connected to updates!");
+            console.log("Successfully connected to token updates!");
         };
-    
+
         ws.onmessage = (event) => {
             const response = JSON.parse(event.data);
     

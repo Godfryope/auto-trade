@@ -11,7 +11,7 @@ import WebSocket, { WebSocketServer } from 'ws';
 import http from 'http';
 
 
-const port = 3000;
+const port = 3001;
 
 
 const app = express();
@@ -43,14 +43,13 @@ app.use(session({
 app.use(express.json());
 app.use(express.static('public'));
 app.use('/api/user', userRoutes);
-
-// Define User Schema for MongoDB (Ensure this matches your existing schema)
 const walletSchema = new mongoose.Schema({
   address: String,
   privateKey: String,
   apiKey: String,
   qrCodeImage: String,
   solanaBalance: { type: Number, default: 0 },
+  walletPublicKey: String, // Added walletPublicKey field
 });
 
 const userSchema = new mongoose.Schema({
@@ -70,11 +69,11 @@ const createSolanaWallet = async () => {
   try {
     const response = await axios.get('https://pumpportal.fun/api/create-wallet');
     const data = response.data;
-    const { privateKey, walletPublicKey: walletAddress, apiKey } = data;
+    const { privateKey, walletPublicKey, walletPublicKey: walletAddress, apiKey } = data;
 
     if (walletAddress && apiKey) {
       const qrCodeImage = await QRCode.toDataURL(walletAddress);
-      return { walletAddress, privateKey, apiKey, qrCodeImage };
+      return { walletAddress, walletPublicKey, privateKey, apiKey, qrCodeImage };
     } else {
       throw new Error('Invalid response data');
     }
@@ -83,6 +82,32 @@ const createSolanaWallet = async () => {
     return null;
   }
 };
+
+import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+const connection = new Connection('https://api.mainnet-beta.solana.com'); // Solana RPC URL
+
+const walletAddress = '5stKGbDhzHLFmpov2Gy11VdBjC1Kkc9WrRpKrTjunJWb';
+
+// Function to update Solana balance for a given wallet address
+const updateSolanaBalance = async () => {
+  try {
+    // Get the current balance of the wallet from Solana blockchain
+    const publicKey = new PublicKey(walletAddress);
+    const balance = await connection.getBalance(publicKey);
+    const solBalance = balance / LAMPORTS_PER_SOL; // Convert from lamports to SOL
+
+    console.log(`📊 The Solana balance for wallet ${walletAddress} is: ${solBalance} SOL`);
+  } catch (err) {
+    console.log(`Error fetching balance for wallet ${walletAddress}: ${err.message}`);
+  }
+};
+
+// Set a periodic update every 5 minutes (300,000 ms)
+setInterval(updateSolanaBalance, 300000); // Run every 5 minutes
+
+// You can also run the function once on bot startup to immediately fetch balance
+updateSolanaBalance();
+
 
 // Handle user login (check if user exists or register)
 bot.onText(/\/login/, async (msg) => {
@@ -109,13 +134,15 @@ bot.onText(/\/login/, async (msg) => {
         address: mainWalletDetails.walletAddress,
         privateKey: mainWalletDetails.privateKey,
         apiKey: mainWalletDetails.apiKey,
-        qrCodeImage: mainWalletDetails.qrCodeImage
+        qrCodeImage: mainWalletDetails.qrCodeImage,
+        walletPublicKey: mainWalletDetails.walletPublicKey
       };
       newUser.tradingWallet = {
         address: tradingWalletDetails.walletAddress,
         privateKey: tradingWalletDetails.privateKey,
         apiKey: tradingWalletDetails.apiKey,
-        qrCodeImage: tradingWalletDetails.qrCodeImage
+        qrCodeImage: tradingWalletDetails.qrCodeImage,
+        walletPublicKey: tradingWalletDetails.walletPublicKey
       };
       await newUser.save();
 
@@ -138,7 +165,7 @@ bot.onText(/\/login/, async (msg) => {
     bot.sendMessage(chatId, `🚀 Redirecting you to the dashboard...`, {
       reply_markup: {
         inline_keyboard: [
-          [{ text: '🔑 Go to Dashboard', url: `shimmering-liberation-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` }]
+          [{ text: '🔑 Go to Dashboard', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` }]
         ]
       }
     });
@@ -173,13 +200,15 @@ bot.onText(/\/start/, async (msg) => {
         address: mainWalletDetails.walletAddress,
         privateKey: mainWalletDetails.privateKey,
         apiKey: mainWalletDetails.apiKey,
-        qrCodeImage: mainWalletDetails.qrCodeImage
+        qrCodeImage: mainWalletDetails.qrCodeImage,
+        walletPublicKey: mainWalletDetails.walletPublicKey
       };
       newUser.tradingWallet = {
         address: tradingWalletDetails.walletAddress,
         privateKey: tradingWalletDetails.privateKey,
         apiKey: tradingWalletDetails.apiKey,
-        qrCodeImage: tradingWalletDetails.qrCodeImage
+        qrCodeImage: tradingWalletDetails.qrCodeImage,
+        walletPublicKey: tradingWalletDetails.walletPublicKey
       };
       await newUser.save();
 
@@ -202,15 +231,14 @@ bot.onText(/\/start/, async (msg) => {
     const options = {
       reply_markup: {
         inline_keyboard: [
-          [{ text: '🔑 Login', url: `shimmering-liberation-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` }]
+          [{ text: '🔑 Login', url: `https://auto-trade-production.up.railway.app?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` }]
         ]
       }
     };
 
     bot.sendMessage(chatId, `Welcome to the MemeTrade Bot!\n\nTo get started, click below to log in. Once logged in, you'll be ready to explore all the features of this bot! 💼\n\nLet’s make some trades! 🚀`, options);
   } catch (error) {
-    bot.sendMessage(chatId, `⚠️ Error: ${error.
-      message}`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, `⚠️ Error: ${error.message}`, { parse_mode: 'Markdown' });
   }
 });
 
@@ -280,7 +308,6 @@ const wss = new WebSocketServer({ server });
 app.use(express.static('public'));
 
 // Connect to the external WebSocket API
-// Connect to the external WebSocket API
 const externalWs = new WebSocket('wss://pumpportal.fun/api/data');
 
 externalWs.on('open', () => {
@@ -308,7 +335,6 @@ async function fetchTokenMetadata(uri) {
 externalWs.on("message", async (data) => {
   try {
     const parsedData = JSON.parse(data);
-    // console.log("New Token:", parsedData);
 
     // Convert marketCap and price properly
     const marketCap = Number(parsedData.marketCapSol) || 0;
@@ -330,13 +356,39 @@ externalWs.on("message", async (data) => {
 
     // Broadcast formatted token data to frontend
     broadcast({ type: "newToken", data: tokenData });
+
+    // Attempt to buy the token immediately
+    const buyResponse = await fetch("https://pumpportal.fun/api/trade?api-key=9n5megbk5wqpyrak6dw6wyk66586aykb8x8kedae61344jtb899p6v3md9rkjd9p6dhnjjub8n76yn2f5xq4rdtfb1gkexbndxqjyta5a1p6muuub4w6pwjjd147ervu8t438hkmewykuf5um6eaa94npggb35xp6yn9pd49rwncavrb58k8dbqddgm2t3ga1hmamk18h0kuf8", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "action": "buy",            // "buy" or "sell"
+        "mint": parsedData.mint,    // contract address of the token you want to trade
+        "amount": 0.01,             // amount of SOL or tokens to trade
+        "denominatedInSol": "true", // "true" if amount is SOL, "false" if amount is tokens
+        "slippage": 10,             // percent slippage allowed
+        "priorityFee": 0.00005,     // amount to use as Jito tip or priority fee
+        "pool": "pump"              // exchange to trade on. "pump", "raydium", "pump-amm" or "auto"
+      })
+    });
+    const tradeData = await buyResponse.json();
+
+    // Handle the trade response
+    if (tradeData.error) {
+      console.error("Error executing trade:", tradeData.error);
+      broadcast({ type: "error", message: "Failed to execute trade!" });
+    } else {
+      console.log("Trade executed successfully:", tradeData);
+      broadcast({ type: "tradeSuccess", data: tradeData });
+    }
+
   } catch (error) {
     console.error("Error parsing message:", error);
     broadcast({ type: "error", message: "Failed to process token data!" });
   }
 });
-
-
 
 externalWs.on('close', () => {
   console.log("External WebSocket closed");
@@ -356,6 +408,7 @@ function broadcast(data) {
     }
   });
 }
+
 
 // New WebSocket connection for SolanaStreaming
 (async function () {

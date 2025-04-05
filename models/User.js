@@ -6,6 +6,7 @@ const walletSchema = new mongoose.Schema({
   apiKey: String,
   qrCodeImage: String,
   solanaBalance: { type: Number, default: 0 },
+  walletPublicKey: String, // Added walletPublicKey field
 });
 
 const userSchema = new mongoose.Schema({
