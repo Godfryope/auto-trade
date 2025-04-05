@@ -153,7 +153,7 @@ setInterval(async () => {
 // Existing code...
 
 app.post('/withdraw', async (req, res) => {
-    const { telegramId, amount, walletAddress, crypto } = req.body;
+    const { telegramId, amount, walletAddress } = req.body;
 
     try {
         const user = await User.findOne({ telegramId });
@@ -171,7 +171,7 @@ app.post('/withdraw', async (req, res) => {
         }
 
         // Process the withdrawal using apiKey and privateKey
-        const { apiKey, privateKey } = user.mainWallet;
+        const { privateKey } = user.mainWallet;
 
         // Create a keypair from the user's private key
         const fromWallet = Keypair.fromSecretKey(Buffer.from(privateKey, 'hex'));
@@ -243,7 +243,7 @@ bot.onText(/\/login/, async (msg) => {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
 
-    req.session.telegramId = chatId; // Store telegramId in session
+    // Removed req.session.telegramId as req is not defined in this context
     const userData = {
       firstName: user ? user.firstName : newUser.firstName,
       lastName: user ? user.lastName : newUser.lastName,
@@ -309,7 +309,7 @@ bot.onText(/\/start/, async (msg) => {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
 
-    req.session.telegramId = chatId; // Store telegramId in session
+    // Removed req.session.telegramId as req is not defined in this context
     const userData = {
       firstName: user ? user.firstName : newUser.firstName,
       lastName: user ? user.lastName : newUser.lastName,
