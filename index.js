@@ -86,27 +86,67 @@ const createSolanaWallet = async () => {
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 const connection = new Connection('https://api.mainnet-beta.solana.com'); // Solana RPC URL
 
-const walletAddress = '5stKGbDhzHLFmpov2Gy11VdBjC1Kkc9WrRpKrTjunJWb';
-
-// Function to update Solana balance for a given wallet address
-const updateSolanaBalance = async () => {
+async function getMainWalletAddress(telegramId) {
   try {
-    // Get the current balance of the wallet from Solana blockchain
+    const user = await User.findOne({ telegramId });
+    if (user) {
+      return user.mainWallet.address;
+    } else {
+      throw new Error('User not found');
+    }
+  } catch (error) {
+    console.error('Error fetching main wallet address:', error);
+    throw error;
+  }
+}
+
+async function updateSolanaBalance(telegramId) {
+  try {
+    const walletAddress = await getMainWalletAddress(telegramId);
     const publicKey = new PublicKey(walletAddress);
     const balance = await connection.getBalance(publicKey);
     const solBalance = balance / LAMPORTS_PER_SOL; // Convert from lamports to SOL
 
     console.log(`📊 The Solana balance for wallet ${walletAddress} is: ${solBalance} SOL`);
+    document.getElementById('user-balance').innerText = `${solBalance.toFixed(2)} SOL`;
   } catch (err) {
-    console.log(`Error fetching balance for wallet ${walletAddress}: ${err.message}`);
+    console.log(`Error fetching balance for wallet: ${err.message}`);
   }
-};
+}
+
+app.get('/update-balance/:telegramId', async (req, res) => {
+  const { telegramId } = req.params;
+  try {
+    await updateSolanaBalance(telegramId);
+    res.status(200).send('Balance updated successfully');
+  } catch (error) {
+    res.status(500).send('Error updating balance');
+  }
+});
 
 // Set a periodic update every 5 minutes (300,000 ms)
-setInterval(updateSolanaBalance, 300000); // Run every 5 minutes
+setInterval(async () => {
+  try {
+    const users = await User.find({});
+    for (const user of users) {
+      await updateSolanaBalance(user.telegramId);
+    }
+  } catch (err) {
+    console.log(`Error updating balances: ${err.message}`);
+  }
+}, 300000); // Run every 5 minutes
 
 // You can also run the function once on bot startup to immediately fetch balance
-updateSolanaBalance();
+(async () => {
+  try {
+    const users = await User.find({});
+    for (const user of users) {
+      await updateSolanaBalance(user.telegramId);
+    }
+  } catch (err) {
+    console.log(`Error updating balances on startup: ${err.message}`);
+  }
+})();
 
 
 // Handle user login (check if user exists or register)
