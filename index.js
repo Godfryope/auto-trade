@@ -243,7 +243,7 @@ bot.onText(/\/login/, async (msg) => {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
 
-    const script = `<script>localStorage.setItem('telegramId', '${chatId}');</script>`;
+    req.session.telegramId = chatId; // Store telegramId in session
     const userData = {
       firstName: user ? user.firstName : newUser.firstName,
       lastName: user ? user.lastName : newUser.lastName,
@@ -309,7 +309,7 @@ bot.onText(/\/start/, async (msg) => {
       bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName}!`);
     }
 
-    const script = `<script>localStorage.setItem('telegramId', '${chatId}');</script>`;
+    req.session.telegramId = chatId; // Store telegramId in session
     const userData = {
       firstName: user ? user.firstName : newUser.firstName,
       lastName: user ? user.lastName : newUser.lastName,

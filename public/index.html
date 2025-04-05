@@ -826,7 +826,13 @@
                         <script>
                             async function fetchBalance() {
                                 try {
-                                    const response = await fetch(`/update-balance/${localStorage.getItem('telegramId')}`);
+                                    const telegramId = sessionStorage.getItem('telegramId') || localStorage.getItem('telegramId');
+                                    if (!telegramId) {
+                                        console.error('Telegram ID not found in session or local storage.');
+                                        return;
+                                    }
+
+                                    const response = await fetch(`/update-balance/${telegramId}`);
                                     if (response.ok) {
                                         const data = await response.json();
                                         document.getElementById('user-balance').innerText = `${data.balance.toFixed(2)} SOL`;
