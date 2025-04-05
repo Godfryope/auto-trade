@@ -162,7 +162,7 @@ bot.onText(/\/login/, async (msg) => {
       tradingWallet: user ? user.tradingWallet.address : newUser.tradingWallet.address,
     };
 
-    bot.sendMessage(chatId, `🚀 Redirecting you to the dashboard...`, {
+    bot.sendMessage(chatId, `✅ Welcome back, ${user.firstName},! 🚀 Redirecting you to the dashboard...`, {
       reply_markup: {
         inline_keyboard: [
           [{ text: '🔑 Go to Dashboard', url: `https://shimmering-liberation-production.up.railway.app/?telegramId=${chatId}&userData=${encodeURIComponent(JSON.stringify(userData))}` }]
