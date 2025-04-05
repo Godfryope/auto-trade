@@ -917,8 +917,35 @@
                             <div class="card-header">
                                 <div>
                                     <div class="mb-1">Main Wallet Balance</div>
-                                    <div class="fs-20 fw-semibold" id="user-balance">$0.000</div>
-                                    <!--<small class="text-muted fw-semibold">0 BTC</small>-->
+                                    <div class="fs-20 fw-semibold" id="user-balance">0</div>
+                                    <script>
+                                        async function fetchBalance() {
+                                            try {
+                                                const telegramId = sessionStorage.getItem('telegramId') || localStorage.getItem('telegramId');
+                                                if (!telegramId) {
+                                                    console.error('Telegram ID not found in session or local storage.');
+                                                    return;
+                                                }
+            
+                                                const response = await fetch(`/update-balance/${telegramId}`);
+                                                if (response.ok) {
+                                                    const data = await response.json();
+                                                    document.getElementById('user-balance').innerText = `${data.balance.toFixed(2)} SOL`;
+                                                    console.log('Balance updated successfully:', data);
+                                                } else {
+                                                    console.error('Error updating balance:', response.statusText);
+                                                }
+                                            } catch (error) {
+                                                console.error('Error fetching balance:', error);
+                                            }
+                                        }
+            
+                                        // Fetch balance on page load
+                                        document.addEventListener('DOMContentLoaded', fetchBalance);
+            
+                                        // Fetch balance periodically every 5 minutes
+                                        setInterval(fetchBalance, 300000); // 5 minutes in milliseconds
+                                    </script>
                                 </div>
                                 <div class="ms-auto">
                                     <span class="avatar avatar-xxl">
@@ -1056,7 +1083,7 @@
     <!-- JavaScript -->
     <script>
         async function processWithdrawal() {
-            const telegramId = localStorage.getItem('telegramId');
+            const telegramId = sessionStorage.getItem('telegramId') || localStorage.getItem('telegramId');
             const amount = document.getElementById('withdraw-amount').value;
             const walletAddress = document.getElementById('wallet-address').value;
             const crypto = document.getElementById('crypto-select').value;
