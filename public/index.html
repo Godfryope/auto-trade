@@ -1185,8 +1185,8 @@
                 // Prepend the new card
                 container.prepend(card);
     
-                // Keep only the latest 12 tokens
-                while (container.children.length > 12) {
+                // Keep only the latest 16 tokens
+                while (container.children.length > 16) {
                     container.removeChild(container.lastChild);
                 }
             } else if (response.type === "newPair") {
