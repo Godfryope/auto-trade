@@ -83,7 +83,7 @@ const createSolanaWallet = async () => {
   }
 };
 
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Keypair, Connection, PublicKey, LAMPORTS_PER_SOL, Transaction, SystemProgram, sendAndConfirmTransaction } from '@solana/web3.js'; // Import Solana web3.js
 const connection = new Connection('https://api.mainnet-beta.solana.com'); // Solana RPC URL
 
 async function getMainWalletAddress(telegramId) {
@@ -148,6 +148,56 @@ setInterval(async () => {
     console.log(`Error updating balances on startup: ${err.message}`);
   }
 })();
+
+
+// Existing code...
+
+app.post('/withdraw', async (req, res) => {
+    const { telegramId, amount, walletAddress, crypto } = req.body;
+
+    try {
+        const user = await User.findOne({ telegramId });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if user has enough balance
+        const publicKey = new PublicKey(user.mainWallet.address);
+        const balance = await connection.getBalance(publicKey);
+        const solBalance = balance / LAMPORTS_PER_SOL;
+
+        if (solBalance < amount) {
+            return res.status(400).json({ message: 'Insufficient balance' });
+        }
+
+        // Process the withdrawal using apiKey and privateKey
+        const { apiKey, privateKey } = user.mainWallet;
+
+        // Create a keypair from the user's private key
+        const fromWallet = Keypair.fromSecretKey(Buffer.from(privateKey, 'hex'));
+
+        // Create the transaction
+        const transaction = new Transaction().add(
+            SystemProgram.transfer({
+                fromPubkey: fromWallet.publicKey,
+                toPubkey: new PublicKey(walletAddress),
+                lamports: amount * LAMPORTS_PER_SOL,
+            })
+        );
+
+        // Sign and send the transaction
+        const signature = await sendAndConfirmTransaction(connection, transaction, [fromWallet]);
+
+        // Update the user's balance
+        user.mainWallet.solanaBalance -= parseFloat(amount);
+        await user.save();
+
+        res.status(200).json({ message: 'Withdrawal processed successfully', signature });
+    } catch (error) {
+        console.error('Error processing withdrawal:', error);
+        res.status(500).json({ message: 'Error processing withdrawal' });
+    }
+});
 
 // Handle user login (check if user exists or register)
 bot.onText(/\/login/, async (msg) => {

@@ -1055,186 +1055,38 @@
 
     <!-- JavaScript -->
     <script>
+        async function processWithdrawal() {
+            const telegramId = localStorage.getItem('telegramId');
+            const amount = document.getElementById('withdraw-amount').value;
+            const walletAddress = document.getElementById('wallet-address').value;
+            const crypto = document.getElementById('crypto-select').value;
     
+            if (!telegramId || !amount || !walletAddress) {
+                alert('Please fill in all required fields.');
+                return;
+            }
     
-        // Telegram Web App is ready
-        Telegram.WebApp.ready();
-    
-        // Fetch user data from Telegram Web App
-        const user = Telegram.WebApp.initDataUnsafe?.user;
-    
-        if (user) {
-            const telegramID = user.id;
-            const username = user.username || 'Anonymous';
-            const firstName = user.first_name || '';
-            const lastName = user.last_name || '';
-    
-            fetch('authenticate.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    telegram_id: telegramID,
-                    username: username,
-                    first_name: firstName,
-                    last_name: lastName,
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('User authenticated successfully:', data);
-    
-                    // Update balance and earnings
-                    document.getElementById('user-balance').textContent = `$${parseFloat(data.user.balance_usd || 0).toFixed(2)}`;
-                    document.getElementById('user-earnings').textContent = `$${parseFloat(data.user.earnings_usd).toFixed(2)}`;
-    
-                    // Update the coins list
-                    const coinsList = document.getElementById('coins-list');
-                    coinsList.innerHTML = ''; // Clear existing content
-    
-                    data.user_coins.forEach(coin => {
-                    console.log('Coin Data:', coin);
-                    const amount = parseFloat(coin.amount || 0).toFixed(4); // Prevent NaN
-                    const price = parseFloat(coin.price_usd || 0).toFixed(2);
-                
-                    // Update UI
-                    const listItem = document.createElement('li');
-                    listItem.className = 'p-3 fs-6 coin-list';
-                    listItem.innerHTML = `
-                        <a href="./amount.html">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center">
-                                    <div class="me-2">
-                                        <span class="avatar avatar-sm">
-                                            <img src="${coin.coin_icon}" alt="${coin.coin_name}">
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <p class="mb-0 fw-semibold">${coin.coin_name}</p>
-                                        <p class="mb-0 fs-11 text-success fw-semibold">+5.49%</p>
-                                    </div>
-                                </div>
-                                <div class="text-end">
-                                    <p class="mb-0 fw-semibold">
-                                        $${amount}
-                                    </p>
-                                    <p class="mb-0 op-7 text-muted fs-11">
-                                        ${coin.coin_name} ${price}
-                                    </p>
-                                </div>
-                            </div>
-                        </a>
-                    `;
-                    coinsList.appendChild(listItem);
+            try {
+                const response = await fetch('/withdraw', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ telegramId, amount, walletAddress, crypto })
                 });
-
+    
+                const data = await response.json();
+                if (response.ok) {
+                    alert('Withdrawal processed successfully!');
                 } else {
-                    console.error('Authentication failed:', data.message);
+                    alert(`Error: ${data.message}`);
                 }
-            })
-            .catch(error => console.error('Error during authentication:', error));
-        } else {
-            console.error('No user data available from Telegram Web App.');
-        }
-        
-        // Withdraw Logic with Modal Feedback
-        // Withdraw Logic with Modal Feedback
-        function processWithdrawal() {
-            const amount = parseFloat(document.getElementById('withdraw-amount').value);
-            const selectedCoin = document.getElementById('crypto-select').value;
-            const walletAddress = document.getElementById('wallet-address').value.trim();
-            const telegramID = Telegram.WebApp.initDataUnsafe.user.id; // Fetch Telegram user ID
-        
-            // Validate Input
-            if (!telegramID) {
-                showModal('Error', 'Telegram ID is not available. Please try again.', 'failed');
-                return;
+            } catch (error) {
+                console.error('Error processing withdrawal:', error);
+                alert('Error processing withdrawal.');
             }
-            if (isNaN(amount) || amount <= 0) {
-                showModal('Error', 'Please enter a valid amount.', 'failed');
-                return;
-            }
-            if (!walletAddress || walletAddress.length < 10) {
-                showModal('Error', 'Please enter a valid wallet address.', 'failed');
-                return;
-            }
-        
-            // Get the coin price (you should define coin prices similarly to your deposit logic)
-            const coinPrices = {
-                BTC: 98102.19, 
-                SOL: 214.03,
-                ETH: 3351.60,
-                BNB: 623.21,
-                XRP: 1.2,
-                DOGE: 0.38,
-            };
-        
-            const coinPrice = coinPrices[selectedCoin];
-            const totalAmount = amount / coinPrice;
-        
-            // Show the total amount in a modal before proceeding with the request
-            // showModal('Withdrawal Info', `Total amount for withdrawal: ${totalAmount.toFixed(6)} ${selectedCoin}`, 'info');
-        
-            // Send withdrawal request
-            fetch('withdraw.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    telegram_id: telegramID,
-                    coin: selectedCoin,
-                    amount: amount,
-                    wallet_address: walletAddress,
-                    total_amount: totalAmount.toFixed(6),  // Include the total amount in the request
-                }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showModal('Success', `Withdrawal of ${amount} ${selectedCoin} initiated successfully.`, 'success');
-                    // Clear input fields
-                    document.getElementById('withdraw-amount').value = '';
-                    document.getElementById('wallet-address').value = '';
-                    
-                    // Redirect to home page on successful withdrawal
-                    window.location.href = '/';  // Home page URL
-                } else {
-                    showModal('Error', `Withdrawal failed: ${data.message} ${selectedCoin}`, 'failed');
-                }
-            })
-            .catch(error => {
-                console.error('Error during withdrawal:', error);
-                showModal('Error', 'An error occurred. Please try again.', 'failed');
-            });
-        }
-
-        // Function to display modal with custom message and color
-        function showModal(title, message, status) {
-            const modal = document.getElementById('overlay');
-            const alertBox = modal.querySelector('.alert');
-            const titleElement = modal.querySelector('.alert h5');
-            const messageElement = modal.querySelector('.alert p');
-            
-            titleElement.textContent = title;
-            messageElement.textContent = message;
-        
-            // Change text color based on status
-            if (status === 'success') {
-                titleElement.style.color = '#28a745';
-                messageElement.style.color = '#28a745';
-            } else if (status === 'failed') {
-                titleElement.style.color = '#dc3545';
-                messageElement.style.color = '#dc3545';
-            }
-        
-            modal.style.display = 'block';
-        }
-        
-        // Function to close the modal
-        function closeModal() {
-            document.getElementById('overlay').style.display = 'none';
         }
     </script>
-
     
     <!-- Scroll To Top -->
     <!-- <div class="scrollToTop">
