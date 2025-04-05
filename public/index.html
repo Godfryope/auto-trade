@@ -828,7 +828,8 @@
                                 try {
                                     const response = await fetch(`/update-balance/${localStorage.getItem('telegramId')}`);
                                     if (response.ok) {
-                                        const data = await response.text();
+                                        const data = await response.json();
+                                        document.getElementById('user-balance').innerText = `${data.balance.toFixed(2)} SOL`;
                                         console.log('Balance updated successfully:', data);
                                     } else {
                                         console.error('Error updating balance:', response.statusText);
