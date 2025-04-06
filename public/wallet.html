@@ -969,7 +969,7 @@
                     return;
                 }
 
-                const response = await fetch(`/update-balance/${telegramId}`);
+                const response = await fetch(`/update-balance2/${telegramId}`);
                 if (response.ok) {
                     const data = await response.json();
                     const solBalance = parseFloat(data.balance).toFixed(2);

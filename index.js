@@ -149,6 +149,69 @@ setInterval(async () => {
   }
 })();
 
+async function getTradingWalletAddress(telegramId) {
+  try {
+    const user = await User.findOne({ telegramId });
+    if (user) {
+      return user.tradingWallet.address;
+    } else {
+      throw new Error('User not found');
+    }
+  } catch (error) {
+    console.error('Error fetching main wallet address:', error);
+    throw error;
+  }
+}
+
+async function updateSolanaBalance2(telegramId) {
+  try {
+    const walletAddress = await getTradingWalletAddress(telegramId);
+    const publicKey = new PublicKey(walletAddress);
+    const balance = await connection.getBalance(publicKey);
+    const solBalance = balance / LAMPORTS_PER_SOL; // Convert from lamports to SOL
+
+    console.log(`📊 The Solana balance for wallet ${walletAddress} is: ${solBalance} SOL`);
+    return solBalance;
+  } catch (err) {
+    console.log(`Error fetching balance for wallet: ${err.message}`);
+    throw err;
+  }
+}
+
+app.get('/update-balance2/:telegramId', async (req, res) => {
+  const { telegramId } = req.params;
+  try {
+    const balance = await updateSolanaBalance2(telegramId);
+    res.status(200).json({ balance }); // Return JSON response
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating balance' });
+  }
+});
+
+// Set a periodic update every 5 minutes (300,000 ms)
+setInterval(async () => {
+  try {
+    const users = await User.find({});
+    for (const user of users) {
+      await updateSolanaBalance2(user.telegramId);
+    }
+  } catch (err) {
+    console.log(`Error updating balances: ${err.message}`);
+  }
+}, 300000); // Run every 5 minutes
+
+// You can also run the function once on bot startup to immediately fetch balance
+(async () => {
+  try {
+    const users = await User.find({});
+    for (const user of users) {
+      await updateSolanaBalance(user.telegramId);
+    }
+  } catch (err) {
+    console.log(`Error updating balances on startup: ${err.message}`);
+  }
+})();
+
 
 app.get('/get-trading-wallet-address', async (req, res) => {
   const { telegramId } = req.query;
