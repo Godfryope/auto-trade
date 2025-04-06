@@ -83,7 +83,8 @@ const createSolanaWallet = async () => {
   }
 };
 
-import { Keypair, Connection, PublicKey, LAMPORTS_PER_SOL, Transaction, SystemProgram, sendAndConfirmTransaction } from '@solana/web3.js'; // Import Solana web3.js
+
+import { VersionedTransaction, Keypair, Connection, PublicKey, LAMPORTS_PER_SOL, Transaction, SystemProgram, sendAndConfirmTransaction } from '@solana/web3.js'; // Import Solana web3.js
 const connection = new Connection('https://api.mainnet-beta.solana.com'); // Solana RPC URL
 
 async function getMainWalletAddress(telegramId) {
@@ -472,7 +473,6 @@ app.put('/api/user/:telegramId', async (req, res) => {
 });
 
 
-import { VersionedTransaction, Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import bs58 from "bs58";
 
 const RPC_ENDPOINT = "https://api.mainnet-beta.solana.com"; // Solana RPC URL
