@@ -853,12 +853,15 @@
                                                     if (response.ok) {
                                                         const data = await response.json();
                                                         const solBalance = parseFloat(data.balance).toFixed(2);
-                                                        const usdBalance = (parseFloat(data.usdBalance)).toFixed(2);
+                                                        const usdBalance = data.usdBalance && !isNaN(data.usdBalance) 
+                                                            ? parseFloat(data.usdBalance).toFixed(2) 
+                                                            : "0.00";
 
                                                         document.getElementById('user-balance').innerText = `${solBalance} SOL`;
                                                         document.getElementById('usd-balance').innerText = `$${usdBalance} USD`;
 
-                                                        console.log('Balance updated successfully:', data);
+                                                        console.error('Error updating balance:', response.statusText);
+                                                        document.getElementById('usd-balance').innerText = "$0.00 USD";
                                                     } else {
                                                         console.error('Error updating balance:', response.statusText);
                                                     }
