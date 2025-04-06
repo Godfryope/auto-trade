@@ -821,46 +821,37 @@
                     <div class="card custom-card">
                         <!-- Top Row with Balance on the Left and Earnings on the Right -->
                         <div class="balance-container pt-2 d-flex justify-content-between align-items-center ms-4 me-4">
-                            <h2 class="balance-amount pt-4 mb-0"><i class="bx bx-wallet"></i> <span id="main-wallet-balance">0</span></h2>
+                            <h2 class="balance-amount pt-4 mb-0"><i class="bx bx-wallet"></i> <span id="user-balance">0</span></h2>
                         </div>
                         <script>
-                            async function fetchBalances() {
+                            async function fetchBalance() {
                                 try {
                                     const telegramId = sessionStorage.getItem('telegramId') || localStorage.getItem('telegramId');
                                     if (!telegramId) {
                                         console.error('Telegram ID not found in session or local storage.');
                                         return;
                                     }
-                        
+
                                     const response = await fetch(`/update-balance/${telegramId}`);
                                     if (response.ok) {
                                         const data = await response.json();
-                                        const mainWalletBalance = data.mainWalletBalance !== undefined ? data.mainWalletBalance.toFixed(2) : '0.00';
-                                        const tradingWalletBalance = data.tradingWalletBalance !== undefined ? data.tradingWalletBalance.toFixed(2) : '0.00';
-                                        document.getElementById('main-wallet-balance').innerText = `${mainWalletBalance} SOL`;
-                                        document.getElementById('trading-wallet-balance').innerText = `${tradingWalletBalance} SOL`;
-                                        console.log('Balances updated successfully:', data);
+                                        document.getElementById('user-balance').innerText = `${data.balance.toFixed(2)} SOL`;
+                                        console.log('Balance updated successfully:', data);
                                     } else {
-                                        console.error('Error updating balances:', response.statusText);
+                                        console.error('Error updating balance:', response.statusText);
                                     }
                                 } catch (error) {
-                                    console.error('Error fetching balances:', error);
+                                    console.error('Error fetching balance:', error);
                                 }
                             }
-                        
-                            document.getElementById('copy-button1').addEventListener('click', () => {
-                                const walletAddressInput = document.getElementById('SOL-wallet-address1');
-                                walletAddressInput.select();
-                                document.execCommand('copy');
-                                alert('Wallet address copied to clipboard');
-                            });
-                        
-                            // Fetch balances on page load
-                            document.addEventListener('DOMContentLoaded', fetchBalances);
-                        
-                            // Fetch balances periodically every 5 minutes
-                            setInterval(fetchBalances, 300000); // 5 minutes in milliseconds
+
+                            // Fetch balance on page load
+                            document.addEventListener('DOMContentLoaded', fetchBalance);
+
+                            // Fetch balance periodically every 5 minutes
+                            setInterval(fetchBalance, 300000); // 5 minutes in milliseconds
                         </script>
+                    
                         <!-- Header with Icons -->
                         <div class="card-header d-flex justify-content-end flex-wrap">
                             <ul class="icons-list list-unstyled d-flex justify-content-between align-items-center text-center flex-grow-1">

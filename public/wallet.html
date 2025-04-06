@@ -833,7 +833,7 @@
                                             </div>
                                             <div>
                                                 <span class="d-block text-muted fs-12 fw-normal">Available SOL</span>
-                                                <span class="fw-semibold" id="trading-wallet-balance">0</span>
+                                                <span class="fw-semibold" id="user-balance">0</span>
                                             </div>
                                         </div>
                                         <div>
@@ -961,43 +961,73 @@
 
 
     <script>
-        async function fetchBalances() {
+        async function fetchBalance() {
             try {
                 const telegramId = sessionStorage.getItem('telegramId') || localStorage.getItem('telegramId');
                 if (!telegramId) {
                     console.error('Telegram ID not found in session or local storage.');
                     return;
                 }
-    
+
                 const response = await fetch(`/update-balance/${telegramId}`);
                 if (response.ok) {
                     const data = await response.json();
-                    const mainWalletBalance = data.mainWalletBalance !== undefined ? data.mainWalletBalance.toFixed(2) : '0.00';
-                    const tradingWalletBalance = data.tradingWalletBalance !== undefined ? data.tradingWalletBalance.toFixed(2) : '0.00';
-                    document.getElementById('main-wallet-balance').innerText = `${mainWalletBalance} SOL`;
-                    document.getElementById('trading-wallet-balance').innerText = `${tradingWalletBalance} SOL`;
-                    console.log('Balances updated successfully:', data);
+                    const solBalance = parseFloat(data.balance).toFixed(2);
+                    const usdBalance = data.usdBalance && !isNaN(data.usdBalance) 
+                        ? parseFloat(data.usdBalance).toFixed(2) 
+                        : "0.00";
+
+                    document.getElementById('user-balance').innerText = `${solBalance} SOL`;
+                    document.getElementById('usd-balance').innerText = `$${usdBalance} USD`;
+
+                    console.error('Error updating balance:', response.statusText);
+                    document.getElementById('usd-balance').innerText = "$0.00 USD";
                 } else {
-                    console.error('Error updating balances:', response.statusText);
+                    console.error('Error updating balance:', response.statusText);
                 }
             } catch (error) {
-                console.error('Error fetching balances:', error);
+                console.error('Error fetching balance:', error);
             }
         }
-    
+
+        // Fetch balance on page load
+        document.addEventListener('DOMContentLoaded', fetchBalance);
+
+        // Fetch balance periodically every 5 minutes
+        setInterval(fetchBalance, 300000); // 5 minutes in milliseconds
+
+        async function fetchTradingWalletAddress() {
+            const telegramId = localStorage.getItem('telegramId');
+            if (!telegramId) {
+                console.error('Telegram ID not found in localStorage');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/get-trading-wallet-address?telegramId=${telegramId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('SOL-wallet-address1').value = data.tradingWallet;
+                } else {
+                    console.error('Error fetching trading wallet address:', response.statusText);
+                }
+            } catch (error) {
+                console.error('Error fetching trading wallet address:', error);
+            }
+        }
+
         document.getElementById('copy-button1').addEventListener('click', () => {
             const walletAddressInput = document.getElementById('SOL-wallet-address1');
             walletAddressInput.select();
             document.execCommand('copy');
             alert('Wallet address copied to clipboard');
         });
-    
-        // Fetch balances on page load
-        document.addEventListener('DOMContentLoaded', fetchBalances);
-    
-        // Fetch balances periodically every 5 minutes
-        setInterval(fetchBalances, 300000); // 5 minutes in milliseconds
+
+        // Fetch the trading wallet address on page load
+        document.addEventListener('DOMContentLoaded', fetchTradingWalletAddress);
     </script>
+
+
 
     <script>
         function displayTokens(tokens) {

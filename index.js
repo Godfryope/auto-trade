@@ -86,100 +86,68 @@ const createSolanaWallet = async () => {
 import { Keypair, Connection, PublicKey, LAMPORTS_PER_SOL, Transaction, SystemProgram, sendAndConfirmTransaction } from '@solana/web3.js'; // Import Solana web3.js
 const connection = new Connection('https://api.mainnet-beta.solana.com'); // Solana RPC URL
 
-async function getWalletAddress(telegramId, walletType) {
+async function getMainWalletAddress(telegramId) {
   try {
-      const user = await User.findOne({ telegramId });
-      if (user) {
-          return walletType === 'main' ? user.mainWallet.address : user.tradingWallet.address;
-      } else {
-          throw new Error('User not found');
-      }
+    const user = await User.findOne({ telegramId });
+    if (user) {
+      return user.mainWallet.address;
+    } else {
+      throw new Error('User not found');
+    }
   } catch (error) {
-      console.error(`Error fetching ${walletType} wallet address:`, error);
-      throw error;
+    console.error('Error fetching main wallet address:', error);
+    throw error;
   }
 }
 
-async function updateSolanaBalance(telegramId, walletType) {
+async function updateSolanaBalance(telegramId) {
   try {
-      const walletAddress = await getWalletAddress(telegramId, walletType);
-      const publicKey = new PublicKey(walletAddress);
-      const balance = await connection.getBalance(publicKey);
-      const solBalance = balance / LAMPORTS_PER_SOL; // Convert from lamports to SOL
+    const walletAddress = await getMainWalletAddress(telegramId);
+    const publicKey = new PublicKey(walletAddress);
+    const balance = await connection.getBalance(publicKey);
+    const solBalance = balance / LAMPORTS_PER_SOL; // Convert from lamports to SOL
 
-      // Update the user's wallet balance in the database
-      const user = await User.findOne({ telegramId });
-      if (user) {
-          if (walletType === 'main') {
-              user.mainWallet.solanaBalance = solBalance;
-          } else {
-              user.tradingWallet.solanaBalance = solBalance;
-          }
-          await user.save();
-      }
-
-      console.log(`📊 The Solana balance for ${walletType} wallet ${walletAddress} is: ${solBalance} SOL`);
-      return solBalance;
+    console.log(`📊 The Solana balance for wallet ${walletAddress} is: ${solBalance} SOL`);
+    return solBalance;
   } catch (err) {
-      console.log(`Error fetching balance for ${walletType} wallet: ${err.message}`);
-      throw err;
+    console.log(`Error fetching balance for wallet: ${err.message}`);
+    throw err;
   }
 }
+
 app.get('/update-balance/:telegramId', async (req, res) => {
   const { telegramId } = req.params;
   try {
-      const mainWalletBalance = await updateSolanaBalance(telegramId, 'main');
-      const tradingWalletBalance = await updateSolanaBalance(telegramId, 'trading');
-      res.status(200).json({ mainWalletBalance, tradingWalletBalance }); // Return JSON response
+    const balance = await updateSolanaBalance(telegramId);
+    res.status(200).json({ balance }); // Return JSON response
   } catch (error) {
-      res.status(500).json({ error: 'Error updating balance' });
+    res.status(500).json({ error: 'Error updating balance' });
   }
 });
 
 // Set a periodic update every 5 minutes (300,000 ms)
 setInterval(async () => {
   try {
-  const users = await User.find({});
-  for (const user of users) {
-    await updateSolanaBalance(user.telegramId, 'main');
-    await updateSolanaBalance(user.telegramId, 'trading');
-  }
+    const users = await User.find({});
+    for (const user of users) {
+      await updateSolanaBalance(user.telegramId);
+    }
   } catch (err) {
-  console.log(`Error updating balances: ${err.message}`);
+    console.log(`Error updating balances: ${err.message}`);
   }
 }, 300000); // Run every 5 minutes
 
 // You can also run the function once on bot startup to immediately fetch balance
 (async () => {
   try {
-  const users = await User.find({});
-  for (const user of users) {
-    await updateSolanaBalance(user.telegramId, 'main');
-    await updateSolanaBalance(user.telegramId, 'trading');
-  }
+    const users = await User.find({});
+    for (const user of users) {
+      await updateSolanaBalance(user.telegramId);
+    }
   } catch (err) {
-  console.log(`Error updating balances on startup: ${err.message}`);
+    console.log(`Error updating balances on startup: ${err.message}`);
   }
 })();
-
-app.get('/get-wallet-balances/:telegramId', async (req, res) => {
-  const { telegramId } = req.params;
-
-  try {
-    const user = await User.findOne({ telegramId });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const mainWalletBalance = user.mainWallet.solanaBalance || 0;
-    const tradingWalletBalance = user.tradingWallet.solanaBalance || 0;
-
-    res.status(200).json({ mainWalletBalance, tradingWalletBalance });
-  } catch (error) {
-    console.error('Error fetching wallet balances:', error);
-    res.status(500).json({ message: 'Error fetching wallet balances' });
-  }
-});
 
 
 app.get('/get-trading-wallet-address', async (req, res) => {
