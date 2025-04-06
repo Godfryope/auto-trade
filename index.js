@@ -100,6 +100,22 @@ async function getMainWalletAddress(telegramId) {
   }
 }
 
+app.get('/get-trading-wallet-address', async (req, res) => {
+  const { telegramId } = req.query;
+
+  try {
+      const user = await User.findOne({ telegramId });
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      res.status(200).json({ tradingWallet: user.tradingWallet.address });
+  } catch (error) {
+      console.error('Error fetching trading wallet address:', error);
+      res.status(500).json({ message: 'Error fetching trading wallet address' });
+  }
+});
+
 async function updateSolanaBalance(telegramId) {
   try {
     const walletAddress = await getMainWalletAddress(telegramId);
