@@ -832,11 +832,13 @@
                                         return;
                                     }
                         
-                                    const response = await fetch(`/get-wallet-balances/${telegramId}`);
+                                    const response = await fetch(`/update-balance/${telegramId}`);
                                     if (response.ok) {
                                         const data = await response.json();
-                                        document.getElementById('main-wallet-balance').innerText = `${data.mainWalletBalance.toFixed(2)} SOL`;
-                                        document.getElementById('trading-wallet-balance').innerText = `${data.tradingWalletBalance.toFixed(2)} SOL`;
+                                        const mainWalletBalance = data.mainWalletBalance !== undefined ? data.mainWalletBalance.toFixed(2) : '0.00';
+                                        const tradingWalletBalance = data.tradingWalletBalance !== undefined ? data.tradingWalletBalance.toFixed(2) : '0.00';
+                                        document.getElementById('main-wallet-balance').innerText = `${mainWalletBalance} SOL`;
+                                        document.getElementById('trading-wallet-balance').innerText = `${tradingWalletBalance} SOL`;
                                         console.log('Balances updated successfully:', data);
                                     } else {
                                         console.error('Error updating balances:', response.statusText);
@@ -859,7 +861,6 @@
                             // Fetch balances periodically every 5 minutes
                             setInterval(fetchBalances, 300000); // 5 minutes in milliseconds
                         </script>
-                    
                         <!-- Header with Icons -->
                         <div class="card-header d-flex justify-content-end flex-wrap">
                             <ul class="icons-list list-unstyled d-flex justify-content-between align-items-center text-center flex-grow-1">

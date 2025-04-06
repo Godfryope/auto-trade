@@ -166,18 +166,18 @@ app.get('/get-wallet-balances/:telegramId', async (req, res) => {
   const { telegramId } = req.params;
 
   try {
-      const user = await User.findOne({ telegramId });
-      if (!user) {
-          return res.status(404).json({ message: 'User not found' });
-      }
+    const user = await User.findOne({ telegramId });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
-      const mainWalletBalance = user.mainWallet.solanaBalance || 0;
-      const tradingWalletBalance = user.tradingWallet.solanaBalance || 0;
+    const mainWalletBalance = user.mainWallet.solanaBalance || 0;
+    const tradingWalletBalance = user.tradingWallet.solanaBalance || 0;
 
-      res.status(200).json({ mainWalletBalance, tradingWalletBalance });
+    res.status(200).json({ mainWalletBalance, tradingWalletBalance });
   } catch (error) {
-      console.error('Error fetching wallet balances:', error);
-      res.status(500).json({ message: 'Error fetching wallet balances' });
+    console.error('Error fetching wallet balances:', error);
+    res.status(500).json({ message: 'Error fetching wallet balances' });
   }
 });
 
