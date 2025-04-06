@@ -470,7 +470,9 @@ app.put('/api/user/:telegramId', async (req, res) => {
     res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
-import { VersionedTransaction, Connection, Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+
+
+import { VersionedTransaction, Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import bs58 from "bs58";
 
 const RPC_ENDPOINT = "https://api.mainnet-beta.solana.com"; // Solana RPC URL
