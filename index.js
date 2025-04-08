@@ -475,18 +475,21 @@ app.put('/api/user/:telegramId', async (req, res) => {
 import bs58 from "bs58";
 
 const RPC_ENDPOINT = "https://api.mainnet-beta.solana.com"; // Solana RPC URL
-const web3Connection = new Connection(RPC_ENDPOINT, 'confirmed');
+const web3Connection = new Connection(RPC_ENDPOINT, "confirmed");
 
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 // Serve static files (HTML, JS)
-app.use(express.static('public'));
+app.use(express.static("public"));
 
-// Connect to the external WebSocket API
-const externalWs = new WebSocket('wss://pumpportal.fun/api/data');
+// Toggle state for trading
+let isTradingEnabled = true; // Default to "on"
 
-externalWs.on('open', () => {
+// WebSocket connection for external API
+const externalWs = new WebSocket("wss://pumpportal.fun/api/data");
+
+externalWs.on("open", () => {
   console.log("Connected to external WebSocket");
 
   // Subscribe to new token creation events
@@ -495,6 +498,21 @@ externalWs.on('open', () => {
 
   // Notify frontend about successful connection
   broadcast({ type: "success", message: "Connected to token updates!" });
+});
+
+// Handle toggle state updates from frontend
+wss.on("connection", (socket) => {
+  socket.on("message", (message) => {
+    try {
+      const data = JSON.parse(message);
+      if (data.type === "toggleTrade") {
+        isTradingEnabled = data.state; // Update trading state (true or false)
+        console.log(`Trading toggled ${isTradingEnabled ? "on" : "off"}`);
+      }
+    } catch (error) {
+      console.error("Error processing toggle message:", error);
+    }
+  });
 });
 
 async function fetchTokenMetadata(uri) {
@@ -508,41 +526,23 @@ async function fetchTokenMetadata(uri) {
   }
 }
 
-async function getTradingWalletAddress(telegramId) {
-  try {
-    const user = await User.findOne({ telegramId });
-    if (user) {
-      return {
-        address: user.tradingWallet.address,
-        privateKey: user.tradingWallet.privateKey
-      };
-    } else {
-      console.error('User not found for telegramId:', telegramId); // Log the telegramId for debugging
-      return null;
-    }
-  } catch (error) {
-    console.error('Error fetching trading wallet address:', error);
-    throw error;
-  }
-}
-
 async function sendPortalTransaction(parsedData, userWallet, action = "buy") {
   try {
     const response = await fetch(`https://pumpportal.fun/api/trade-local`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        "publicKey": userWallet.address, // User's trading wallet public key
-        "action": action,                // "buy" or "sell"
-        "mint": parsedData.mint,         // contract address of the token you want to trade
-        "denominatedInSol": "true",      // "true" if amount is amount of SOL, "false" if amount is number of tokens
-        "amount": 0.01,                  // amount of SOL or tokens
-        "slippage": 10,                  // percent slippage allowed
-        "priorityFee": 0.00001,          // priority fee
-        "pool": "pump"                   // exchange to trade on. "pump", "raydium", "pump-amm" or "auto"
-      })
+        publicKey: userWallet.address, // User's trading wallet public key
+        action: action, // "buy" or "sell"
+        mint: parsedData.mint, // contract address of the token you want to trade
+        denominatedInSol: "true", // "true" if amount is amount of SOL, "false" if amount is number of tokens
+        amount: 0.01, // amount of SOL or tokens
+        slippage: 10, // percent slippage allowed
+        priorityFee: 0.00001, // priority fee
+        pool: "pump", // exchange to trade on. "pump", "raydium", "pump-amm" or "auto"
+      }),
     });
 
     if (response.status === 200) {
@@ -588,6 +588,12 @@ externalWs.on("message", async (data) => {
     // Broadcast formatted token data to frontend
     broadcast({ type: "newToken", data: tokenData });
 
+    // Only execute trade if trading is enabled
+    if (!isTradingEnabled) {
+      console.log("Trading is disabled. Ignoring token trade execution.");
+      return;
+    }
+
     // Get user's trading wallet address
     const userWallet = await getTradingWalletAddress(parsedData.telegramId);
 
@@ -613,26 +619,25 @@ externalWs.on("message", async (data) => {
     } else {
       broadcast({ type: "error", message: "User wallet not found!" });
     }
-
   } catch (error) {
     console.error("Error parsing message:", error);
     broadcast({ type: "error", message: "Failed to process token data!" });
   }
 });
 
-externalWs.on('close', () => {
+externalWs.on("close", () => {
   console.log("External WebSocket closed");
   broadcast({ type: "error", message: "Connection closed! Trying to reconnect..." });
 });
 
-externalWs.on('error', (err) => {
+externalWs.on("error", (err) => {
   console.error("WebSocket error:", err);
   broadcast({ type: "error", message: "WebSocket error occurred!" });
 });
 
 // Function to send data to all connected frontend clients
 function broadcast(data) {
-  wss.clients.forEach(client => {
+  wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(data));
     }

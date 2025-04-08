@@ -707,6 +707,25 @@
                             </div>
                         </div>
                         <!-- End::header-link -->
+                        <script>
+                            const socket = new WebSocket(`wss://${window.location.host}`); // Update with your WebSocket URL
+                          
+                            // Listen for toggle button changes
+                            document.querySelectorAll('input[name="btnradio"]').forEach((button) => {
+                              button.addEventListener("change", (event) => {
+                                const isOn = event.target.id === "btnon";
+                                socket.send(JSON.stringify({ type: "toggleTrade", state: isOn }));
+                              });
+                            });
+                          
+                            socket.onopen = () => {
+                              console.log("Connected to WebSocket for toggle updates.");
+                            };
+                          
+                            socket.onerror = (error) => {
+                              console.error("WebSocket error:", error);
+                            };
+                          </script>
                         
                     </div>  
                     <!-- End::header-element -->
