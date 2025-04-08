@@ -472,7 +472,6 @@ app.put('/api/user/:telegramId', async (req, res) => {
   }
 });
 
-
 import bs58 from "bs58";
 
 const RPC_ENDPOINT = "https://api.mainnet-beta.solana.com"; // Solana RPC URL
@@ -509,7 +508,7 @@ async function fetchTokenMetadata(uri) {
   }
 }
 
-async function fetchTradingWalletAddress(telegramId) {
+async function getTradingWalletAddress(telegramId) {
   try {
     const user = await User.findOne({ telegramId });
     if (user) {
@@ -518,7 +517,8 @@ async function fetchTradingWalletAddress(telegramId) {
         privateKey: user.tradingWallet.privateKey
       };
     } else {
-      throw new Error('User not found');
+      console.error('User not found for telegramId:', telegramId); // Log the telegramId for debugging
+      return null;
     }
   } catch (error) {
     console.error('Error fetching trading wallet address:', error);
@@ -526,7 +526,7 @@ async function fetchTradingWalletAddress(telegramId) {
   }
 }
 
-async function sendPortalTransaction(parsedData, userWallet) {
+async function sendPortalTransaction(parsedData, userWallet, action = "buy") {
   try {
     const response = await fetch(`https://pumpportal.fun/api/trade-local`, {
       method: "POST",
@@ -535,7 +535,7 @@ async function sendPortalTransaction(parsedData, userWallet) {
       },
       body: JSON.stringify({
         "publicKey": userWallet.address, // User's trading wallet public key
-        "action": "buy",                 // "buy" or "sell"
+        "action": action,                // "buy" or "sell"
         "mint": parsedData.mint,         // contract address of the token you want to trade
         "denominatedInSol": "true",      // "true" if amount is amount of SOL, "false" if amount is number of tokens
         "amount": 0.01,                  // amount of SOL or tokens
@@ -551,14 +551,14 @@ async function sendPortalTransaction(parsedData, userWallet) {
       const signerKeyPair = Keypair.fromSecretKey(bs58.decode(userWallet.privateKey));
       tx.sign([signerKeyPair]);
       const signature = await web3Connection.sendTransaction(tx);
-      console.log("Transaction: https://solscan.io/tx/" + signature);
+      console.log(`Transaction (${action}): https://solscan.io/tx/${signature}`);
       return signature;
     } else {
       console.log(response.statusText); // log error
       return null;
     }
   } catch (error) {
-    console.error('Error sending portal transaction:', error);
+    console.error(`Error sending portal transaction (${action}):`, error);
     return null;
   }
 }
@@ -589,16 +589,26 @@ externalWs.on("message", async (data) => {
     broadcast({ type: "newToken", data: tokenData });
 
     // Get user's trading wallet address
-    const userWallet = await fetchTradingWalletAddress(parsedData.telegramId);
+    const userWallet = await getTradingWalletAddress(parsedData.telegramId);
 
     if (userWallet) {
       // Attempt to buy the token using the local transaction API
-      const signature = await sendPortalTransaction(parsedData, userWallet);
+      const buySignature = await sendPortalTransaction(parsedData, userWallet, "buy");
 
-      if (signature) {
-        broadcast({ type: "tradeSuccess", data: { signature } });
+      if (buySignature) {
+        broadcast({ type: "tradeSuccess", data: { buySignature } });
+
+        // Set a timeout to sell the token after 1 second
+        setTimeout(async () => {
+          const sellSignature = await sendPortalTransaction(parsedData, userWallet, "sell");
+          if (sellSignature) {
+            broadcast({ type: "tradeSuccess", data: { sellSignature } });
+          } else {
+            broadcast({ type: "error", message: "Failed to execute sell trade!" });
+          }
+        }, 1000); // 1 second delay
       } else {
-        broadcast({ type: "error", message: "Failed to execute trade!" });
+        broadcast({ type: "error", message: "Failed to execute buy trade!" });
       }
     } else {
       broadcast({ type: "error", message: "User wallet not found!" });
