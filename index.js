@@ -506,11 +506,11 @@ wss.on("connection", (socket) => {
     try {
       const data = JSON.parse(message);
       if (data.type === "toggleTrade") {
-        isTradingEnabled = data.state; // Update trading state (true or false)
-        console.log(`Trading toggled ${isTradingEnabled ? "on" : "off"}`);
+        console.log(`Trade state toggled: ${data.state ? "ON" : "OFF"}`);
+        // Handle the toggle logic here
       }
     } catch (error) {
-      console.error("Error processing toggle message:", error);
+      console.error("Error processing WebSocket message:", error);
     }
   });
 });

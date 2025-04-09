@@ -707,25 +707,37 @@
                             </div>
                         </div>
                         <!-- End::header-link -->
+                        
                         <script>
-                            const socket = new WebSocket(`wss://${window.location.host}`); // Update with your WebSocket URL
-                          
+                            document.addEventListener("DOMContentLoaded", () => {
+                            const socket = new WebSocket(`ws://${window.location.host}`); // Update with your WebSocket URL
+                        
                             // Listen for toggle button changes
                             document.querySelectorAll('input[name="btnradio"]').forEach((button) => {
-                              button.addEventListener("change", (event) => {
+                                button.addEventListener("change", (event) => {
                                 const isOn = event.target.id === "btnon";
+                                console.log(`Toggled ${isOn ? "ON" : "OFF"}`); // Debug log
                                 socket.send(JSON.stringify({ type: "toggleTrade", state: isOn }));
-                              });
+                                });
                             });
-                          
+                        
                             socket.onopen = () => {
-                              console.log("Connected to WebSocket for toggle updates.");
+                                console.log("Connected to WebSocket for toggle updates.");
                             };
-                          
+                        
                             socket.onerror = (error) => {
-                              console.error("WebSocket error:", error);
+                                console.error("WebSocket error:", error);
                             };
-                          </script>
+                        
+                            socket.onclose = () => {
+                                console.error("WebSocket connection closed.");
+                            };
+                        
+                            socket.onmessage = (event) => {
+                                console.log("Message from server:", event.data);
+                            };
+                            });
+                        </script>
                         
                     </div>  
                     <!-- End::header-element -->
