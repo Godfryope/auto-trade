@@ -475,18 +475,12 @@ app.put('/api/user/:telegramId', async (req, res) => {
   }
 });
 
-import bs58 from "bs58";
-
-const RPC_ENDPOINT = "https://api.mainnet-beta.solana.com"; // Solana RPC URL
-const web3Connection = new Connection(RPC_ENDPOINT, "confirmed");
-
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
 // Serve static files (HTML, JS)
 app.use(express.static('public'));
 
-// Connect to the external WebSocket API
 // Connect to the external WebSocket API
 const externalWs = new WebSocket('wss://pumpportal.fun/api/data');
 
@@ -515,7 +509,6 @@ async function fetchTokenMetadata(uri) {
 externalWs.on("message", async (data) => {
   try {
     const parsedData = JSON.parse(data);
-    // console.log("New Token:", parsedData);
 
     // Convert marketCap and price properly
     const marketCap = Number(parsedData.marketCapSol) || 0;
@@ -537,109 +530,36 @@ externalWs.on("message", async (data) => {
 
     // Broadcast formatted token data to frontend
     broadcast({ type: "newToken", data: tokenData });
+
+    // Attempt to buy the token immediately
+    const buyResponse = await fetch("https://pumpportal.fun/api/trade?api-key=9n5megbk5wqpyrak6dw6wyk66586aykb8x8kedae61344jtb899p6v3md9rkjd9p6dhnjjub8n76yn2f5xq4rdtfb1gkexbndxqjyta5a1p6muuub4w6pwjjd147ervu8t438hkmewykuf5um6eaa94npggb35xp6yn9pd49rwncavrb58k8dbqddgm2t3ga1hmamk18h0kuf8", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        "action": "buy",            // "buy" or "sell"
+        "mint": parsedData.mint,    // contract address of the token you want to trade
+        "amount": 0.01,             // amount of SOL or tokens to trade
+        "denominatedInSol": "true", // "true" if amount is SOL, "false" if amount is tokens
+        "slippage": 10,             // percent slippage allowed
+        "priorityFee": 0.00005,     // amount to use as Jito tip or priority fee
+        "pool": "pump"              // exchange to trade on. "pump", "raydium", "pump-amm" or "auto"
+      })
+    });
+    const tradeData = await buyResponse.json();
+
+    // Handle the trade response
+    if (tradeData.error) {
+      console.error("Error executing trade:", tradeData.error);
+      broadcast({ type: "error", message: "Failed to execute trade!" });
+    } else {
+      console.log("Trade executed successfully:", tradeData);
+      broadcast({ type: "tradeSuccess", data: tradeData });
+    }
+
   } catch (error) {
     console.error("Error parsing message:", error);
-    broadcast({ type: "error", message: "Failed to process token data!" });
-  }
-});
-
-
-// Toggle state for trading (default to OFF)
-let isTradingEnabled = false;
-
-
-// Handle toggle state updates from frontend
-wss.on("connection", (socket) => {
-  console.log("New WebSocket connection established.");
-
-  socket.on("message", async (message) => {
-    try {
-      const data = JSON.parse(message);
-      console.log("Message received from client:", data);
-
-      if (data.type === "toggleTrade") {
-        // Toggle trading state based on frontend input
-        isTradingEnabled = data.state;
-        console.log(`Trade toggled: ${isTradingEnabled ? "ON" : "OFF"}`);
-      }
-
-      if (data.type === "authenticate") {
-        const userWallet = await getTradingWalletAddress(data.telegramId);
-
-        if (userWallet) {
-          // Notify frontend of successful authentication
-          socket.send(JSON.stringify({ type: "authenticated", wallet: userWallet.address }));
-        } else {
-          // Notify frontend of failed authentication
-          socket.send(JSON.stringify({ type: "error", message: "User not found!" }));
-        }
-      }
-    } catch (error) {
-      console.error("Error processing WebSocket message:", error);
-    }
-  });
-
-  socket.on("close", () => {
-    console.log("WebSocket connection closed.");
-  });
-});
-
-// async function getTradingWalletAddress(telegramId) {
-//   try {
-//     const user = await User.findOne({ telegramId });
-//     if (user) {
-//       return {
-//         address: user.tradingWallet.address,
-//         privateKey: user.tradingWallet.privateKey,
-//       };
-//     } else {
-//       console.error("User not found for telegramId:", telegramId);
-//       return null;
-//     }
-//   } catch (error) {
-//     console.error("Error fetching trading wallet address:", error);
-//     throw error;
-//   }
-// }
-
-externalWs.on("message", async (data) => {
-  try {
-    const parsedData = JSON.parse(data);
-
-    // Broadcast token data to the frontend
-    broadcast({ type: "newToken", data: parsedData });
-
-    // Only execute trade if trading is enabled
-    if (!isTradingEnabled) {
-      console.log("Trading is disabled. Ignoring token trade execution.");
-      return;
-    }
-
-    const userWallet = await getTradingWalletAddress(parsedData.telegramId);
-    if (!userWallet) {
-      console.error("User wallet not found! Skipping trade.");
-      return;
-    }
-
-    // Proceed with trade execution
-    const buySignature = await sendPortalTransaction(parsedData, userWallet, "buy");
-    if (buySignature) {
-      broadcast({ type: "tradeSuccess", data: { buySignature } });
-
-      // Set timeout for selling the token
-      setTimeout(async () => {
-        const sellSignature = await sendPortalTransaction(parsedData, userWallet, "sell");
-        if (sellSignature) {
-          broadcast({ type: "tradeSuccess", data: { sellSignature } });
-        } else {
-          broadcast({ type: "error", message: "Failed to execute sell trade!" });
-        }
-      }, 1000);
-    } else {
-      broadcast({ type: "error", message: "Failed to execute buy trade!" });
-    }
-  } catch (error) {
-    console.error("Error processing token data:", error);
     broadcast({ type: "error", message: "Failed to process token data!" });
   }
 });
@@ -654,22 +574,14 @@ externalWs.on('error', (err) => {
   broadcast({ type: "error", message: "WebSocket error occurred!" });
 });
 
+// Function to send data to all connected frontend clients
 function broadcast(data) {
-  wss.clients.forEach((client) => {
+  wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(data));
     }
   });
 }
-
-// Function to send data to all connected frontend clients
-// function broadcast(data) {
-//   wss.clients.forEach((client) => {
-//     if (client.readyState === WebSocket.OPEN) {
-//       client.send(JSON.stringify(data));
-//     }
-//   });
-// }
 
 // New WebSocket connection for SolanaStreaming
 (async function () {
