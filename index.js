@@ -154,30 +154,33 @@ async function getTradingWalletAddress(telegramId) {
   try {
     const user = await User.findOne({ telegramId });
     if (user) {
-      return user.tradingWallet.address;
+      return {
+      address: user.tradingWallet.address,
+      privateKey: user.tradingWallet.privateKey,
+      };
     } else {
       throw new Error('User not found');
     }
-  } catch (error) {
-    console.error('Error fetching main wallet address:', error);
+    } catch (error) {
+    console.error('Error fetching trading wallet address:', error);
     throw error;
+    }
   }
-}
 
-async function updateSolanaBalance2(telegramId) {
-  try {
-    const walletAddress = await getTradingWalletAddress(telegramId);
+  async function updateSolanaBalance2(telegramId) {
+    try {
+    const { address: walletAddress } = await getTradingWalletAddress(telegramId);
     const publicKey = new PublicKey(walletAddress);
     const balance = await connection.getBalance(publicKey);
     const solBalance = balance / LAMPORTS_PER_SOL; // Convert from lamports to SOL
 
-    console.log(`📊 The Solana balance for wallet ${walletAddress} is: ${solBalance} SOL`);
+    console.log(`📊 The Solana balance for trading wallet ${walletAddress} is: ${solBalance} SOL`);
     return solBalance;
-  } catch (err) {
-    console.log(`Error fetching balance for wallet: ${err.message}`);
+    } catch (err) {
+    console.log(`Error fetching balance for trading wallet: ${err.message}`);
     throw err;
+    }
   }
-}
 
 app.get('/update-balance2/:telegramId', async (req, res) => {
   const { telegramId } = req.params;
@@ -536,23 +539,23 @@ wss.on("connection", (socket) => {
   });
 });
 
-async function getTradingWalletAddress(telegramId) {
-  try {
-    const user = await User.findOne({ telegramId });
-    if (user) {
-      return {
-        address: user.tradingWallet.address,
-        privateKey: user.tradingWallet.privateKey,
-      };
-    } else {
-      console.error("User not found for telegramId:", telegramId);
-      return null;
-    }
-  } catch (error) {
-    console.error("Error fetching trading wallet address:", error);
-    throw error;
-  }
-}
+// async function getTradingWalletAddress(telegramId) {
+//   try {
+//     const user = await User.findOne({ telegramId });
+//     if (user) {
+//       return {
+//         address: user.tradingWallet.address,
+//         privateKey: user.tradingWallet.privateKey,
+//       };
+//     } else {
+//       console.error("User not found for telegramId:", telegramId);
+//       return null;
+//     }
+//   } catch (error) {
+//     console.error("Error fetching trading wallet address:", error);
+//     throw error;
+//   }
+// }
 
 externalWs.on("message", async (data) => {
   try {
