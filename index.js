@@ -91,7 +91,7 @@ async function getMainWalletAddress(telegramId) {
   try {
     const user = await User.findOne({ telegramId });
     if (user) {
-      return user.TradingWallet.address;
+      return user.tradingWallet.address;
     } else {
       throw new Error('User not found');
     }
