@@ -586,7 +586,7 @@ async function executeTrade(telegramId, parsedData) {
 }
 
 // HTTP endpoint to trigger the trade
-app.post('/api/trade/:telegramId', async (req, res) => {
+app.get('/api/trade/:telegramId/status', async (req, res) => {
   const { telegramId } = req.params; // Extract telegramId from URL parameters
   const { parsedData } = req.body; // Retrieve parsedData from the request body
 
