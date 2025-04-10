@@ -531,32 +531,71 @@ externalWs.on("message", async (data) => {
     // Broadcast formatted token data to frontend
     broadcast({ type: "newToken", data: tokenData });
 
-    // Attempt to buy the token immediately
-    const buyResponse = await fetch("https://pumpportal.fun/api/trade?api-key=9n5megbk5wqpyrak6dw6wyk66586aykb8x8kedae61344jtb899p6v3md9rkjd9p6dhnjjub8n76yn2f5xq4rdtfb1gkexbndxqjyta5a1p6muuub4w6pwjjd147ervu8t438hkmewykuf5um6eaa94npggb35xp6yn9pd49rwncavrb58k8dbqddgm2t3ga1hmamk18h0kuf8", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        "action": "buy",            // "buy" or "sell"
-        "mint": parsedData.mint,    // contract address of the token you want to trade
-        "amount": 0.01,             // amount of SOL or tokens to trade
-        "denominatedInSol": "true", // "true" if amount is SOL, "false" if amount is tokens
-        "slippage": 10,             // percent slippage allowed
-        "priorityFee": 0.00005,     // amount to use as Jito tip or priority fee
-        "pool": "pump"              // exchange to trade on. "pump", "raydium", "pump-amm" or "auto"
-      })
-    });
-    const tradeData = await buyResponse.json();
+    // Function to execute a trade using parsedData.mint
+    async function executeTrade(telegramId, parsedData) {
+      try {
+        // Fetch the user data to get the API key from the trading wallet
+        const user = await User.findOne({ telegramId });
+        if (!user || !user.tradingWallet || !user.tradingWallet.apiKey) {
+          throw new Error("User or trading wallet details not found");
+        }
 
-    // Handle the trade response
-    if (tradeData.error) {
-      console.error("Error executing trade:", tradeData.error);
-      broadcast({ type: "error", message: "Failed to execute trade!" });
-    } else {
-      console.log("Trade executed successfully:", tradeData);
-      broadcast({ type: "tradeSuccess", data: tradeData });
+        const apiKey = user.tradingWallet.apiKey; // Get API key from trading wallet
+        const mint = parsedData.mint; // Use mint value from parsedData
+
+        if (!apiKey || !mint) {
+          throw new Error("Invalid API key or mint value");
+        }
+
+        // Make the trade request
+        const buyResponse = await fetch(`https://pumpportal.fun/api/trade?api-key=${apiKey}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            action: "buy",            // "buy" or "sell"
+            mint: mint,               // contract address of the token to trade
+            amount: 0.01,             // amount of SOL or tokens to trade
+            denominatedInSol: true,   // true if amount is SOL, false if amount is tokens
+            slippage: 10,             // percent slippage allowed
+            priorityFee: 0.00005,     // amount to use as Jito tip or priority fee
+            pool: "pump"              // exchange to trade on. "pump", "raydium", "pump-amm" or "auto"
+          })
+        });
+
+        const tradeData = await buyResponse.json();
+
+        // Handle the trade response
+        if (tradeData.error) {
+          console.error("Error executing trade:", tradeData.error);
+          return { success: false, error: tradeData.error };
+        } else {
+          console.log("Trade executed successfully:", tradeData);
+          return { success: true, data: tradeData };
+        }
+      } catch (error) {
+        console.error("Error executing trade:", error.message);
+        return { success: false, error: error.message };
+      }
     }
+
+    // Example WebSocket or HTTP route to trigger the trade
+    app.post('/api/trade', async (req, res) => {
+      const { telegramId, parsedData } = req.body;
+
+      try {
+        const result = await executeTrade(telegramId, parsedData);
+        if (result.success) {
+          res.status(200).json({ message: "Trade executed successfully", data: result.data });
+        } else {
+          res.status(400).json({ message: "Trade failed", error: result.error });
+        }
+      } catch (error) {
+        console.error("Error in trade endpoint:", error.message);
+        res.status(500).json({ message: "Internal server error", error: error.message });
+      }
+    });
 
   } catch (error) {
     console.error("Error parsing message:", error);

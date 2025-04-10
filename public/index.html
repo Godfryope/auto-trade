@@ -707,95 +707,64 @@
                         <!-- End::header-link -->
                         
                         <script>
-                            document.addEventListener("DOMContentLoaded", () => {
-                              const socket = new WebSocket(`ws://${window.location.host}`);
-                          
-                              let isAuthenticated = false;
-                          
-                              // Function to check if telegramId exists in sessionStorage or localStorage
-                              const checkAuthentication = () => {
-                                const telegramId = sessionStorage.getItem("telegramId") || localStorage.getItem("telegramId");
-                                if (telegramId) {
-                                  console.log("Found telegramId in storage:", telegramId);
-                          
-                                  // Notify the backend about the existing telegramId
-                                  socket.send(JSON.stringify({ type: "authenticate", telegramId }));
-                          
-                                  return true;
+                            document.addEventListener('DOMContentLoaded', () => {
+                                // Function to fetch the current trade status
+                                async function fetchTradeStatus() {
+                                    try {
+                                    const response = await fetch('/api/trade/status');
+                                    const result = await response.json();
+
+                                    if (response.ok) {
+                                        // Update the button states based on the current trade status
+                                        const status = result.status;
+                                        if (status === 'on') {
+                                        document.getElementById('btnon').checked = true;
+                                        } else {
+                                        document.getElementById('btnoff').checked = true;
+                                        }
+                                    } else {
+                                        console.error("Error fetching trade status:", result.error);
+                                        alert("Failed to fetch the current trade status. Please try again.");
+                                    }
+                                    } catch (err) {
+                                    console.error("Error fetching trade status:", err);
+                                    alert("Failed to fetch the current trade status. Please try again.");
+                                    }
                                 }
-                                return false;
-                              };
-                          
-                              // Try to authenticate automatically on page load
-                              if (checkAuthentication()) {
-                                console.log("Attempting to authenticate using stored telegramId...");
-                              } else {
-                                console.log("No telegramId found in storage. Please authenticate.");
-                              }
-                          
-                              // Authenticate the user manually if not already authenticated
-                              document.getElementById("authenticate").addEventListener("click", () => {
-                                const telegramId = prompt("Enter your Telegram ID:");
-                                if (telegramId) {
-                                  // Store telegramId in sessionStorage
-                                  sessionStorage.setItem("telegramId", telegramId);
-                          
-                                  // Optionally store in localStorage for persistent storage
-                                  localStorage.setItem("telegramId", telegramId);
-                          
-                                  // Send the telegramId to the backend for authentication
-                                  socket.send(JSON.stringify({ type: "authenticate", telegramId }));
+
+                                // Function to toggle trade execution status
+                                async function toggleTradeStatus(status) {
+                                    try {
+                                    const response = await fetch('/api/trade/status', {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ status })
+                                    });
+
+                                    const result = await response.json();
+
+                                    if (response.ok) {
+                                        alert(result.message); // Alert when trade is turned on or off
+                                    } else {
+                                        alert(`Error: ${result.error}`);
+                                    }
+                                    } catch (err) {
+                                    console.error("Error toggling trade status:", err);
+                                    alert("Failed to toggle trade status. Please try again.");
+                                    }
                                 }
-                              });
-                          
-                              // Handle server messages
-                              socket.onmessage = (event) => {
-                                const data = JSON.parse(event.data);
-                          
-                                if (data.type === "authenticated") {
-                                  console.log("User authenticated successfully:", data.wallet);
-                                  isAuthenticated = true;
-                          
-                                  // Enable the buttons after authentication
-                                  document.getElementById("btnon").disabled = false;
-                                  alert("Authenticated successfully!");
-                                }
-                          
-                                if (data.type === "error") {
-                                  console.error("Error from server:", data.message);
-                                  alert(data.message);
-                          
-                                  // Clear storage if authentication fails
-                                  sessionStorage.removeItem("telegramId");
-                                  localStorage.removeItem("telegramId");
-                                }
-                              };
-                          
-                              socket.onopen = () => {
-                                console.log("Connected to WebSocket for toggle updates.");
-                              };
-                          
-                              socket.onerror = (error) => {
-                                console.error("WebSocket error occurred:", error);
-                              };
-                          
-                              socket.onclose = () => {
-                                console.error("WebSocket connection closed.");
-                              };
-                          
-                              // Listen for toggle button changes
-                              document.querySelectorAll('input[name="btnradio"]').forEach((button) => {
-                                button.addEventListener("change", (event) => {
-                                  if (!isAuthenticated) {
-                                    alert("Please authenticate before toggling trade execution.");
-                                    return;
-                                  }
-                          
-                                  const isOn = event.target.id === "btnon";
-                                  console.log(`Toggled ${isOn ? "ON" : "OFF"}`);
-                                  socket.send(JSON.stringify({ type: "toggleTrade", state: isOn }));
+
+                                // Event listeners for the buttons
+                                document.getElementById('btnon').addEventListener('click', () => {
+                                    toggleTradeStatus('on');
                                 });
-                              });
+
+                                document.getElementById('btnoff').addEventListener('click', () => {
+                                    toggleTradeStatus('off');
+                                });
+
+                                // Fetch and set the initial trade status on page load
+                                fetchTradeStatus();
                             });
                           </script>
                         
