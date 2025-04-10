@@ -585,6 +585,24 @@ async function executeTrade(telegramId, parsedData) {
   }
 }
 
+// HTTP POST endpoint to execute a trade
+app.post('/api/trade/:telegramId/execute', async (req, res) => {
+  const { telegramId } = req.params;
+  const parsedData = req.body;
+
+  try {
+    const result = await executeTrade(telegramId, parsedData);
+    if (result.success) {
+      res.status(200).json({ message: "Trade executed successfully", data: result.data });
+    } else {
+      res.status(400).json({ message: "Trade execution failed", error: result.error });
+    }
+  } catch (error) {
+    console.error("Error executing trade:", error.message);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
 // HTTP GET endpoint to fetch the trade status
 app.get('/api/trade/:telegramId/status', async (req, res) => {
   const { telegramId } = req.params;
