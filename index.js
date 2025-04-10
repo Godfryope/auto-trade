@@ -103,8 +103,8 @@ async function getMainWalletAddress(telegramId) {
 
 async function updateSolanaBalance(telegramId) {
   try {
-    const walletAddress = '9r6gRD2H16YXB4Ccw3hSnXGznm65B1nN74eXUhqQdGXM';
-    const publicKey = '9r6gRD2H16YXB4Ccw3hSnXGznm65B1nN74eXUhqQdGXM';
+    const walletAddress = await getMainWalletAddress(telegramId);
+    const publicKey = new PublicKey(walletAddress);
     const balance = await connection.getBalance(publicKey);
     const solBalance = balance / LAMPORTS_PER_SOL; // Convert from lamports to SOL
 
