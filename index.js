@@ -108,8 +108,8 @@ async function updateSolanaBalance(telegramId) {
     const balance = await connection.getBalance(publicKey);
     const solBalance = balance / LAMPORTS_PER_SOL; // Convert from lamports to SOL
 
-    console.log(`📊 The Solana balance for wallet ${walletAddress} is: ${solBalance.toFixed(9)} SOL`);
-    return solBalance.toFixed(9);
+    console.log(`📊 The Solana balance for wallet ${walletAddress} is: ${Number(solBalance).toFixed(9)} SOL`);
+    return Number(solBalance).toFixed(9); // Ensure solBalance is a number before calling toFixed
   } catch (err) {
     console.log(`Error fetching balance for wallet: ${err.message}`);
     throw err;
