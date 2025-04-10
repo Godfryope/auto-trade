@@ -585,24 +585,52 @@ async function executeTrade(telegramId, parsedData) {
   }
 }
 
-// HTTP endpoint to trigger the trade
+// HTTP GET endpoint to fetch the trade status
 app.get('/api/trade/:telegramId/status', async (req, res) => {
-  const { telegramId } = req.params; // Extract telegramId from URL parameters
-  const { parsedData } = req.body; // Retrieve parsedData from the request body
+  const { telegramId } = req.params;
 
-  if (!telegramId || !parsedData || !parsedData.mint) {
-    return res.status(400).json({ message: "Invalid request. 'telegramId' and 'parsedData.mint' are required." });
+  try {
+    // Fetch the user from the database
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Assume trade status is stored in the user's tradingWallet (or elsewhere as appropriate)
+    const tradeStatus = user.tradingWallet.tradeStatus || 'off'; // Default to 'off' if not set
+
+    res.status(200).json({ status: tradeStatus });
+  } catch (error) {
+    console.error("Error fetching trade status:", error.message);
+    res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
+// HTTP PUT endpoint to update the trade status
+app.put('/api/trade/:telegramId/status', async (req, res) => {
+  const { telegramId } = req.params;
+  const { status } = req.body;
+
+  if (!status || (status !== 'on' && status !== 'off')) {
+    return res.status(400).json({ message: "Invalid status. Allowed values are 'on' or 'off'." });
   }
 
   try {
-    const result = await executeTrade(telegramId, parsedData);
-    if (result.success) {
-      res.status(200).json({ message: "Trade executed successfully", data: result.data });
-    } else {
-      res.status(400).json({ message: "Trade failed", error: result.error });
+    // Fetch the user from the database
+    const user = await User.findOne({ telegramId });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
+
+    // Update the trade status in the user's tradingWallet (or elsewhere as appropriate)
+    user.tradingWallet.tradeStatus = status;
+    await user.save();
+
+    res.status(200).json({ message: `Trade status updated to '${status}' successfully.` });
   } catch (error) {
-    console.error("Error in trade endpoint:", error.message);
+    console.error("Error updating trade status:", error.message);
     res.status(500).json({ message: "Internal server error", error: error.message });
   }
 });

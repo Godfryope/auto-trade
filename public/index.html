@@ -707,79 +707,79 @@
                         <!-- End::header-link -->
                         
                         <script>
-                            document.addEventListener('DOMContentLoaded', () => {
-                                // Get telegramId from sessionStorage or localStorage
-                                const telegramId =
-                                sessionStorage.getItem('telegramId') || localStorage.getItem('telegramId');
-                                if (!telegramId) {
-                                alert('Telegram ID not found. Please log in to continue.');
-                                return;
+                        document.addEventListener('DOMContentLoaded', () => {
+                            // Get telegramId from sessionStorage or localStorage
+                            const telegramId =
+                            sessionStorage.getItem('telegramId') || localStorage.getItem('telegramId');
+                            if (!telegramId) {
+                            alert('Telegram ID not found. Please log in to continue.');
+                            return;
+                            }
+                        
+                            // Function to fetch the current trade status
+                            async function fetchTradeStatus() {
+                            try {
+                                const response = await fetch(`/api/trade/${telegramId}/status`);
+                                if (!response.ok) {
+                                if (response.status === 404) {
+                                    throw new Error('Trade status endpoint not found (404).');
                                 }
-
-                                // Function to fetch the current trade status
-                                async function fetchTradeStatus() {
-                                try {
-                                    const response = await fetch(`/api/trade/${telegramId}/status`);
-                                    if (!response.ok) {
-                                    if (response.status === 404) {
-                                        throw new Error('Trade status endpoint not found (404).');
-                                    }
-                                    throw new Error(`HTTP error! status: ${response.status}`);
-                                    }
-
-                                    const result = await response.json();
-
-                                    // Update the button states based on the current trade status
-                                    const status = result.status;
-                                    if (status === 'on') {
-                                    document.getElementById('btnon').checked = true;
-                                    } else {
-                                    document.getElementById('btnoff').checked = true;
-                                    }
-                                } catch (err) {
-                                    console.error('Error fetching trade status:', err);
-                                    alert('Failed to fetch the current trade status. Please try again.');
+                                throw new Error(`HTTP error! status: ${response.status}`);
                                 }
+                        
+                                const result = await response.json();
+                        
+                                // Update the button states based on the current trade status
+                                const status = result.status;
+                                if (status === 'on') {
+                                document.getElementById('btnon').checked = true;
+                                } else {
+                                document.getElementById('btnoff').checked = true;
                                 }
-
-                                // Function to toggle trade execution status
-                                async function toggleTradeStatus(status) {
-                                try {
-                                    const response = await fetch(`/api/trade/${telegramId}/status`, {
-                                    method: 'PUT',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ status }),
-                                    });
-
-                                    if (!response.ok) {
-                                    if (response.status === 404) {
-                                        throw new Error('Trade status update endpoint not found (404).');
-                                    }
-                                    throw new Error(`HTTP error! status: ${response.status}`);
-                                    }
-
-                                    const result = await response.json();
-
-                                    alert(result.message); // Alert when trade is turned on or off
-                                } catch (err) {
-                                    console.error('Error toggling trade status:', err);
-                                    alert('Failed to toggle trade status. Please try again.');
-                                }
-                                }
-
-                                // Event listeners for the buttons
-                                document.getElementById('btnon').addEventListener('click', () => {
-                                toggleTradeStatus('on');
+                            } catch (err) {
+                                console.error('Error fetching trade status:', err);
+                                alert('Failed to fetch the current trade status. Please try again.');
+                            }
+                            }
+                        
+                            // Function to toggle trade execution status
+                            async function toggleTradeStatus(status) {
+                            try {
+                                const response = await fetch(`/api/trade/${telegramId}/status`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status }),
                                 });
-
-                                document.getElementById('btnoff').addEventListener('click', () => {
-                                toggleTradeStatus('off');
-                                });
-
-                                // Fetch and set the initial trade status on page load
-                                fetchTradeStatus();
+                        
+                                if (!response.ok) {
+                                if (response.status === 404) {
+                                    throw new Error('Trade status update endpoint not found (404).');
+                                }
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                        
+                                const result = await response.json();
+                        
+                                alert(result.message); // Alert when trade is turned on or off
+                            } catch (err) {
+                                console.error('Error toggling trade status:', err);
+                                alert('Failed to toggle trade status. Please try again.');
+                            }
+                            }
+                        
+                            // Event listeners for the buttons
+                            document.getElementById('btnon').addEventListener('click', () => {
+                            toggleTradeStatus('on');
                             });
-                          </script>
+                        
+                            document.getElementById('btnoff').addEventListener('click', () => {
+                            toggleTradeStatus('off');
+                            });
+                        
+                            // Fetch and set the initial trade status on page load
+                            fetchTradeStatus();
+                        });
+                        </script>
                         
                     </div>  
                     <!-- End::header-element -->
