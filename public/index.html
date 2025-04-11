@@ -904,7 +904,7 @@
                                     const response = await fetch(`/update-balance/${telegramId}`);
                                     if (response.ok) {
                                         const data = await response.json();
-                                        document.getElementById('user-balance').innerText = `${data.balance.toFixed(9)} SOL`;
+                                        document.getElementById('user-balance').innerText = `${data.balance} SOL`;
                                         console.log('Balance updated successfully:', data);
                                     } else {
                                         console.error('Error updating balance:', response.statusText);

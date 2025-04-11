@@ -3,6 +3,7 @@ import express from 'express'; // Import Express module
 import { WebSocketServer } from 'ws'; // Import WebSocketServer from 'ws'
 import WebSocket from 'ws'; // Import WebSocket from 'ws'
 import fetch from 'node-fetch'; // Import node-fetch for HTTP requests
+import { PublicKey, Connection, LAMPORTS_PER_SOL } from '@solana/web3.js'; // Import Solana Web3 classes
 
 const app = express(); // Initialize Express app
 
@@ -37,10 +38,11 @@ async function fetchTokenMetadata(uri) {
     }
 }
 
-externalWs.on("message", async (data) => {
+externalWs.on("message", async (rawData) => {
     try {
-        const parsedData = JSON.parse(data);
-
+        const parsedData = JSON.parse(rawData);
+        console.log("Received data:", parsedData);
+        
         // Convert marketCap and price properly
         const marketCap = Number(parsedData.marketCapSol) || 0;
         const price = parsedData.initialBuy
@@ -53,6 +55,23 @@ externalWs.on("message", async (data) => {
         const tokenData = {
             name: parsedData.name || "Unknown",
             symbol: parsedData.symbol || "N/A",
+            mint: parsedData.mint || "N/A",
+            uri: parsedData.uri || "N/A",
+            creator: parsedData.creator || "N/A",
+            tokenAddress: parsedData.tokenAddress || "N/A",
+            tokenType: parsedData.tokenType || "N/A",
+            tokenStandard: parsedData.tokenStandard || "N/A",
+            tokenDecimals: parsedData.tokenDecimals || 0,
+            tokenAmount: parsedData.tokenAmount || 0,
+            tokenPrice: parsedData.tokenPrice || 0,
+            tokenSupply: parsedData.tokenSupply || 0,
+            tokenVolume: parsedData.tokenVolume || 0,
+            tokenLiquidity: parsedData.tokenLiquidity || 0,
+            tokenLiquiditySol: parsedData.tokenLiquiditySol || 0,
+            tokenLiquidityUsdc: parsedData.tokenLiquidityUsdc || 0,
+            tokenLiquidityUsdt: parsedData.tokenLiquidityUsdt || 0,
+            tokenLiquidityEth: parsedData.tokenLiquidityEth || 0,
+            tokenLiquidityBtc: parsedData.tokenLiquidityBtc || 0,
             marketCap: marketCap > 0 ? `$${marketCap.toLocaleString()}` : "N/A",
             price: price > 0 ? `$${price.toFixed(8)}` : "N/A",
             bondingCurve: Math.trunc(parsedData.vSolInBondingCurve), // Convert to integer
@@ -63,57 +82,34 @@ externalWs.on("message", async (data) => {
         broadcast({ type: "newToken", data: tokenData });
 
         // Check wallet balance before attempting to buy the token
-        const walletBalanceResponse = await fetch("https://pumpportal.fun/api/wallet/balance?api-key=9n5megbk5wqpyrak6dw6wyk66586aykb8x8kedae61344jtb899p6v3md9rkjd9p6dhnjjub8n76yn2f5xq4rdtfb1gkexbndxqjyta5a1p6muuub4w6pwjjd147ervu8t438hkmewykuf5um6eaa94npggb35xp6yn9pd49rwncavrb58k8dbqddgm2t3ga1hmamk18h0kuf8");
-        if (walletBalanceResponse.headers.get("content-type")?.includes("application/json")) {
-            const walletBalanceData = await walletBalanceResponse.json();
-        } else {
-            console.error("Invalid response format for wallet balance");
-            broadcast({ type: "error", message: "Invalid wallet balance response format!" });
-            return;
-        }
+        const walletAddress = '9r6gRD2H16YXB4Ccw3hSnXGznm65B1nN74eXUhqQdGXM';
+        const publicKey = new PublicKey(walletAddress);
+        const connection = new Connection('https://api.mainnet-beta.solana.com'); // Initialize Solana connection
+        const balance = await connection.getBalance(publicKey);
+        const solBalance = balance / LAMPORTS_PER_SOL; // Convert from lamports to SOL
 
-        if (walletBalanceData.balance >= 0.01) {
-            // Attempt to buy the token immediately
-            const buyResponse = await fetch("https://pumpportal.fun/api/trade?api-key=9n5megbk5wqpyrak6dw6wyk66586aykb8x8kedae61344jtb899p6v3md9rkjd9p6dhnjjub8n76yn2f5xq4rdtfb1gkexbndxqjyta5a1p6muuub4w6pwjjd147ervu8t438hkmewykuf5um6eaa94npggb35xp6yn9pd49rwncavrb58k8dbqddgm2t3ga1hmamk18h0kuf8", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    "action": "buy",            // "buy" or "sell"
-                    "mint": parsedData.mint,    // contract address of the token you want to trade
-                    "amount": 0.01,             // amount of SOL or tokens to trade
-                    "denominatedInSol": "true", // "true" if amount is SOL, "false" if amount is tokens
-                    "slippage": 10,             // percent slippage allowed
-                    "priorityFee": 0.00005,     // amount to use as Jito tip or priority fee
-                    "pool": "pump"              // exchange to trade on. "pump", "raydium", "pump-amm" or "auto"
-                })
-            });
-            const tradeData = await buyResponse.json();
+        console.log(`📊 The Solana balance for wallet ${walletAddress} is: ${solBalance} SOL`);
 
-            // Handle the trade response
-            if (tradeData.error) {
-                console.error("Error executing trade:", tradeData.error);
-                broadcast({ type: "error", message: "Failed to execute trade!" });
-            } else {
-                console.log("Trade executed successfully:", tradeData);
-                broadcast({ type: "tradeSuccess", data: tradeData });
-            }
-        } else {
-            console.error("Insufficient wallet balance to execute trade.");
-            broadcast({ type: "error", message: "Insufficient wallet balance!" });
-        }
-        const tradeData = await buyResponse.json();
+        // Log wallet balance instead of unused variable
+        console.log(`Wallet balance data: ${solBalance} SOL`);
 
-        // Handle the trade response
-        if (tradeData.error) {
-            console.error("Error executing trade:", tradeData.error);
-            broadcast({ type: "error", message: "Failed to execute trade!" });
-        } else {
-            console.log("Trade executed successfully:", tradeData);
-            broadcast({ type: "tradeSuccess", data: tradeData });
-        }
-
+        const response = await fetch("https://pumpportal.fun/api/trade?api-key=6x84uhatb12pwguu9526crubddvkge1kc92n6gk76tnngxjpad8kaduhe0v2pp356gv32cj8e17prcubb9r4pwageh174h32dcv6wkvea1q7mjj3b0t7ahvkdnc5jkbd8945exaqcwyku6gupcebtf50mawtb9wumyva1b489wmpmhbdnc3edvfedrpuwj7cwu4gha2anvkuf8", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "action": "buy",            // "buy" or "sell"
+                "mint": parsedData.mint,     // contract address of the token you want to trade
+                "amount": 1,                // amount of SOL or tokens to trade (minimum 1 token)
+                "denominatedInSol": "true", // "true" if amount is SOL, "false" if amount is tokens
+                "slippage": 10,             // percent slippage allowed
+                "priorityFee": 0.00005,       // amount to use as Jito tip or priority fee
+                "pool": "pump"              // exchange to trade on. "pump", "raydium", "pump-amm" or "auto"
+            })
+        });
+        const data = await response.json();  // JSON object with tx signature or error(s)
+        console.log("Trade response:", data);
     } catch (error) {
         console.error("Error parsing message:", error);
         broadcast({ type: "error", message: "Failed to process token data!" });

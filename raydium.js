@@ -1,21 +1,42 @@
-import { Connection, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { Connection, clusterApiUrl, PublicKey } from '@solana/web3.js';
 
-const LAMPORTS_PER_SOL = 1_000_000_000; // Number of lamports in one SOL
+const web3Connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
 
-async function updateSolanaBalance() {
-    try {
-        const walletAddress = '9r6gRD2H16YXB4Ccw3hSnXGznm65B1nN74eXUhqQdGXM';
-        const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
-        const publicKey = new PublicKey(walletAddress);
-        const balance = await connection.getBalance(publicKey);
-        const solBalance = balance / LAMPORTS_PER_SOL; // Convert from lamports to SOL
+async function getTransactionHistory(publicKey) {
+  try {
+    const signatures = await web3Connection.getSignaturesForAddress(publicKey, { limit: 10 }); // Fetch last 10 transactions
+    const transactionHistory = [];
 
-        console.log(`📊 The Solana balance for wallet ${walletAddress} is: ${solBalance} SOL`);
-        return solBalance;
-    } catch (err) {
-        console.log(`Error fetching balance for wallet: ${err.message}`);
-        throw err;
+    for (const signatureInfo of signatures) {
+      const transactionDetails = await web3Connection.getTransaction(signatureInfo.signature, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 });
+
+      if (transactionDetails) {
+        const { meta } = transactionDetails;
+
+        if (meta) {
+          const preBalances = meta.preBalances;
+          const postBalances = meta.postBalances;
+
+          // Calculate SOL spent or received
+          const solChange = (postBalances[0] - preBalances[0]) / 1e9; // Convert lamports to SOL
+
+          transactionHistory.push({
+            amount: solChange,
+            link: `https://solscan.io/tx/${signatureInfo.signature}`,
+            signature: signatureInfo.signature,
+          });
+        }
+      }
     }
+
+    console.log(transactionHistory);
+    return transactionHistory;
+  } catch (error) {
+    console.error("Error fetching transaction history:", error);
+    return [];
+  }
 }
 
-updateSolanaBalance();
+// Example usage
+const walletPublicKey = new PublicKey("9r6gRD2H16YXB4Ccw3hSnXGznm65B1nN74eXUhqQdGXM"); // Replace with your wallet public key
+getTransactionHistory(walletPublicKey);
